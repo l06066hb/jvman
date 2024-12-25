@@ -11,6 +11,7 @@ from PyQt6.QtGui import QIcon, QAction, QFont
 from .tabs.download_tab import DownloadTab
 from .tabs.local_tab import LocalTab
 from .tabs.settings_tab import SettingsTab
+from .tabs.help_tab import HelpTab
 from utils.system_utils import create_junction, set_environment_variable, update_path_variable
 from utils.theme_manager import ThemeManager
 
@@ -42,10 +43,12 @@ class MainWindow(QMainWindow):
         self.download_tab = DownloadTab(self.config)
         self.local_tab = LocalTab(self.config)
         self.settings_tab = SettingsTab(self.config)
+        self.help_tab = HelpTab()
         
         tab_widget.addTab(self.download_tab, '在线下载')
         tab_widget.addTab(self.local_tab, '本地管理')
         tab_widget.addTab(self.settings_tab, '设置')
+        tab_widget.addTab(self.help_tab, '使用说明')
         
         layout.addWidget(tab_widget)
         
@@ -273,7 +276,7 @@ class MainWindow(QMainWindow):
         self.update_jdk_menu()  # 更新托盘菜单
 
     def on_settings_changed(self):
-        """处���设置变更事件"""
+        """处理设置变更事件"""
         self.download_tab.update_settings()
         self.local_tab.update_settings()
         # 应用新主题
