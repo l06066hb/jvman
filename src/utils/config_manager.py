@@ -55,11 +55,23 @@ class ConfigManager:
     def add_mapped_jdk(self, jdk_info):
         """添加映射的JDK"""
         mapped_jdks = self.get('mapped_jdks', [])
-        if jdk_info not in mapped_jdks:
-            mapped_jdks.append(jdk_info)
-            self.set('mapped_jdks', mapped_jdks)
-            return True
-        return False
+        
+        # 检查是否已存在相同路径的JDK
+        for existing_jdk in mapped_jdks:
+            try:
+                if os.path.samefile(existing_jdk['path'], jdk_info['path']):
+                    return False
+            except Exception:
+                continue
+                
+        # 检查是否已存在相同版本的JDK
+        for existing_jdk in mapped_jdks:
+            if existing_jdk['version'] == jdk_info['version'] and existing_jdk['path'] == jdk_info['path']:
+                return False
+                
+        mapped_jdks.append(jdk_info)
+        self.set('mapped_jdks', mapped_jdks)
+        return True
 
     def add_downloaded_jdk(self, jdk_info):
         """添加下载的JDK"""

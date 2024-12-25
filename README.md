@@ -1,57 +1,33 @@
-# JDK 管理工具 v1.0.0
+# JDK 版本管理工具 (JDK Version Manager)
 
-一个基于PyQt6开发的Windows平台JDK版本管理工具，支持在线下载和本地JDK管理。
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![Python](https://img.shields.io/badge/python-3.8+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-orange.svg)
+
+一个简单易用的 Windows JDK 版本管理工具，支持在线下载和本地 JDK 管理。
 
 ## 功能特点
 
-### 在线下载管理
-- 支持多种JDK发行版在线下载
-  - Oracle JDK
-  - OpenJDK
-  - Eclipse Temurin (Adoptium)
-  - Amazon Corretto
-  - Azul Zulu
-- 显示版本详细信息和特性说明
-- 显示实时下载进度
-- 自动添加到管理列表
-
-### 本地管理
-- 支持添加本地已有的JDK
-- 显示JDK详细版本信息
-- 快速打开JDK安装目录
-- 一键切换JDK版本
-- 支持移除已添加的JDK
-- 显示当前使用的JDK版本
-
-### 系统集成
-- 自动创建软链接实现无感知切换
-- 支持配置JAVA_HOME/PATH/CLASSPATH环境变量
-- 系统托盘快捷操作
-  - 显示当前JDK版本
-  - 快速切换JDK版本
-  - 一键打开管理界面
-
-### 界面特性
-- 支持浅色/深色/青色三种主题
-- 现代化UI设计
-  - 圆角边框
-  - 渐变色
-  - 动态效果
-- 友好的操作提示
-- 详细的版本信息展示
-- 实时进度反馈
+- 🚀 在线下载 JDK：支持多个 JDK 发行版（Oracle JDK、OpenJDK、Adoptium、Amazon Corretto、Zulu OpenJDK）
+- 📂 本地 JDK 管理：轻松导入和管理已安装的 JDK
+- 🔄 快速版本切换：使用 Junction 实现无缝切换 JDK 版本
+- 🛠 环境变量管理：自动配置 JAVA_HOME、PATH 和 CLASSPATH
+- 💡 系统托盘：快速查看和切换当前 JDK 版本
+- 🎨 主题切换：支持浅色和深色主题
 
 ## 系统要求
 
 - Windows 10/11
 - Python 3.8+
-- 管理员权限（用于创建软链接和修改环境变量）
+- PyQt6
 
-## 安装
+## 安装使用
 
 1. 克隆仓库：
 ```bash
-git clone [repository-url]
+git clone https://github.com/yourusername/jvman.git
+cd jvman
 ```
 
 2. 安装依赖：
@@ -59,68 +35,45 @@ git clone [repository-url]
 pip install -r requirements.txt
 ```
 
-## 使用说明
-
-1. 启动程序：
+3. 运行程序：
 ```bash
-python main.py
+python src/main.py
 ```
 
-2. 在线下载JDK：
-   - 切换到"在线下载"标签页
-   - 选择JDK发行版（Oracle/OpenJDK/Adoptium等）
-   - 选择需要的JDK版本
-   - 查看版本详细信息
-   - 点击"下载"开始下载
-   - 等待下载和安装完成
+## 使用说明
 
-3. 添加本地JDK：
-   - 切换到"本地管理"标签页
-   - 点击"添加本地JDK"
-   - 选择JDK安装目录
-   - 确认添加
+### 在线下载 JDK
+1. 选择 JDK 发行版和版本
+2. 选择下载目录
+3. 点击下载并等待完成
 
-4. 切换JDK版本：
-   - 在本地管理页面选择目标版本
-   - 点击"切换版本"
-   - 或通过系统托盘菜单快速切换
+### 本地 JDK 管理
+1. 点击"添加本地 JDK"
+2. 选择 JDK 安装目录
+3. 确认添加
 
-5. 环境变量配置：
-   - 切换到"设置"标签页
-   - 选择需要配置的环境变量
-   - 点击"应用环境变量设置"
-
-6. 主题切换：
-   - 在设置页面选择主题
-   - 支持浅色/深色/青色三种主题
-   - 实时预览效果
-
-## 配置说明
-
-- JDK存储目录：默认为用户目录下的`jdk_versions`
-- 软链接路径：默认为用户目录下的`current_jdk`
-- 配置文件：存储在`config/settings.json`
-- 日志文件：存储在`logs`目录下
-
-## 注意事项
-
-- 首次运行需要管理员权限
-- 建议在操作前备份环境变量
-- 如遇问题，请查看日志文件
-- 软链接路径不要使用中文
-- Oracle JDK下载需要登录Oracle官网
-- 部分JDK版本可能需要手动下载
+### 切换 JDK 版本
+1. 在列表中选择目标 JDK
+2. 点击"切换版本"
+3. 等待切换完成
 
 ## 更新日志
 
-### v1.0.0 (2024-02-07)
+### v1.0.1 (2024-01-14)
+- 优化界面样式和用户体验
+- 修复本地 JDK 重复添加问题
+- 改进版本切换功能
+- 优化下载进度显示
+- 增加详细版本信息显示
+
+### v1.0.0 (2024-01-10)
 - 首次发布
-- 支持多种JDK发行版下载
-- 完整的本地JDK管理功能
-- 系统托盘集成
-- 三种主题切换
-- 环境变量配置
+- 基本功能实现
+
+## 贡献指南
+
+欢迎提交 Issue 和 Pull Request 来帮助改进这个项目。
 
 ## 许可证
 
-MIT License 
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。 
