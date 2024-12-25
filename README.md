@@ -1,39 +1,101 @@
-# 追梦之旅
+# JDK 管理工具
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+一个基于PyQt6开发的Windows平台JDK版本管理工具，支持在线下载和本地JDK管理。
 
-#### 软件架构
-软件架构说明
+## 功能特点
 
+### 在线下载管理
+- 支持主流JDK版本在线下载（8/11/17/21）
+- 显示下载进度
+- 自动添加到管理列表
 
-#### 安装教程
+### 本地管理
+- 支持添加本地已有的JDK
+- 显示JDK详细版本信息
+- 快速打开JDK安装目录
+- 一键切换JDK版本
+- 支持移除已添加的JDK
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+### 系统集成
+- 自动创建软链接实现无感知切换
+- 支持配置JAVA_HOME/PATH/CLASSPATH环境变量
+- 系统托盘快捷操作
+  - 显示当前JDK版本
+  - 快速切换JDK版本
+  - 一键打开管理界面
 
-#### 使用说明
+### 界面特性
+- 支持浅色/深色/青色三种主题
+- 现代化UI设计
+- 友好的操作提示
+- 详细的版本信息展示
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## 系统要求
 
-#### 参与贡献
+- Windows 10/11
+- Python 3.8+
+- 管理员权限（用于创建软链接和修改环境变量）
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+## 安装
 
+1. 克隆仓库：
+```bash
+git clone [repository-url]
+```
 
-#### 特技
+2. 安装依赖：
+```bash
+pip install -r requirements.txt
+```
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+## 使用说明
+
+1. 启动程序：
+```bash
+python main.py
+```
+
+2. 在线下载JDK：
+   - 切换到"在线下载"标签页
+   - 从下拉列表选择需要的JDK版本
+   - 点击"开始下载"
+   - 等待下载完成
+
+3. 添加本地JDK：
+   - 切换到"本地管理"标签页
+   - 点击"添加本地JDK"
+   - 选择JDK安装目录
+   - 输入版本号
+
+4. 切换JDK版本：
+   - 在本地管理页面选择目标版本
+   - 点击"切换版本"
+   - 或通过系统托盘菜单快速切换
+
+5. 环境变量配置：
+   - 切换到"设置"标签页
+   - 选择需要配置的环境变量
+   - 点击"应用环境变量设置"
+
+6. 主题切换：
+   - 在设置页面选择主题
+   - 支持浅色/深色/青色三种主题
+   - 实时预览效果
+
+## 配置说明
+
+- JDK存储目录：默认为用户目录下的`jdk_versions`
+- 软链接路径：默认为用户目录下的`current_jdk`
+- 配置文件：存储在`config/settings.json`
+- 日志文件：存储在`logs`目录下
+
+## 注意事项
+
+- 首次运行需要管理员权限
+- 建议在操作前备份环境变量
+- 如遇问题，请查看日志文件
+- 软链接路径不要使用中文
+
+## 许可证
+
+MIT License 
