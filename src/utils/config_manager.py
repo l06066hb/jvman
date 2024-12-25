@@ -82,3 +82,26 @@ class ConfigManager:
         mapped_jdks = self.get('mapped_jdks', [])
         downloaded_jdks = self.get('downloaded_jdks', [])
         return mapped_jdks + downloaded_jdks 
+
+    def get_current_jdk(self):
+        """获取当前使用的JDK信息"""
+        junction_path = self.get('junction_path')
+        if not junction_path or not os.path.exists(junction_path):
+            return None
+            
+        try:
+            # 获取软链接指向的实际路径
+            real_path = os.path.realpath(junction_path)
+            
+            # 在所有JDK中查找匹配的
+            for jdk in self.get_all_jdks():
+                try:
+                    if os.path.samefile(jdk['path'], real_path):
+                        return jdk
+                except Exception:
+                    continue
+                    
+            return None
+        except Exception as e:
+            logger.error(f"获取当前JDK失败: {str(e)}")
+            return None 
