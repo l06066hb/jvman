@@ -416,19 +416,21 @@ class LocalTab(QWidget):
             
             # 添加到配置
             import datetime
-            self.config.add_mapped_jdk({
+            jdk_info = {
                 'version': version,
                 'path': jdk_path,
                 'type': 'mapped',
                 'import_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            })
+            }
             
-            # 发送信号
+            # 添加到配置
+            if not self.config.add_mapped_jdk(jdk_info):
+                QMessageBox.warning(self, '警告', '该JDK已经添加过了')
+                return
+                
+            # 发送信号并刷新列表
             self.jdk_mapped.emit(version, jdk_path)
-            
-            # 刷新列表
             self.refresh_jdk_list()
-            
             QMessageBox.information(self, '成功', f'已添加 JDK {version}')
             
         except Exception as e:
@@ -523,7 +525,7 @@ class LocalTab(QWidget):
         
         layout.addWidget(button_box)
         
-        # 连接��号
+        # 连接信号
         delete_button.clicked.connect(dialog.accept)
         remove_button.clicked.connect(lambda: dialog.done(2))
         cancel_button.clicked.connect(dialog.reject)
@@ -553,7 +555,7 @@ class LocalTab(QWidget):
                     import shutil
                     if os.path.exists(path):
                         shutil.rmtree(path)
-                        message = f'JDK {version} 及其文件夹已成功��除'
+                        message = f'JDK {version} 及其文件夹已成功删除'
                     else:
                         message = f'JDK {version} 文件夹不存在，已从列表移除'
                 else:
