@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QDialog, QDialogButtonBox
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QSize
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 
 class LocalTab(QWidget):
     """本地管理标签页"""
@@ -32,26 +32,43 @@ class LocalTab(QWidget):
         version_container.setStyleSheet("""
             QWidget#version_container {
                 background-color: #EBF3FE;
-                border: 1px solid #90CAF9;
                 border-radius: 8px;
             }
         """)
         
         version_layout = QHBoxLayout(version_container)
         version_layout.setContentsMargins(16, 0, 16, 0)
+        version_layout.setSpacing(8)
         
-        # 添加版本图标
+        # 添加check-circle图标
+        check_icon = QLabel()
+        check_icon.setStyleSheet("background: transparent;")
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'check-circle.png')
+        pixmap = QPixmap(icon_path)
+        if not pixmap.isNull():
+            pixmap.setDevicePixelRatio(1)  # 确保清晰度
+            check_icon.setPixmap(pixmap.scaled(20, 20, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        version_layout.addWidget(check_icon)
+        
+        # 添加Java图标
         version_icon = QLabel()
-        version_icon.setPixmap(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'java-current.png')).pixmap(QSize(24, 24)))
+        version_icon.setStyleSheet("background: transparent;")
+        java_icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'java-current.png')
+        java_pixmap = QPixmap(java_icon_path)
+        if not java_pixmap.isNull():
+            java_pixmap.setDevicePixelRatio(1)  # 确保清晰度
+            version_icon.setPixmap(java_pixmap.scaled(24, 24, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         version_layout.addWidget(version_icon)
         
+        # 版本号标签
         self.current_version_label = QLabel('当前版本: 未设置')
         self.current_version_label.setObjectName('current_version_label')
         self.current_version_label.setStyleSheet("""
             QLabel#current_version_label {
-                color: #1976D2;
+                color: #1a73e8;
                 font-weight: bold;
                 font-size: 13px;
+                background: transparent;
             }
         """)
         version_layout.addWidget(self.current_version_label)
@@ -369,7 +386,7 @@ class LocalTab(QWidget):
         # 验证是否是有效的JDK目录
         java_path = os.path.join(jdk_path, 'bin', 'java.exe')
         if not os.path.exists(java_path):
-            QMessageBox.warning(self, '错误', '所选目录不是���效的JDK目录')
+            QMessageBox.warning(self, '错误', '所选目录不是有效的JDK目录')
             return
             
         # 检查是否已经添加过
@@ -506,7 +523,7 @@ class LocalTab(QWidget):
         
         layout.addWidget(button_box)
         
-        # 连接信号
+        # 连接��号
         delete_button.clicked.connect(dialog.accept)
         remove_button.clicked.connect(lambda: dialog.done(2))
         cancel_button.clicked.connect(dialog.reject)
@@ -536,7 +553,7 @@ class LocalTab(QWidget):
                     import shutil
                     if os.path.exists(path):
                         shutil.rmtree(path)
-                        message = f'JDK {version} 及其文件夹已成功移除'
+                        message = f'JDK {version} 及其文件夹已成功��除'
                     else:
                         message = f'JDK {version} 文件夹不存在，已从列表移除'
                 else:
