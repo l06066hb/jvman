@@ -12,6 +12,7 @@ class ConfigManager:
             'jdk_store_path': os.path.join(os.path.expanduser('~'), 'jdk_versions'),
             'junction_path': os.path.join(os.path.expanduser('~'), 'current_jdk'),
             'theme': 'light',
+            'auto_start': False,
             'mapped_jdks': [],
             'downloaded_jdks': []
         }
@@ -117,3 +118,53 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"获取当前JDK失败: {str(e)}")
             return None 
+
+    def set_auto_start(self, enabled):
+        """设置自启动状态"""
+        try:
+            import winreg
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+            app_name = "JDK Version Manager"
+            exe_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'jvman.exe'))
+            
+            # 打开注册表项
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+            
+            if enabled:
+                # 添加自启动项
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, exe_path)
+            else:
+                try:
+                    # 删除自启动项
+                    winreg.DeleteValue(key, app_name)
+                except WindowsError:
+                    pass  # 如果键不存在，忽略错误
+            
+            winreg.CloseKey(key)
+            self.set('auto_start', enabled)
+            return True
+        except Exception as e:
+            logger.error(f"设置自启动失败: {str(e)}")
+            return False
+
+    def get_auto_start_status(self):
+        """获取自启动状态"""
+        try:
+            import winreg
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+            app_name = "JDK Version Manager"
+            
+            # 打开注册表项
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_READ)
+            
+            try:
+                winreg.QueryValueEx(key, app_name)
+                is_auto_start = True
+            except WindowsError:
+                is_auto_start = False
+            
+            winreg.CloseKey(key)
+            return is_auto_start
+        except Exception as e:
+            logger.error(f"获取自启动状态失败: {str(e)}")
+            return False 
