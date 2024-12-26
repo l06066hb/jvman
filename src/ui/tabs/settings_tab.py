@@ -130,9 +130,44 @@ class SettingsTab(QWidget):
         theme_layout.addWidget(self.theme_combo)
         theme_layout.addStretch()
         
+        # 自启动设置
+        auto_start_layout = QHBoxLayout()
+        auto_start_label = QLabel('开机自启动:')
+        auto_start_label.setMinimumWidth(100)
+        
+        self.auto_start_checkbox = QCheckBox()
+        self.auto_start_checkbox.setStyleSheet("""
+            QCheckBox {
+                spacing: 8px;
+                padding: 4px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+            }
+            QCheckBox::indicator:unchecked {
+                border: 1px solid #E0E0E0;
+                border-radius: 3px;
+                background-color: white;
+            }
+            QCheckBox::indicator:checked {
+                border: none;
+                border-radius: 3px;
+                background-color: #1a73e8;
+                image: url(icon/check.png);
+            }
+        """)
+        self.auto_start_checkbox.setChecked(self.config.get_auto_start_status())
+        
+        auto_start_layout.addWidget(auto_start_label)
+        auto_start_layout.addWidget(self.auto_start_checkbox)
+        auto_start_layout.addStretch()
+        
+        # 添加到基本设置布局
         basic_layout.addLayout(store_layout)
         basic_layout.addLayout(junction_layout)
         basic_layout.addLayout(theme_layout)
+        basic_layout.addLayout(auto_start_layout)
         
         # 保存按钮
         self.save_button = QPushButton('保存设置')
@@ -155,7 +190,7 @@ class SettingsTab(QWidget):
             }
         """)
         basic_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignRight)
-        
+
         layout.addWidget(basic_group)
 
         # 环境变量设置组
@@ -164,88 +199,34 @@ class SettingsTab(QWidget):
         env_layout = QVBoxLayout(env_group)
         env_layout.setSpacing(10)
         
-        # 环境变量说明
-        desc_container = QFrame()
-        desc_container.setObjectName('desc_container')
-        desc_container.setStyleSheet("""
+        # 自动设置区域
+        auto_container = QFrame()
+        auto_container.setObjectName('desc_container')
+        auto_container.setStyleSheet("""
             QFrame {
                 background-color: #F8F9FA;
                 border-radius: 6px;
                 padding: 2px;
             }
         """)
-        desc_layout = QVBoxLayout(desc_container)
-        desc_layout.setSpacing(8)
-        desc_layout.setContentsMargins(15, 15, 15, 15)
-
-        # 标题
-        title_label = QLabel('环境变量配置说明')
-        title_label.setProperty('title', True)
-        title_label.setStyleSheet("""
-            QLabel {
-                font-weight: bold;
-                font-size: 13px;
-                padding-bottom: 5px;
-            }
-        """)
-        desc_layout.addWidget(title_label)
+        auto_layout = QVBoxLayout(auto_container)
+        auto_layout.setSpacing(8)
+        auto_layout.setContentsMargins(15, 15, 15, 15)
 
         # 自动设置说明
-        auto_desc = QLabel('1. 可以通过下方选项自动设置系统环境变量')
+        auto_desc = QLabel('方式一：自动设置：通过下方选项自动设置系统环境变量')
         auto_desc.setProperty('description', True)
-        desc_layout.addWidget(auto_desc)
-
-        # 手动设置说明
-        manual_desc = QLabel('2. 也可以手动设置，将以下值复制到系统环境变量中：')
-        manual_desc.setProperty('description', True)
-        desc_layout.addWidget(manual_desc)
-
-        # 环境变量值容器
-        values_frame = QFrame()
-        values_frame.setObjectName('values_frame')
-        values_frame.setStyleSheet("""
-            QFrame {
-                background-color: #FFFFFF;
-                border: 1px solid #E0E0E0;
-                border-radius: 4px;
+        auto_desc.setStyleSheet("""
+            QLabel {
+                color: #333333;
+                padding: 5px;
+                font-weight: bold;
+                background: transparent;
             }
         """)
-        values_layout = QVBoxLayout(values_frame)
-        values_layout.setSpacing(4)
-        values_layout.setContentsMargins(10, 10, 10, 10)
-
-        # JAVA_HOME
-        java_home_layout = QHBoxLayout()
-        java_home_label = QLabel('JAVA_HOME')
-        java_home_label.setProperty('key', True)
-        java_home_value = QLabel('= ' + self.junction_path_edit.text())
-        java_home_value.setProperty('value', True)
-        java_home_layout.addWidget(java_home_label)
-        java_home_layout.addWidget(java_home_value)
-        values_layout.addLayout(java_home_layout)
-
-        # PATH
-        path_layout = QHBoxLayout()
-        path_label = QLabel('PATH')
-        path_label.setProperty('key', True)
-        path_value = QLabel('= %JAVA_HOME%\\bin')
-        path_value.setProperty('value', True)
-        path_layout.addWidget(path_label)
-        path_layout.addWidget(path_value)
-        values_layout.addLayout(path_layout)
-
-        # CLASSPATH
-        classpath_layout = QHBoxLayout()
-        classpath_label = QLabel('CLASSPATH')
-        classpath_label.setProperty('key', True)
-        classpath_value = QLabel('= .;%JAVA_HOME%\\lib\\dt.jar;%JAVA_HOME%\\lib\\tools.jar')
-        classpath_value.setProperty('value', True)
-        classpath_layout.addWidget(classpath_label)
-        classpath_layout.addWidget(classpath_value)
-        values_layout.addLayout(classpath_layout)
-
-        desc_layout.addWidget(values_frame)
-        env_layout.addWidget(desc_container)
+        auto_desc.setFont(QFont("Microsoft YaHei", 10))
+        auto_desc.setText("⚙️ 方式一：自动设置：通过下方选项自动设置系统环境变量")
+        auto_layout.addWidget(auto_desc)
 
         # 环境变量选项
         self.env_java_home = QCheckBox('设置 JAVA_HOME')
@@ -277,9 +258,9 @@ class SettingsTab(QWidget):
         self.env_path.setStyleSheet(checkbox_style)
         self.env_classpath.setStyleSheet(checkbox_style)
         
-        env_layout.addWidget(self.env_java_home)
-        env_layout.addWidget(self.env_path)
-        env_layout.addWidget(self.env_classpath)
+        auto_layout.addWidget(self.env_java_home)
+        auto_layout.addWidget(self.env_path)
+        auto_layout.addWidget(self.env_classpath)
         
         # 应用环境变量按钮
         self.apply_env_button = QPushButton('应用环境变量设置')
@@ -301,8 +282,104 @@ class SettingsTab(QWidget):
                 background-color: #E8F0FE;
             }
         """)
-        env_layout.addWidget(self.apply_env_button, alignment=Qt.AlignmentFlag.AlignRight)
+        auto_layout.addWidget(self.apply_env_button, alignment=Qt.AlignmentFlag.AlignRight)
         
+        env_layout.addWidget(auto_container)
+        
+        # 手动设置区域
+        manual_container = QFrame()
+        manual_container.setObjectName('desc_container')
+        manual_container.setStyleSheet("""
+            QFrame {
+                background-color: #F8F9FA;
+                border-radius: 6px;
+                padding: 2px;
+            }
+        """)
+        manual_layout = QVBoxLayout(manual_container)
+        manual_layout.setSpacing(8)
+        manual_layout.setContentsMargins(15, 15, 15, 15)
+
+        # 手动设置说明
+        manual_desc = QLabel('方式二：手动设置：复制以下内容到系统环境变量中')
+        manual_desc.setProperty('description', True)
+        manual_desc.setStyleSheet("""
+            QLabel {
+                color: #333333;
+                padding: 5px;
+                font-weight: bold;
+                background: transparent;
+            }
+        """)
+        manual_desc.setFont(QFont("Microsoft YaHei", 10))
+        manual_desc.setText("📋 方式二：手动设置：复制以下内容到系统环境变量中")
+        manual_layout.addWidget(manual_desc)
+
+        # 环境变量值容器
+        values_frame = QFrame()
+        values_frame.setObjectName('values_frame')
+        values_frame.setStyleSheet("""
+            QFrame {
+                background-color: #FFFFFF;
+                border: 1px solid #E0E0E0;
+                border-radius: 4px;
+            }
+        """)
+        values_layout = QVBoxLayout(values_frame)
+        values_layout.setSpacing(4)
+        values_layout.setContentsMargins(10, 10, 10, 10)
+
+        # JAVA_HOME
+        java_home_layout = QHBoxLayout()
+        java_home_label = QLabel('JAVA_HOME')
+        java_home_label.setMinimumWidth(100)
+        java_home_label.setStyleSheet("font-weight: bold;")
+        self.java_home_value = QLineEdit(self.junction_path_edit.text())
+        self.java_home_value.setReadOnly(True)
+        self.java_home_value.setMinimumWidth(400)
+        self.java_home_value.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #E0E0E0;
+                border-radius: 4px;
+                padding: 4px 8px;
+                background-color: #F8F9FA;
+                selection-background-color: #E8F0FE;
+            }
+        """)
+        java_home_layout.addWidget(java_home_label)
+        java_home_layout.addWidget(self.java_home_value)
+        values_layout.addLayout(java_home_layout)
+
+        # PATH
+        path_layout = QHBoxLayout()
+        path_label = QLabel('PATH')
+        path_label.setMinimumWidth(100)
+        path_label.setStyleSheet("font-weight: bold;")
+        path_value = QLineEdit('%JAVA_HOME%\\bin')
+        path_value.setReadOnly(True)
+        path_value.setMinimumWidth(400)
+        path_value.setStyleSheet(self.java_home_value.styleSheet())
+        path_layout.addWidget(path_label)
+        path_layout.addWidget(path_value)
+        values_layout.addLayout(path_layout)
+
+        # CLASSPATH
+        classpath_layout = QHBoxLayout()
+        classpath_label = QLabel('CLASSPATH')
+        classpath_label.setMinimumWidth(100)
+        classpath_label.setStyleSheet("font-weight: bold;")
+        classpath_value = QLineEdit('.;%JAVA_HOME%\\lib\\dt.jar;%JAVA_HOME%\\lib\\tools.jar')
+        classpath_value.setReadOnly(True)
+        classpath_value.setMinimumWidth(400)
+        classpath_value.setStyleSheet(self.java_home_value.styleSheet())
+        classpath_layout.addWidget(classpath_label)
+        classpath_layout.addWidget(classpath_value)
+        values_layout.addLayout(classpath_layout)
+
+        manual_layout.addWidget(values_frame)
+        env_layout.addWidget(manual_container)
+        
+        # 添加环境变量组到主布局
         layout.addWidget(env_group)
         
         # 添加弹性空间
@@ -347,10 +424,14 @@ class SettingsTab(QWidget):
         # 保存软链接路径
         self.config.set('junction_path', self.junction_path_edit.text())
         
-        # 主题设置已经在on_theme_changed中保存
+        # 保存自启动设置
+        self.config.set_auto_start(self.auto_start_checkbox.isChecked())
         
         # 发送设置变更信号
         self.settings_changed.emit()
+        
+        # 显示保存成功提示
+        QMessageBox.information(self, '成功', '设置已保存')
 
     def apply_env_settings(self):
         """应用环境变量设置"""

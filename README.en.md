@@ -1,6 +1,6 @@
 # JDK Version Manager (JVMAN)
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -16,7 +16,8 @@ A user-friendly JDK version management tool for Windows, supporting online downl
 - 🔄 Quick Version Switching: Seamless JDK version switching using Junction
 - 🛠 Environment Variable Management: Automatic configuration of JAVA_HOME, PATH, and CLASSPATH
 - 💡 System Tray: Quick view and switch current JDK version
-- 🎨 Theme Switching: Support light and dark themes
+- 🎨 Theme Switching: Support light, dark, and cyan themes
+- 🌐 Internationalization: Support for Chinese and English interfaces
 
 ## System Requirements
 
@@ -59,16 +60,28 @@ python src/main.py
 2. Click "Switch Version"
 3. Wait for the switch to complete
 
+### Notes
+- Recommended to use ZIP version of JDK to avoid conflicts with installed versions
+- First-time use requires administrator privileges for environment variable configuration
+- If download fails, try manual download option
+
 ## Changelog
 
-### v1.0.1 (2024-01-14)
+### v1.0.2 (2024-01-10)
+- Optimized interface layout and styles
+- Improved environment variables settings panel
+- Fixed theme switching issues
+- Enhanced version information display
+- Added usage recommendations
+
+### v1.0.1 (2024-01-05)
 - Optimized UI style and user experience
 - Fixed local JDK duplicate addition issue
 - Improved version switching functionality
 - Enhanced download progress display
 - Added detailed version information display
 
-### v1.0.0 (2024-01-10)
+### v1.0.0 (2024-01-01)
 - Initial release
 - Basic functionality implementation
 

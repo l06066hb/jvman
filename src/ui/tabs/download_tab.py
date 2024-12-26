@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QLabel, QComboBox, QProgressBar, QMessageBox,
     QGroupBox, QFrame, QScrollArea, QDialog, QDialogButtonBox
 )
-from PyQt6.QtCore import pyqtSignal, Qt, QThread, QSize, QDateTime
+from PyQt6.QtCore import pyqtSignal, Qt, QThread, QSize, QDateTime, QTimer
 from PyQt6.QtGui import QIcon
 from utils.jdk_downloader import JDKDownloader
 import shutil
@@ -146,8 +146,8 @@ class ProgressDialog(QDialog):
     """进度对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("下载进度")  # 修改标题
-        self.setFixedSize(400, 180)
+        self.setWindowTitle("下载进度")
+        self.setFixedSize(400, 200)  # 增加对话框高度
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setModal(True)
         
@@ -174,6 +174,7 @@ class ProgressDialog(QDialog):
                 font-size: 12px;
             }
         """)
+        self.detail_label.setWordWrap(True)  # 允许文本换行
         layout.addWidget(self.detail_label)
         
         # 进度条
@@ -201,39 +202,49 @@ class ProgressDialog(QDialog):
         """)
         layout.addWidget(self.progress_bar)
         
-        # 关闭按钮（初始隐藏）
-        self.close_button = QPushButton("完成")
-        self.close_button.setStyleSheet("""
+        # 添加弹性空间
+        layout.addStretch()
+        
+        # 按钮容器
+        self.button_container = QWidget()
+        button_layout = QHBoxLayout(self.button_container)
+        button_layout.setSpacing(10)
+        button_layout.setContentsMargins(0, 0, 0, 10)  # 减少底部边距
+        
+        # 手动下载按钮
+        self.manual_download_button = QPushButton("手动下载")
+        self.manual_download_button.setFixedSize(100, 32)
+        self.manual_download_button.setStyleSheet("""
             QPushButton {
-                padding: 8px 20px;
-                border: none;
+                padding: 6px 20px;
+                border: 1px solid #1a73e8;
                 border-radius: 4px;
-                background-color: #1a73e8;
-                color: white;
+                background-color: white;
+                color: #1a73e8;
                 font-weight: bold;
-                min-width: 80px;
+                font-size: 12px;
             }
             QPushButton:hover {
-                background-color: #1557b0;
+                background-color: #F5F5F5;
             }
             QPushButton:pressed {
-                background-color: #0d47a1;
+                background-color: #E8F0FE;
             }
         """)
-        self.close_button.clicked.connect(self.accept)
-        self.close_button.hide()
-        layout.addWidget(self.close_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.manual_download_button.clicked.connect(self.open_manual_download)
+        self.manual_download_button.hide()
         
-        # 添加取消按钮
+        # 取消按钮
         self.cancel_button = QPushButton("取消")
+        self.cancel_button.setFixedSize(100, 32)
         self.cancel_button.setStyleSheet("""
             QPushButton {
-                padding: 8px 20px;
+                padding: 6px 20px;
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
                 background-color: white;
                 color: #666666;
-                min-width: 80px;
+                font-size: 12px;
             }
             QPushButton:hover {
                 background-color: #F5F5F5;
@@ -243,7 +254,63 @@ class ProgressDialog(QDialog):
             }
         """)
         self.cancel_button.clicked.connect(self.reject)
-        layout.addWidget(self.cancel_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # 完成按钮
+        self.close_button = QPushButton("完成")
+        self.close_button.setFixedSize(100, 32)
+        self.close_button.setStyleSheet("""
+            QPushButton {
+                padding: 6px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: #1a73e8;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #1557b0;
+            }
+            QPushButton:pressed {
+                background-color: #0d47a1;
+            }
+            QPushButton:disabled {
+                background-color: #E0E0E0;
+                color: #999999;
+            }
+        """)
+        self.close_button.clicked.connect(self.accept)
+        self.close_button.hide()
+        
+        button_layout.addWidget(self.manual_download_button)
+        button_layout.addWidget(self.cancel_button)
+        button_layout.addWidget(self.close_button)
+        
+        layout.addWidget(self.button_container)
+        
+        # 存储手动下载链接
+        self.manual_download_url = ""
+        
+        # 设置进度条动画定时器
+        self.animation_timer = QTimer(self)
+        self.animation_timer.timeout.connect(self.update_progress_gradient)
+        self.gradient_offset = 0.0
+
+    def update_progress_gradient(self):
+        """更新进度条渐变动画"""
+        self.gradient_offset = (self.gradient_offset + 0.02) % 1.0
+        gradient = f"""
+            QProgressBar::chunk {{
+                background: qlineargradient(x1:{self.gradient_offset}, y1:0, x2:{self.gradient_offset + 1}, y2:0,
+                    stop:0 #1a73e8,
+                    stop:0.5 #34A853,
+                    stop:1 #1a73e8);
+                border-radius: 6px;
+            }}
+        """
+        current_style = self.progress_bar.styleSheet()
+        base_style = current_style.split("QProgressBar::chunk")[0]
+        self.progress_bar.setStyleSheet(base_style + gradient)
 
     def set_progress(self, current, total, phase="下载"):
         """更新进度"""
@@ -251,19 +318,26 @@ class ProgressDialog(QDialog):
             percentage = (current / total) * 100
             self.progress_bar.setValue(int(percentage))
             
+            # 启动进度条动画
+            if not self.animation_timer.isActive():
+                self.animation_timer.start(50)  # 50ms 更新一次
+            
             if phase == "下载":
                 self.status_label.setText("正在下载 JDK...")
                 self.detail_label.setText(
-                    f'已下载: {current/1024/1024:.1f}MB / {total/1024/1024:.1f}MB ({percentage:.1f}%)'
+                    f"已下载: {current/1024/1024:.1f}MB / {total/1024/1024:.1f}MB ({percentage:.1f}%)"
                 )
             else:  # 安装阶段
                 self.status_label.setText("正在安装 JDK...")
                 self.detail_label.setText(
-                    f'正在处理: {current}/{total} 个文件 ({percentage:.1f}%)'
+                    f"正在处理: {current}/{total} 个文件 ({percentage:.1f}%)"
                 )
 
     def set_complete(self, success=True, is_download=True):
         """设置完成状态"""
+        # 停止进度条动画
+        self.animation_timer.stop()
+        
         if success:
             if is_download:
                 self.status_label.setText("下载完成！")
@@ -295,6 +369,11 @@ class ProgressDialog(QDialog):
                     border-radius: 6px;
                 }
             """)
+            
+            self.close_button.setEnabled(True)
+            self.close_button.show()
+            self.cancel_button.hide()
+            self.manual_download_button.hide()
         else:
             self.status_label.setText("操作失败")
             self.status_label.setStyleSheet("""
@@ -319,16 +398,58 @@ class ProgressDialog(QDialog):
                     border-radius: 6px;
                 }
             """)
-        
-        self.close_button.show()
-        self.cancel_button.hide()
+            
+            self.close_button.setEnabled(True)
+            self.close_button.show()
+            self.cancel_button.hide()
 
     def closeEvent(self, event):
         """关闭事件处理"""
+        self.animation_timer.stop()  # 停止动画
         if self.close_button.isVisible():
             event.accept()
         else:
             event.ignore()  # 如果还在进行中，阻止关闭
+
+    def show_manual_download_hint(self, vendor, version):
+        """显示手动下载提示"""
+        self.status_label.setText("无法自动下载")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #F29900;
+                font-size: 14px;
+                font-weight: bold;
+            }
+        """)
+        
+        # 根据不同发行版提供不同的下载链接和提示
+        if vendor == "Oracle JDK":
+            self.manual_download_url = f"https://www.oracle.com/java/technologies/downloads/#java{version}-windows"
+            self.detail_label.setText("需要登录 Oracle 账号才能下载此版本。点击\"手动下载\"前往官网下载页面。")
+        elif vendor == "OpenJDK":
+            self.manual_download_url = f"https://jdk.java.net/{version}"
+            self.detail_label.setText("此版本需要从 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面。")
+        else:
+            self.detail_label.setText("此版本暂不支持自动下载，请前往对应官网下载。")
+        
+        self.manual_download_button.show()
+        self.close_button.show()
+        self.cancel_button.hide()
+        self.close_button.setEnabled(True)
+
+    def show_error(self, message):
+        """显示错误信息"""
+        self.status_label.setText("下载失败")
+        self.detail_label.setText(f"错误信息：{message}")
+        self.close_button.setEnabled(True)
+        self.close_button.show()
+        self.cancel_button.hide()
+
+    def open_manual_download(self):
+        """打开手动下载页面"""
+        if self.manual_download_url:
+            import webbrowser
+            webbrowser.open(self.manual_download_url)
 
 class DownloadTab(QWidget):
     """下载标签页"""
@@ -343,6 +464,7 @@ class DownloadTab(QWidget):
         self.progress_dialog = None
         self.download_thread = None
         self.install_thread = None
+        self.is_downloading = False  # 添加下载状态标志
         self.init_ui()
         self.connect_signals()
 
@@ -554,6 +676,11 @@ class DownloadTab(QWidget):
         
         # 初始化版本列表
         self.refresh_versions()
+        
+        # 默认选择最新版本
+        if self.version_combo.count() > 0:
+            self.version_combo.setCurrentIndex(0)  # 选择第一个版本（最新版本）
+            self.on_version_changed(self.version_combo.currentText())  # 触发版本变更事件
 
     def connect_signals(self):
         """连接信号"""
@@ -571,6 +698,11 @@ class DownloadTab(QWidget):
             
         self.progress_dialog.setWindowTitle(title)
         self.progress_dialog.progress_bar.setValue(0)
+        self.progress_dialog.status_label.setText("准备中...")
+        self.progress_dialog.detail_label.setText("")
+        self.progress_dialog.close_button.hide()
+        self.progress_dialog.cancel_button.show()
+        self.progress_dialog.manual_download_button.hide()
         self.progress_dialog.show()
 
     def cancel_operation(self):
@@ -585,16 +717,19 @@ class DownloadTab(QWidget):
 
     def update_download_progress(self, current, total):
         """更新下载进度"""
-        if total > 0 and self.progress_dialog:
+        if self.progress_dialog and not self.progress_dialog.isHidden():
             self.progress_dialog.set_progress(current, total, "下载")
 
     def update_install_progress(self, current, total):
         """更新安装进度"""
-        if total > 0 and self.progress_dialog:
+        if self.progress_dialog and not self.progress_dialog.isHidden():
             self.progress_dialog.set_progress(current, total, "安装")
 
     def on_download_complete(self, success, message):
         """下载完成处理"""
+        # 重置下载状态
+        self.is_downloading = False
+        
         if success:
             version = self.version_combo.currentData()
             target_dir = self.config.get('jdk_store_path')
@@ -625,8 +760,15 @@ class DownloadTab(QWidget):
                     logger.error(f"删除文件失败: {str(e)}")
         else:
             if self.progress_dialog:
-                self.progress_dialog.set_complete(False)
-            QMessageBox.warning(self, '错误', f'下载失败: {message}')
+                # 根据错误类型提供不同的提示
+                if "需要登录" in message or "手动下载" in message:
+                    self.progress_dialog.show_manual_download_hint(
+                        self.vendor_combo.currentText(),
+                        self.version_combo.currentData()
+                    )
+                else:
+                    self.progress_dialog.show_error(message)
+                    self.progress_dialog.set_complete(False)
 
     def on_install_complete(self, success, message, install_time, import_time):
         """安装完成处理"""
@@ -646,8 +788,11 @@ class DownloadTab(QWidget):
 
     def start_download(self):
         """开始下载"""
+        if self.is_downloading:
+            return
+            
         if self.version_combo.currentIndex() < 0:
-            QMessageBox.warning(self, '警告', '请先选择要下载的JDK版本')
+            QMessageBox.warning(self, "警告", "请先选择要下载的JDK版本")
             return
         
         vendor = self.vendor_combo.currentText()
@@ -659,6 +804,9 @@ class DownloadTab(QWidget):
         
         # 显示进度对话框
         self.show_progress_dialog("正在下载")
+        
+        # 设置下载状态
+        self.is_downloading = True
         
         # 创建并启动下载线程
         self.download_thread = DownloadThread(self.downloader, vendor, version, target_dir)
@@ -676,9 +824,86 @@ class DownloadTab(QWidget):
             version_number = version.replace('JDK ', '')
             info = self.downloader.get_version_info(self.vendor_combo.currentText(), version_number)
             if info:
-                self.version_info_label.setText(info)
+                # 更新版本信息
+                self.version_info_label.setText(f"""
+                    <style>
+                        .content-section {{
+                            color: #3c4043;
+                            line-height: 1.6;
+                            text-align: justify;
+                            margin: 15px 0;
+                        }}
+                        .link-section {{
+                            margin-top: 25px;
+                            padding-top: 15px;
+                            border-top: 1px solid #E0E0E0;
+                        }}
+                        .link-item {{
+                            margin: 12px 0;
+                            display: flex;
+                            align-items: center;
+                            transition: transform 0.2s;
+                        }}
+                        .link-item:hover {{
+                            transform: translateX(5px);
+                        }}
+                        .link-icon {{
+                            margin-right: 12px;
+                            color: #1a73e8;
+                            font-size: 18px;
+                        }}
+                        .link-text {{
+                            flex: 1;
+                            color: #1a73e8;
+                        }}
+                        a {{
+                            color: #1a73e8;
+                            text-decoration: none;
+                            display: block;
+                            width: 100%;
+                        }}
+                        a:hover {{
+                            text-decoration: none;
+                        }}
+                        .section-title {{
+                            color: #1a73e8;
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin: 20px 0 10px 0;
+                            display: flex;
+                            align-items: center;
+                        }}
+                        .section-title::before {{
+                            content: "✦";
+                            margin-right: 8px;
+                            color: #1a73e8;
+                        }}
+                    </style>
+                    <div class='content-section'>
+                        {info}
+                    </div>
+                    <div class='link-section'>
+                        <div class='section-title'>相关资源</div>
+                        <div class='link-item'>
+                            <span class='link-icon'>📚</span>
+                            <a href='https://docs.oracle.com/en/java/javase/{version_number}/docs/api/' target='_blank'>
+                                <span class='link-text'>Java {version_number} API 文档</span>
+                            </a>
+                        </div>
+                        <div class='link-item'>
+                            <span class='link-icon'>📖</span>
+                            <a href='https://docs.oracle.com/en/java/javase/{version_number}/specs/' target='_blank'>
+                                <span class='link-text'>Java {version_number} 语言规范</span>
+                            </a>
+                        </div>
+                    </div>
+                """)
             else:
-                self.version_info_label.setText("暂无版本信息")
+                self.version_info_label.setText("""
+                    <div style='color: #666666; font-style: italic; padding: 20px 0;'>
+                        暂无版本信息
+                    </div>
+                """)
         else:
             self.version_info_label.setText("")
 
@@ -709,16 +934,13 @@ class DownloadThread(QThread):
         
     def run(self):
         try:
-            success = self.downloader.download_jdk(
+            success, message = self.downloader.download_jdk(
                 self.vendor, 
                 self.version, 
                 self.target_dir,
                 progress_callback=self.progress.emit
             )
-            if success:
-                self.finished.emit(True, "下载完成")
-            else:
-                self.finished.emit(False, "下载失败")
+            self.finished.emit(success, message)
         except Exception as e:
             self.finished.emit(False, str(e))
             

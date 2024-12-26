@@ -1,4 +1,5 @@
 import os
+from loguru import logger
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QTabWidget, QSystemTrayIcon,
@@ -12,6 +13,7 @@ from .tabs.download_tab import DownloadTab
 from .tabs.local_tab import LocalTab
 from .tabs.settings_tab import SettingsTab
 from .tabs.help_tab import HelpTab
+from .tabs.docs_tab import DocsTab
 from utils.system_utils import create_junction, set_environment_variable, update_path_variable
 from utils.theme_manager import ThemeManager
 
@@ -44,11 +46,13 @@ class MainWindow(QMainWindow):
         self.local_tab = LocalTab(self.config)
         self.settings_tab = SettingsTab(self.config)
         self.help_tab = HelpTab()
+        self.docs_tab = DocsTab()
         
         tab_widget.addTab(self.download_tab, '在线下载')
         tab_widget.addTab(self.local_tab, '本地管理')
         tab_widget.addTab(self.settings_tab, '设置')
         tab_widget.addTab(self.help_tab, '使用说明')
+        tab_widget.addTab(self.docs_tab, '文档')
         
         layout.addWidget(tab_widget)
         
@@ -109,7 +113,7 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # 添加退出动作（放在最上面）
+        # 添加退出动作（在最上面）
         quit_action = QAction('退出程序', self)
         quit_action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'exit.png')))
         quit_action.triggered.connect(self.quit_application)
@@ -155,29 +159,8 @@ class MainWindow(QMainWindow):
 
     def get_formatted_version_text(self):
         """获取格式化的版本文本"""
-        junction_path = self.config.get('junction_path')
-        if not os.path.exists(junction_path):
-            return "未设置 JDK"
-            
-        java_path = os.path.join(junction_path, 'bin', 'java.exe')
-        if not os.path.exists(java_path):
-            return "未设置 JDK"
-            
-        try:
-            import subprocess
-            result = subprocess.run(
-                [java_path, '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8'
-            )
-            version_info = result.stderr.split('\n')[0].strip()
-            # 简化版本信息显示
-            if 'java version' in version_info.lower():
-                version_info = version_info.split('"')[1]
-            return f"当前: {version_info}"
-        except:
-            return "未知版本"
+        current_version = self.get_current_version()
+        return f"当前 JDK: {current_version}" if current_version else "未设置 JDK 版本"
 
     def update_current_version_display(self):
         """更新当前版本显示"""
@@ -276,11 +259,39 @@ class MainWindow(QMainWindow):
         self.update_jdk_menu()  # 更新托盘菜单
 
     def on_settings_changed(self):
-        """处理设置变更事件"""
-        self.download_tab.update_settings()
-        self.local_tab.update_settings()
-        # 应用新主题
-        ThemeManager.apply_theme(self.config.get('theme', 'light'))
+        """设置变更处理"""
+        try:
+            # 更新主题
+            ThemeManager.apply_theme(self.config.get('theme', 'light'))
+            
+            # 更新托盘图标提示
+            if hasattr(self, 'tray_icon'):
+                current_version = self.get_current_version()
+                tooltip = f"JDK 管理工具 v{self.config.get('version', '1.0.2')}\n"
+                tooltip += f"当前 JDK: {current_version}" if current_version else "未设置 JDK 版本"
+                self.tray_icon.setToolTip(tooltip)
+                
+            # 更新当前版本显示
+            if hasattr(self, 'current_version_action'):
+                version_text = self.get_formatted_version_text()
+                self.current_version_action.setText(version_text)
+                
+        except Exception as e:
+            logger.error(f"更新设置失败: {str(e)}")
+            QMessageBox.warning(self, "错误", f"更新设置失败: {str(e)}")
+
+    def get_current_version(self):
+        """获取当前JDK版本"""
+        try:
+            junction_path = self.config.get('junction_path')
+            if os.path.exists(junction_path):
+                current_path = os.path.realpath(junction_path)
+                for jdk in self.config.get_all_jdks():
+                    if os.path.samefile(jdk['path'], current_path):
+                        return jdk['version']
+        except Exception as e:
+            logger.error(f"获取当前版本失败: {str(e)}")
+        return None
 
     def closeEvent(self, event):
         """处理窗口关闭事件"""
