@@ -10,6 +10,12 @@ from PyQt6.QtCore import pyqtSignal, Qt, QThread, QSize, QDateTime, QTimer
 from PyQt6.QtGui import QIcon
 from utils.jdk_downloader import JDKDownloader
 import shutil
+import logging
+from datetime import datetime
+import requests
+
+# 获取logger
+logger = logging.getLogger(__name__)
 
 class ConfirmDialog(QDialog):
     """安装确认对话框"""
@@ -25,7 +31,7 @@ class ConfirmDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # 标题
-        title_label = QLabel("JDK 安装确认")
+        title_label = QLabel("安装确认")
         title_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
@@ -428,7 +434,7 @@ class ProgressDialog(QDialog):
             self.detail_label.setText("需要登录 Oracle 账号才能下载此版本。点击\"手动下载\"前往官网下载页面。")
         elif vendor == "OpenJDK":
             self.manual_download_url = f"https://jdk.java.net/{version}"
-            self.detail_label.setText("此版本需要从 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面。")
+            self.detail_label.setText("此版本需要 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面")
         else:
             self.detail_label.setText("此版本暂不支持自动下载，请前往对应官网下载。")
         
@@ -702,18 +708,79 @@ class DownloadTab(QWidget):
         self.progress_dialog.detail_label.setText("")
         self.progress_dialog.close_button.hide()
         self.progress_dialog.cancel_button.show()
+        self.progress_dialog.cancel_button.setEnabled(True)
         self.progress_dialog.manual_download_button.hide()
         self.progress_dialog.show()
 
     def cancel_operation(self):
         """取消当前操作"""
-        if self.download_thread and self.download_thread.isRunning():
-            self.download_thread.cancel()
-        if self.install_thread and self.install_thread.isRunning():
-            self.install_thread.cancel()
-        
-        if self.progress_dialog:
-            self.progress_dialog.reject()
+        try:
+            if self.download_thread and self.download_thread.isRunning():
+                # 防止重复连接信号
+                try:
+                    self.download_thread.cleanup_complete.disconnect()
+                except:
+                    pass
+                # 连接清理完成信号
+                self.download_thread.cleanup_complete.connect(self.on_download_cleanup_complete)
+                
+                # 更新进度对话框状态
+                if self.progress_dialog:
+                    self.progress_dialog.status_label.setText("正在取消...")
+                    self.progress_dialog.detail_label.setText("正在清理文件...")
+                    self.progress_dialog.cancel_button.setEnabled(False)
+                
+                # 取消下载
+                self.download_thread.cancel()
+                return
+            
+            if self.install_thread and self.install_thread.isRunning():
+                self.install_thread.cancel()
+                self.install_thread.wait()
+                self.install_thread.deleteLater()
+                self.install_thread = None
+            
+            # 如果没有活动的线程，直接关闭对话框
+            self.is_downloading = False
+            if self.progress_dialog:
+                self.progress_dialog.reject()
+                self.progress_dialog = None
+            
+        except Exception as e:
+            logger.error(f"取消操作失败: {str(e)}")
+            if self.progress_dialog:
+                self.progress_dialog.show_error(f"取消操作失败: {str(e)}")
+
+    def on_download_cleanup_complete(self):
+        """下载清理完成回调"""
+        try:
+            # 断开所有信号连接
+            if self.download_thread:
+                try:
+                    self.download_thread.cleanup_complete.disconnect()
+                    self.download_thread.progress.disconnect()
+                    self.download_thread.finished.disconnect()
+                except:
+                    pass
+                
+                # 等待线程完成并删除
+                if self.download_thread.isRunning():
+                    self.download_thread.wait()
+                self.download_thread.deleteLater()
+                self.download_thread = None
+
+            # 重置状态
+            self.is_downloading = False
+            
+            # 关闭进度对话框
+            if self.progress_dialog:
+                self.progress_dialog.reject()
+                self.progress_dialog = None
+
+        except Exception as e:
+            logger.error(f"处理清理完成事件失败: {str(e)}")
+            if self.progress_dialog:
+                self.progress_dialog.show_error(f"处理清理完成事件失败: {str(e)}")
 
     def update_download_progress(self, current, total):
         """更新下载进度"""
@@ -726,65 +793,312 @@ class DownloadTab(QWidget):
             self.progress_dialog.set_progress(current, total, "安装")
 
     def on_download_complete(self, success, message):
-        """下载完成处理"""
-        # 重置下载状态
-        self.is_downloading = False
-        
-        if success:
-            version = self.version_combo.currentData()
-            target_dir = self.config.get('jdk_store_path')
-            zip_path = os.path.join(target_dir, f"jdk-{version}.zip")
-            jdk_path = os.path.join(target_dir, f"jdk-{version}")
-            
-            # 设置下载完成状态
-            if self.progress_dialog:
-                self.progress_dialog.set_complete(True, is_download=True)
-                self.progress_dialog.accept()
-            
-            # 显示确认对话框
-            confirm_dialog = ConfirmDialog(zip_path, self)
-            if confirm_dialog.exec() == QDialog.DialogCode.Accepted:
-                # 显示安装进度对话框
-                self.show_progress_dialog("正在安装")
-                
-                # 创建并启动安装线程
-                self.install_thread = InstallThread(zip_path, target_dir)
-                self.install_thread.progress.connect(self.update_install_progress)
-                self.install_thread.finished.connect(self.on_install_complete)
-                self.install_thread.start()
+        """下载完成回调"""
+        try:
+            if success:
+                # 获取下载的zip文件路径
+                zip_file = os.path.join(self.target_dir, f"jdk-{self.version}.zip")
+                if os.path.exists(zip_file):
+                    # 显示安装确认对话框
+                    confirm_dialog = ConfirmDialog(zip_file, self)
+                    if confirm_dialog.exec() == QDialog.DialogCode.Accepted:
+                        # 用户确认安装，开始安装过程
+                        self.progress_dialog.set_complete(True, True)
+                        self.start_install(zip_file)
+                    else:
+                        # 用户取消安装，但保留下载的文件
+                        self.progress_dialog.close()
+                        QMessageBox.information(self, '下载完成', 
+                            f'JDK {self.version} 下载完成！\n可以稍后在下载目录中找到安装包。')
+                else:
+                    # zip文件不存在，显示错误
+                    self.progress_dialog.show_error("下载完成但文件不存在，请重试下载")
             else:
-                # 用户取消安装，删除下载的文件
-                try:
-                    os.remove(zip_path)
-                except Exception as e:
-                    logger.error(f"删除文件失败: {str(e)}")
-        else:
-            if self.progress_dialog:
-                # 根据错误类型提供不同的提示
-                if "需要登录" in message or "手动下载" in message:
+                # 如果消息中包含手动下载的指导，显示手动下载提示
+                if "请按以下步骤" in message or "需要登录" in message or "手动下载" in message:
                     self.progress_dialog.show_manual_download_hint(
                         self.vendor_combo.currentText(),
                         self.version_combo.currentData()
                     )
                 else:
-                    self.progress_dialog.show_error(message)
-                    self.progress_dialog.set_complete(False)
+                    # 显示错误信息，并添加手动下载按钮
+                    self.progress_dialog.status_label.setText("下载失败")
+                    self.progress_dialog.detail_label.setText(f"错误信息：{message}\n\n您可尝试手动下载此版本。")
+                    self.progress_dialog.show_manual_download_hint(
+                        self.vendor_combo.currentText(),
+                        self.version_combo.currentData()
+                    )
+        except Exception as e:
+            self.progress_dialog.show_error(f"处理下载完成事件失败: {str(e)}")
+        finally:
+            # 重置下载状态
+            self.is_downloading = False
 
-    def on_install_complete(self, success, message, install_time, import_time):
-        """安装完成处理"""
-        if success:
-            version = self.version_combo.currentData()
-            jdk_path = os.path.join(self.config.get('jdk_store_path'), f"jdk-{version}")
+    def start_install(self, zip_file):
+        """开始安装程序"""
+        try:
+            # 验证文件是否存在
+            if not os.path.exists(zip_file):
+                raise Exception("安装文件不存在")
             
-            if self.progress_dialog:
-                self.progress_dialog.set_complete(True, is_download=False)
+            # 验证是否是有效的 ZIP 文件
+            import zipfile
+            try:
+                with zipfile.ZipFile(zip_file, 'r') as zf:
+                    # 验证 ZIP 文件的完整性
+                    if zf.testzip() is not None:
+                        raise Exception("ZIP 文件已损坏")
+            except zipfile.BadZipFile:
+                raise Exception("不是有效的 ZIP 文件，下载可能未完成或文件已损坏")
             
-            # 发送下载完成信号，包含安装时间和导入时间
-            self.jdk_downloaded.emit(str(version), jdk_path, install_time, import_time)
-        else:
-            if self.progress_dialog:
-                self.progress_dialog.set_complete(False)
-            QMessageBox.warning(self, '错误', f'安装失败: {message}')
+            # 保存当前选择的版本信息
+            self.current_version = self.version_combo.currentData()
+            if not self.current_version:
+                self.current_version = self.version  # 使用类成员变量中保存的版本
+            
+            # 创建安装线程
+            self.install_thread = InstallThread(zip_file, self.target_dir)
+            self.install_thread.progress.connect(self.update_install_progress)
+            self.install_thread.finished.connect(self.on_install_complete)
+            
+            # 更新进度对话框状态
+            self.progress_dialog.status_label.setText("正在安装...")
+            self.progress_dialog.detail_label.setText("正在解压文件...")
+            self.progress_dialog.progress_bar.setValue(0)
+            
+            # 启动安装线程
+            self.install_thread.start()
+        except Exception as e:
+            logger.error(f"开始安装失败: {str(e)}")
+            self.progress_dialog.status_label.setText("安装失败")
+            self.progress_dialog.detail_label.setText(f"错误信息：{str(e)}")
+            self.progress_dialog.cancel_button.setText("关闭")
+            self.progress_dialog.cancel_button.setEnabled(True)
+
+    def on_install_complete(self, success, message):
+        """安装完成的处理"""
+        try:
+            if success:
+                # 获取安装目录
+                install_dir = self.config.get('install_path')
+                if not install_dir:
+                    install_dir = self.target_dir  # 如果没有配置安装路径，使用下载目录
+                
+                if not install_dir or not os.path.exists(install_dir):
+                    raise Exception("安装目录不存在")
+                
+                logger.debug(f"正在查找JDK目录，安装目录: {install_dir}")
+                
+                # 获取正确的 JDK 路径（安装目录下的具体版本目录）
+                jdk_name = None
+                for item in os.listdir(install_dir):
+                    item_path = os.path.join(install_dir, item)
+                    if os.path.isdir(item_path) and 'jdk' in item.lower():
+                        # 检查是否是最新创建的目录
+                        if not jdk_name or os.path.getctime(item_path) > os.path.getctime(os.path.join(install_dir, jdk_name)):
+                            jdk_name = item
+                
+                if not jdk_name:
+                    raise Exception("无法找到安装的JDK目录")
+                
+                jdk_path = os.path.join(install_dir, jdk_name)
+                logger.debug(f"找到JDK目录: {jdk_path}")
+                
+                if not os.path.exists(jdk_path):
+                    raise Exception(f"JDK目录不存在: {jdk_path}")
+                
+                # 获取发行商信息
+                vendor = self.get_vendor_name(jdk_path)
+                logger.debug(f"获取到发行商信息: {vendor}")
+                
+                # 获取当前时间作为导入时间
+                import datetime
+                import_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                # 使用保存的版本信息
+                if not hasattr(self, 'current_version') or not self.current_version:
+                    self.current_version = self.version  # 使用类成员变量中保存的版本
+                
+                if not self.current_version:
+                    raise Exception("无法获取版本信息")
+                
+                # 添加到配置
+                jdk_info = {
+                    'path': jdk_path,
+                    'version': self.current_version,
+                    'vendor': vendor,
+                    'type': 'downloaded',
+                    'import_time': import_time
+                }
+                
+                logger.debug(f"准备添加JDK信息到配置: {jdk_info}")
+                # 确保添加到配置成功
+                if not self.config.add_downloaded_jdk(jdk_info):
+                    raise Exception("添加JDK到配置失败")
+                
+                # 强制保存配置
+                self.config.save()
+                logger.debug("配置已保存")
+                
+                # 更新进度对话框
+                self.progress_dialog.status_label.setText("安装完成！")
+                self.progress_dialog.detail_label.setText("JDK安装已完成，可以点击完成按钮关闭此窗口。")
+                self.progress_dialog.cancel_button.setText("完成")
+                self.progress_dialog.cancel_button.setEnabled(True)
+                
+                # 连接完成按钮的点击事件
+                try:
+                    self.progress_dialog.cancel_button.clicked.disconnect()
+                except:
+                    pass
+                self.progress_dialog.cancel_button.clicked.connect(self.on_install_dialog_complete)
+                
+                # 立即刷新本地管理标签页
+                main_window = self.parent().parent()
+                if hasattr(main_window, 'local_tab'):
+                    logger.debug("开始刷新本地管理标签页")
+                    def do_refresh():
+                        try:
+                            # 重新加载配置
+                            main_window.config.load()  # 使用主窗口的配置实例
+                            self.config.load()  # 同时更新当前标签页的配置
+                            # 刷新列表
+                            main_window.local_tab.refresh_jdk_list()
+                            logger.debug("本地管理标签页刷新完成")
+                            
+                            # 通知主窗口更新JDK菜单
+                            main_window.update_jdk_menu()
+                        except Exception as e:
+                            logger.error(f"刷新本地管理标签页失败: {str(e)}")
+                    
+                    # 使用定时器确保配置文件已完全保存
+                    QTimer.singleShot(1000, do_refresh)
+                    # 再次延迟刷新以确保更新
+                    QTimer.singleShot(2000, do_refresh)
+                    
+            else:
+                self.progress_dialog.status_label.setText("安装失败")
+                self.progress_dialog.detail_label.setText(f"错误信息：{message}")
+                self.progress_dialog.cancel_button.setText("关闭")
+                self.progress_dialog.cancel_button.setEnabled(True)
+                
+        except Exception as e:
+            logger.error(f"处理安装完成事件失败: {str(e)}")
+            self.progress_dialog.status_label.setText("安装失败")
+            self.progress_dialog.detail_label.setText(f"错误信息：{str(e)}")
+            self.progress_dialog.cancel_button.setText("关闭")
+            self.progress_dialog.cancel_button.setEnabled(True)
+
+    def on_install_dialog_complete(self):
+        """安装完成对话框关闭时的处理"""
+        try:
+            # 关闭进度对话框
+            self.progress_dialog.accept()
+            
+            # 再次刷新本地管理标签页
+            main_window = self.parent().parent()
+            if hasattr(main_window, 'local_tab'):
+                logger.debug("安装完成后再次刷新本地管理标签页")
+                def do_refresh():
+                    try:
+                        # 重新加载配置
+                        main_window.config.load()  # 使用主窗口的配置实例
+                        self.config.load()  # 同时更新当前标签页的配置
+                        # 刷新列表
+                        main_window.local_tab.refresh_jdk_list()
+                        logger.debug("本地管理标签页刷新完成")
+                        
+                        # 通知主窗口更新JDK菜单
+                        main_window.update_jdk_menu()
+                    except Exception as e:
+                        logger.error(f"刷新本地管理标签页失败: {str(e)}")
+                
+                # 使用定时器确保配置文件已完全保存
+                QTimer.singleShot(1000, do_refresh)
+                # 再次延迟刷新以确保更新
+                QTimer.singleShot(2000, do_refresh)
+        except Exception as e:
+            logger.error(f"处理安装完成对话框关闭事件失败: {str(e)}")
+
+    def get_vendor_name(self, jdk_path):
+        """获取JDK发行商信息"""
+        try:
+            # 如果是从 jdk.java.net 下载的版本，直接判定为 OpenJDK
+            if hasattr(self, 'vendor') and self.vendor == "OpenJDK":
+                return 'OpenJDK'
+            
+            # 检查 release 文件
+            release_file = os.path.join(jdk_path, 'release')
+            if os.path.exists(release_file):
+                with open(release_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # 添加详细的调试日志
+                    logger.debug(f"Release文件完整内容:\n{content}")
+                    
+                    content = content.lower()
+                    
+                    # 解析所有关键字段
+                    fields = {}
+                    for line in content.split('\n'):
+                        if '=' in line:
+                            key, value = line.split('=', 1)
+                            fields[key.strip()] = value.strip().strip('"').strip("'")
+                    logger.debug(f"解析到的字段: {fields}")
+                    
+                    # 优先检查 IMPLEMENTOR 字段
+                    if 'implementor' in fields:
+                        implementor = fields['implementor']
+                        logger.debug(f"IMPLEMENTOR字段值: {implementor}")
+                        
+                        if 'temurin' in implementor or 'eclipse' in implementor:
+                            return 'Temurin'
+                        elif 'corretto' in implementor or 'amazon' in implementor:
+                            return 'Corretto'
+                        elif 'zulu' in implementor or 'azul' in implementor:
+                            return 'Zulu'
+                        elif 'microsoft' in implementor:
+                            return 'Microsoft'
+                        elif 'openjdk' in implementor:
+                            return 'OpenJDK'
+                        # 如果是 Oracle Corporation，需要进一步判断
+                        elif 'oracle' in implementor:
+                            # 检查是否存在商业版特有的字段
+                            if any(key for key in fields.keys() if 'oracle' in key and key != 'implementor'):
+                                return 'Oracle'
+                            # 否则认为是 OpenJDK 的官方构建版本
+                            return 'OpenJDK'
+                    
+                    # 如果没有找到 IMPLEMENTOR 或无法确定，检查整个文件内容
+                    if 'temurin' in content or 'eclipse' in content:
+                        return 'Temurin'
+                    elif 'corretto' in content or 'amazon' in content:
+                        return 'Corretto'
+                    elif 'zulu' in content or 'azul' in content:
+                        return 'Zulu'
+                    elif 'microsoft' in content:
+                        return 'Microsoft'
+            
+            # 如果无法从 release 文件确定，检查路径名
+            path_lower = jdk_path.lower()
+            if 'temurin' in path_lower or 'eclipse' in path_lower:
+                return 'Temurin'
+            elif 'corretto' in path_lower or 'amazon' in path_lower:
+                return 'Corretto'
+            elif 'zulu' in path_lower or 'azul' in path_lower:
+                return 'Zulu'
+            elif 'microsoft' in path_lower:
+                return 'Microsoft'
+            elif 'openjdk' in path_lower:
+                return 'OpenJDK'
+            
+            # 如果是从 jdk.java.net 下载的，默认为 OpenJDK
+            if hasattr(self, 'vendor') and self.vendor == "OpenJDK":
+                return 'OpenJDK'
+            
+            return '未知'
+        except Exception as e:
+            logger.error(f"获取JDK发行商信息失败: {str(e)}")
+            return '未知'
 
     def start_download(self):
         """开始下载"""
@@ -795,12 +1109,34 @@ class DownloadTab(QWidget):
             QMessageBox.warning(self, "警告", "请先选择要下载的JDK版本")
             return
         
-        vendor = self.vendor_combo.currentText()
-        version = self.version_combo.currentData()
-        target_dir = self.config.get('jdk_store_path')
+        # 如果存在旧的下载线程，确保它已经停止并清理
+        if hasattr(self, 'download_thread') and self.download_thread:
+            try:
+                # 断开所有信号连接
+                self.download_thread.cleanup_complete.disconnect()
+                self.download_thread.progress.disconnect()
+                self.download_thread.finished.disconnect()
+            except:
+                pass
+            
+            # 等待线程完成并删除
+            if self.download_thread.isRunning():
+                self.download_thread.cancel()
+                self.download_thread.wait()
+            self.download_thread.deleteLater()
+            self.download_thread = None
+        
+        # 重置进度对话框
+        if self.progress_dialog:
+            self.progress_dialog.deleteLater()
+            self.progress_dialog = None
+        
+        self.vendor = self.vendor_combo.currentText()
+        self.version = self.version_combo.currentData()
+        self.target_dir = self.config.get('jdk_store_path')
         
         # 确保目标目录存在
-        os.makedirs(target_dir, exist_ok=True)
+        os.makedirs(self.target_dir, exist_ok=True)
         
         # 显示进度对话框
         self.show_progress_dialog("正在下载")
@@ -809,7 +1145,7 @@ class DownloadTab(QWidget):
         self.is_downloading = True
         
         # 创建并启动下载线程
-        self.download_thread = DownloadThread(self.downloader, vendor, version, target_dir)
+        self.download_thread = DownloadThread(self.downloader, self.vendor, self.version, self.target_dir)
         self.download_thread.progress.connect(self.update_download_progress)
         self.download_thread.finished.connect(self.on_download_complete)
         self.download_thread.start()
@@ -923,6 +1259,7 @@ class DownloadThread(QThread):
     """下载线程"""
     progress = pyqtSignal(int, int)  # 当前大小，总大小
     finished = pyqtSignal(bool, str)  # 成功标志，消息
+    cleanup_complete = pyqtSignal()  # 清理完成信号
     
     def __init__(self, downloader, vendor, version, target_dir):
         super().__init__()
@@ -931,26 +1268,141 @@ class DownloadThread(QThread):
         self.version = version
         self.target_dir = target_dir
         self.is_cancelled = False
+        self.current_file = None  # 当前正在下载的文件路径
+        self.file_handle = None  # 文件句柄
+        self.response = None  # 响应对象
+        self.download_success = False  # 下载是否成功
+        self.is_cleaning = False  # 是否正在清理
         
     def run(self):
+        """执行下载任务"""
         try:
-            success, message = self.downloader.download_jdk(
-                self.vendor, 
-                self.version, 
-                self.target_dir,
-                progress_callback=self.progress.emit
+            # 获取下载链接
+            download_url = self.downloader._get_download_url(self.vendor, self.version)
+            if not download_url:
+                self.finished.emit(False, "无法获取下载链接，请尝试手动下载")
+                return
+
+            # 设置下载文件路径
+            self.current_file = os.path.join(self.target_dir, f"jdk-{self.version}.zip")
+            
+            # 创建下载请求
+            self.response = requests.get(download_url, 
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }, 
+                stream=True,
+                timeout=30
             )
-            self.finished.emit(success, message)
+            if not self.response or self.response.status_code != 200:
+                self.finished.emit(False, "创建下载请求失败，请检查网络连接")
+                return
+                
+            # 获取文件大小
+            total_size = int(self.response.headers.get('content-length', 0))
+            block_size = 1024 * 1024  # 1MB
+            current_size = 0
+            
+            # 开始下载
+            self.file_handle = open(self.current_file, 'wb')
+            for data in self.response.iter_content(block_size):
+                if self.is_cancelled:
+                    return
+                    
+                if data:
+                    current_size += len(data)
+                    self.file_handle.write(data)
+                    self.progress.emit(current_size, total_size)
+            
+            # 关闭文件
+            self.file_handle.close()
+            self.file_handle = None
+            
+            # 检查文件是否下载完整
+            if os.path.exists(self.current_file) and os.path.getsize(self.current_file) == total_size:
+                self.download_success = True
+                self.finished.emit(True, "下载完成")
+            else:
+                self.finished.emit(False, "下载文件不完整，请重试")
+                
         except Exception as e:
-            self.finished.emit(False, str(e))
+            logger.error(f"下载失败: {str(e)}")
+            self.finished.emit(False, f"下载失败: {str(e)}")
+            
+        finally:
+            self.close_handles()
+            if not self.download_success and self.current_file and os.path.exists(self.current_file):
+                try:
+                    os.remove(self.current_file)
+                except Exception as e:
+                    logger.error(f"清理未完成的下载文件失败: {str(e)}")
+
+    def cancel(self):
+        """取消下载"""
+        if self.is_cancelled:  # 如果已经取消，直接返回
+            return
+        self.is_cancelled = True
+        self.start_cleanup()  # 开始清理
+        
+    def start_cleanup(self):
+        """开始清理过程"""
+        if self.is_cleaning:  # 如果已经在清理中，直接返回
+            return
+            
+        self.is_cleaning = True
+        try:
+            # 先关闭句柄
+            self.close_handles()
+            # 删除文件
+            if self.current_file and os.path.exists(self.current_file):
+                try:
+                    os.remove(self.current_file)
+                    logger.info(f"成功删除文件: {self.current_file}")
+                except Exception as e:
+                    logger.error(f"删除文件失败: {str(e)}")
+            # 发送清理完成信号
+            self.cleanup_complete.emit()
+        except Exception as e:
+            logger.error(f"清理资源失败: {str(e)}")
+            self.cleanup_complete.emit()
+        finally:
+            # 确保线程能够正常退出
+            self.quit()
+            self.wait()
+            
+    def close_handles(self):
+        """关闭文件句柄和响应对象"""
+        try:
+            # 关闭文件句柄
+            if self.file_handle:
+                try:
+                    self.file_handle.close()
+                except Exception as e:
+                    logger.error(f"关闭文件句柄失败: {str(e)}")
+                self.file_handle = None
+            
+            # 关闭响应对象
+            if self.response:
+                try:
+                    self.response.close()
+                except Exception as e:
+                    logger.error(f"关闭响应对象失败: {str(e)}")
+                self.response = None
+                
+        except Exception as e:
+            logger.error(f"关闭句柄失败: {str(e)}")
             
     def cancel(self):
+        """取消下载"""
+        if self.is_cancelled:  # 如果已经取消，直接返回
+            return
         self.is_cancelled = True
+        self.start_cleanup()  # 开始清理
 
 class InstallThread(QThread):
     """安装线程"""
     progress = pyqtSignal(int, int)  # 当前文件数，总文件数
-    finished = pyqtSignal(bool, str, str, str)  # 成功标���，消息，安装时间，导入时间
+    finished = pyqtSignal(bool, str, str, str)  # 成功标志，消息，安装时间，导入时间
     
     def __init__(self, zip_path, target_dir):
         super().__init__()

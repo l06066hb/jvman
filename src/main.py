@@ -30,6 +30,7 @@ def main():
 
     # 初始化配置
     config = ConfigManager()
+    config.set('version', '1.0.3')
     
     # 创建应用实例
     app = QApplication(sys.argv)

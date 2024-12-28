@@ -471,4 +471,10 @@ class SettingsTab(QWidget):
         # 发送设置变更信号
         self.settings_changed.emit()
         # 保存配置
-        self.config.save_config() 
+        self.config.save()
+
+    def reset_close_action(self):
+        """重置关闭行为设置"""
+        self.config.set('close_action', None)
+        self.config.save()
+        QMessageBox.information(self, '提示', '关闭行为已重置，下次关闭窗口时将重新询问。') 

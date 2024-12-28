@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap
+import re
 
 class LocalTab(QWidget):
     """本地管理标签页"""
@@ -15,8 +16,8 @@ class LocalTab(QWidget):
     # 定义信号
     jdk_mapped = pyqtSignal(str, str)  # 版本号，路径
     
-    def __init__(self, config):
-        super().__init__()
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
         self.config = config
         self.init_ui()
         
@@ -126,56 +127,20 @@ class LocalTab(QWidget):
             }
         """)
         
-        # 切换版本按钮
-        switch_button = QPushButton('切换版本')
-        switch_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'switch.png')))
-        switch_button.clicked.connect(self.switch_version)
-        switch_button.setStyleSheet("""
-            QPushButton {
-                padding: 8px 20px;
-                border: 1px solid #1a73e8;
-                border-radius: 4px;
-                background-color: white;
-                color: #1a73e8;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #F5F9FF;
-            }
-            QPushButton:pressed {
-                background-color: #E8F0FE;
-            }
-        """)
-        
-        # 移除JDK按钮
-        remove_button = QPushButton('移除JDK')
-        remove_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'remove.png')))
-        remove_button.clicked.connect(self.remove_jdk)
-        remove_button.setStyleSheet("""
-            QPushButton {
-                padding: 8px 20px;
-                border: 1px solid #E0E0E0;
-                border-radius: 4px;
-                background-color: white;
-                color: #666666;
-            }
-            QPushButton:hover {
-                background-color: #F5F5F5;
-                border-color: #D0D0D0;
-            }
-            QPushButton:pressed {
-                background-color: #E0E0E0;
-            }
-        """)
-        
+        # 将按钮添加到右侧
+        button_layout.addStretch()  # 添加弹性空间，将按钮推到右侧
         button_layout.addWidget(add_button)
-        button_layout.addWidget(switch_button)
-        button_layout.addWidget(remove_button)
-        button_layout.addStretch()
         
         layout.addWidget(button_container)
         
         # 刷新JDK列表
+        self.refresh_jdk_list()
+
+    def showEvent(self, event):
+        """当标签页显示时触发"""
+        super().showEvent(event)
+        # 重新加载配置并刷新列表
+        self.config.load()
         self.refresh_jdk_list()
 
     def is_current_version(self, path):
@@ -257,118 +222,264 @@ class LocalTab(QWidget):
 
     def refresh_jdk_list(self):
         """刷新JDK列表"""
-        self.jdk_list.clear()
-        jdks = self.config.get_all_jdks()
-        
-        for jdk in jdks:
-            # 创建列表项容器
-            item_widget = QWidget()
-            item_layout = QHBoxLayout(item_widget)
-            item_layout.setContentsMargins(10, 5, 10, 5)
+        try:
+            # 清空现有列表
+            self.jdk_list.clear()
             
-            # 左侧信息容器
-            info_container = QWidget()
-            info_layout = QVBoxLayout(info_container)
-            info_layout.setSpacing(4)
+            # 重新加载配置
+            self.config.load()
             
-            # 第一行：版本和发行版
-            version_layout = QHBoxLayout()
-            version_label = QLabel(f"JDK {jdk['version']}")
-            version_label.setProperty('version', True)
+            # 获取所有JDK
+            jdks = self.config.get_all_jdks()
             
-            # 获取详细版本
-            java_path = os.path.join(jdk['path'], 'bin', 'java.exe')
-            detailed_version = self.get_detailed_version(java_path)
-            if detailed_version:
-                version_label.setText(f"JDK {jdk['version']} ({detailed_version})")
+            # 获取当前JDK
+            current_jdk = self.config.get_current_jdk()
+            current_path = current_jdk['path'] if current_jdk else None
             
-            # 发行版标签
-            vendor_name = self.get_vendor_name(jdk['path'])
-            vendor_label = QLabel(vendor_name)
-            vendor_label.setStyleSheet("""
-                QLabel {
-                    background-color: #E3F2FD;
-                    color: #1976D2;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-size: 11px;
-                }
-            """)
+            # 按版本号排序
+            jdks.sort(key=lambda x: self.version_sort_key(x.get('version', '')), reverse=True)
             
-            version_layout.addWidget(version_label)
-            version_layout.addWidget(vendor_label)
-            version_layout.addStretch()
-            
-            # 第二行：路径
-            path_label = QLabel(jdk['path'])
-            path_label.setStyleSheet("color: #666666; font-size: 12px;")
-            
-            # 第三行：导入时间
-            time_label = QLabel(f"导入时间: {jdk.get('import_time', '未知')}")
-            time_label.setStyleSheet("color: #666666; font-size: 11px;")
-            
-            info_layout.addLayout(version_layout)
-            info_layout.addWidget(path_label)
-            info_layout.addWidget(time_label)
-            
-            # 右侧按钮容器
-            button_container = QWidget()
-            button_layout = QHBoxLayout(button_container)
-            button_layout.setSpacing(8)
-            
-            # 当前版本标签
-            if self.is_current_version(jdk['path']):
-                current_label = QLabel("应用中")
-                current_label.setStyleSheet("""
-                    QLabel {
-                        color: #34A853;
-                        font-weight: bold;
-                        padding-right: 8px;
+            # 添加JDK条目
+            for jdk in jdks:
+                if os.path.exists(jdk['path']):
+                    # 创建列表项
+                    item = QListWidgetItem()
+                    
+                    # 创建自定义 widget
+                    widget = QWidget()
+                    layout = QHBoxLayout(widget)
+                    layout.setContentsMargins(5, 5, 5, 5)
+                    
+                    # 版本图标
+                    icon_label = QLabel()
+                    icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'java.png')
+                    if os.path.exists(icon_path):
+                        icon_label.setPixmap(QIcon(icon_path).pixmap(QSize(24, 24)))
+                    layout.addWidget(icon_label)
+                    
+                    # 信息布局
+                    info_layout = QVBoxLayout()
+                    info_layout.setSpacing(2)
+                    
+                    # 版本信息布局（包含版本号和标签）
+                    version_layout = QHBoxLayout()
+                    version_layout.setSpacing(8)
+                    
+                    # 版本号
+                    version_label = QLabel(f"JDK {jdk['version']}")
+                    version_label.setStyleSheet("font-size: 10pt; font-weight: bold;")
+                    version_layout.addWidget(version_label)
+                    
+                    # 当前版本标签
+                    if jdk['path'] == current_path:
+                        current_tag = QLabel("✓ 已应用")
+                        current_tag.setStyleSheet("""
+                            background-color: #28a745;
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 9pt;
+                            font-weight: bold;
+                        """)
+                        version_layout.addWidget(current_tag)
+                    
+                    # 版本类型标签
+                    version_type = self._get_version_type(jdk['version'])
+                    version_type_tag = QLabel(version_type)
+                    version_type_tag.setStyleSheet(f"""
+                        background-color: {self._get_version_type_color(version_type)};
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 9pt;
+                    """)
+                    version_layout.addWidget(version_type_tag)
+                    
+                    # 类型标签
+                    type_text = "已映射" if jdk['type'] == 'mapped' else "已下载"
+                    type_tag = QLabel(type_text)
+                    type_tag.setStyleSheet("""
+                        background-color: #6c757d;
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 9pt;
+                    """)
+                    version_layout.addWidget(type_tag)
+                    
+                    # 发行商标签
+                    vendor = jdk.get('vendor', '未知')
+                    vendor_tag = QLabel(vendor)
+                    
+                    # 为不同发行商设置不同的颜色
+                    vendor_colors = {
+                        'Oracle': '#F80000',      # Oracle红色
+                        'OpenJDK': '#6B94DA',     # OpenJDK蓝色
+                        'Temurin': '#2C2255',     # Eclipse深蓝色
+                        'Corretto': '#FF9900',    # Amazon橙色
+                        'Zulu': '#0095DE',        # Azul蓝色
+                        'Microsoft': '#00A4EF',   # Microsoft蓝色
+                        '未知': '#757575'         # 灰色
                     }
-                """)
-                button_layout.addWidget(current_label)
+                    
+                    # 获取发行商颜色，如果没有匹配的发行商则使用默认颜色
+                    vendor_color = next((color for vendor_name, color in vendor_colors.items() 
+                                    if vendor_name.lower() in vendor.lower()), 
+                                    vendor_colors['未知'])
+                    
+                    vendor_tag.setStyleSheet(f"""
+                        background-color: {vendor_color};
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 9pt;
+                    """)
+                    version_layout.addWidget(vendor_tag)
+                    
+                    version_layout.addStretch()
+                    info_layout.addLayout(version_layout)
+                    
+                    # 路径和导入时间
+                    path_layout = QHBoxLayout()
+                    path_label = QLabel(jdk['path'])
+                    path_label.setStyleSheet("color: #666666; font-size: 9pt;")
+                    path_layout.addWidget(path_label)
+                    
+                    # 添加导入时间
+                    import_time = jdk.get('import_time', '未知')
+                    if import_time != '未知':
+                        import_time_label = QLabel(f"导入时间: {import_time}")
+                    else:
+                        import_time_label = QLabel("导入时间: 未知")
+                    import_time_label.setStyleSheet("color: #666666; font-size: 9pt;")
+                    path_layout.addWidget(import_time_label)
+                    
+                    path_layout.addStretch()
+                    info_layout.addLayout(path_layout)
+                    
+                    # 将info_layout添加到主布局
+                    layout.addLayout(info_layout)
+                    
+                    # 添加按钮到右侧
+                    button_layout = QHBoxLayout()
+                    button_layout.setSpacing(8)  # 设置按钮之间的间距
+                    
+                    # 打开目录按钮
+                    open_dir_button = QPushButton("打开目录")
+                    open_dir_button.setStyleSheet("""
+                        QPushButton {
+                            padding: 4px 12px;
+                            border: 1px solid #E0E0E0;
+                            border-radius: 4px;
+                            background-color: white;
+                            color: #666666;
+                        }
+                        QPushButton:hover {
+                            background-color: #f8f9fa;
+                        }
+                    """)
+                    open_dir_button.setProperty('jdk_path', jdk['path'])
+                    open_dir_button.clicked.connect(lambda _, path=jdk['path']: self.open_jdk_dir(path))
+                    button_layout.addWidget(open_dir_button)
+                    
+                    # 设为当前版本按钮
+                    if jdk['path'] != current_path:
+                        set_current_button = QPushButton("设为当前版本")
+                        set_current_button.setStyleSheet("""
+                            QPushButton {
+                                padding: 4px 12px;
+                                border: none;
+                                border-radius: 4px;
+                                background-color: #1a73e8;
+                                color: white;
+                            }
+                            QPushButton:hover {
+                                background-color: #1557b0;
+                            }
+                        """)
+                        set_current_button.setProperty('jdk_path', jdk['path'])
+                        set_current_button.clicked.connect(self.on_set_current_clicked)
+                        button_layout.addWidget(set_current_button)
+                    
+                    # 删除按钮
+                    delete_button = QPushButton("删除")
+                    delete_button.setStyleSheet("""
+                        QPushButton {
+                            padding: 4px 12px;
+                            border: none;
+                            border-radius: 4px;
+                            background-color: #dc3545;
+                            color: white;
+                        }
+                        QPushButton:hover {
+                            background-color: #c82333;
+                        }
+                    """)
+                    delete_button.setProperty('jdk_path', jdk['path'])
+                    delete_button.clicked.connect(self.on_delete_clicked)
+                    button_layout.addWidget(delete_button)
+                    
+                    # 将按钮布局添加到主布局的右侧
+                    layout.addLayout(button_layout)
+                    
+                    # 设置自定义widget
+                    item.setSizeHint(widget.sizeHint())
+                    self.jdk_list.addItem(item)
+                    self.jdk_list.setItemWidget(item, widget)
+                    
+                else:
+                    # 如果路径不存在，从配置中移除
+                    logger.debug(f"移除不存在的JDK路径: {jdk['path']}")
+                    self.config.remove_jdk(jdk['path'], is_mapped=(jdk.get('type') == 'mapped'))
             
-            # 打开目录图标
-            open_icon = QLabel()
-            open_icon.setPixmap(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'folder.png')).pixmap(QSize(20, 20)))
-            open_icon.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_icon.mousePressEvent = lambda e, path=jdk['path']: self.open_jdk_dir(path)
-            button_layout.addWidget(open_icon)
+            # 更新当前版本显示
+            self.update_current_version()
             
-            # 添加到主布局
-            item_layout.addWidget(info_container, stretch=1)
-            item_layout.addWidget(button_container)
+        except Exception as e:
+            logger.error(f"刷新JDK列表失败: {str(e)}")
+            QMessageBox.warning(self, "错误", f"刷新JDK列表失败: {str(e)}")
             
-            # 创建列表项
-            list_item = QListWidgetItem()
-            list_item.setSizeHint(item_widget.sizeHint())
-            list_item.setData(Qt.ItemDataRole.UserRole, jdk)
-            
-            self.jdk_list.addItem(list_item)
-            self.jdk_list.setItemWidget(list_item, item_widget)
-            
-        # 更新当前版本显示
-        self.update_current_version()
+    def version_sort_key(self, version):
+        """版本号排序键"""
+        try:
+            # 将版本号分割为数字部分
+            parts = re.findall(r'\d+', version)
+            # 转换为整数列表，如果转换失败则使用0
+            numbers = [int(part) if part.isdigit() else 0 for part in parts]
+            # 补齐位数，确保能够正确比较
+            while len(numbers) < 3:
+                numbers.append(0)
+            return numbers
+        except Exception:
+            return [0, 0, 0]  # 如果解析失败，返回默认值
 
     def update_current_version(self):
         """更新当前版本显示"""
-        junction_path = self.config.get('junction_path')
-        if os.path.exists(junction_path):
-            try:
+        try:
+            junction_path = self.config.get('junction_path')
+            if os.path.exists(junction_path):
                 current_path = os.path.realpath(junction_path)
-                for jdk in self.config.get_all_jdks():
-                    if os.path.samefile(jdk['path'], current_path):
-                        java_path = os.path.join(current_path, 'bin', 'java.exe')
-                        detailed_version = self.get_detailed_version(java_path)
-                        version_text = f"当前版本: JDK {jdk['version']}"
-                        if detailed_version:
-                            version_text += f" ({detailed_version})"
-                        self.current_version_label.setText(version_text)
-                        return
-            except Exception as e:
-                logger.error(f"更新当前版本显示失败: {str(e)}")
-        
-        self.current_version_label.setText("当前版本: 未设置")
+                if os.path.exists(current_path):
+                    for jdk in self.config.get_all_jdks():
+                        try:
+                            if os.path.exists(jdk['path']) and os.path.samefile(jdk['path'], current_path):
+                                java_path = os.path.join(current_path, 'bin', 'java.exe')
+                                detailed_version = self.get_detailed_version(java_path)
+                                version_text = f"当前版本: JDK {jdk['version']}"
+                                if detailed_version:
+                                    version_text += f" ({detailed_version})"
+                                self.current_version_label.setText(version_text)
+                                return
+                        except Exception as e:
+                            logger.error(f"检查JDK版本失败: {str(e)}")
+                            continue
+            
+            # 如果没有找到有效的当前版本
+            self.current_version_label.setText("当前版本: 未设置")
+            
+        except Exception as e:
+            logger.error(f"更新当前版本显示失败: {str(e)}")
+            self.current_version_label.setText("当前版本: 未设置")
 
     def add_local_jdk(self):
         """添加本地JDK"""
@@ -455,120 +566,123 @@ class LocalTab(QWidget):
         else:
             QMessageBox.warning(self, '错误', '切换JDK版本失败')
 
-    def remove_jdk(self):
-        """移除JDK"""
-        current_item = self.jdk_list.currentItem()
-        if not current_item:
-            QMessageBox.warning(self, '警告', '请先选择要移除的JDK')
-            return
+    def remove_jdk(self, jdk_path=None):
+        """删除JDK"""
+        try:
+            if not jdk_path:
+                return
             
-        jdk = current_item.data(Qt.ItemDataRole.UserRole)
-        
-        # 创建确认对话框
-        dialog = QDialog(self)
-        dialog.setWindowTitle('移除JDK')
-        dialog.setFixedWidth(400)
-        
-        layout = QVBoxLayout(dialog)
-        
-        # 提示文本
-        label = QLabel(f'确定要移除 JDK {jdk["version"]} 吗？')
-        layout.addWidget(label)
-        
-        # 按钮
-        button_box = QDialogButtonBox()
-        delete_button = QPushButton('删除文件夹')
-        delete_button.setStyleSheet("""
-            QPushButton {
-                padding: 8px 20px;
-                border: none;
-                border-radius: 4px;
-                background-color: #dc3545;
-                color: white;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
-        
-        remove_button = QPushButton('仅从列表移除')
-        remove_button.setStyleSheet("""
-            QPushButton {
-                padding: 8px 20px;
-                border: 1px solid #6c757d;
-                border-radius: 4px;
-                background-color: white;
-                color: #6c757d;
-            }
-            QPushButton:hover {
-                background-color: #f8f9fa;
-            }
-        """)
-        
-        cancel_button = QPushButton('取消')
-        cancel_button.setStyleSheet("""
-            QPushButton {
-                padding: 8px 20px;
-                border: 1px solid #E0E0E0;
-                border-radius: 4px;
-                background-color: white;
-                color: #666666;
-            }
-            QPushButton:hover {
-                background-color: #f8f9fa;
-            }
-        """)
-        
-        button_box.addButton(delete_button, QDialogButtonBox.ButtonRole.DestructiveRole)
-        button_box.addButton(remove_button, QDialogButtonBox.ButtonRole.ActionRole)
-        button_box.addButton(cancel_button, QDialogButtonBox.ButtonRole.RejectRole)
-        
-        layout.addWidget(button_box)
-        
-        # 连接信号
-        delete_button.clicked.connect(dialog.accept)
-        remove_button.clicked.connect(lambda: dialog.done(2))
-        cancel_button.clicked.connect(dialog.reject)
-        
-        # 显示对话框
-        result = dialog.exec()
-        
-        if result != QDialog.DialogCode.Rejected:
-            try:
-                version = jdk['version']
-                path = jdk['path']
-                
+            # 获取JDK信息
+            jdk_info = None
+            for jdk in self.config.get_all_jdks():
+                if jdk['path'] == jdk_path:
+                    jdk_info = jdk
+                    break
+            
+            if not jdk_info:
+                QMessageBox.warning(self, '错误', '未找到指定的JDK信息')
+                return
+            
+            version_text = jdk_info.get('version', '未知')
+            vendor_text = jdk_info.get('vendor', '未知')
+            
+            # 弹出确认对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle('删除JDK')
+            layout = QVBoxLayout(dialog)
+            
+            message = QLabel(f'确定要删除 JDK {version_text} ({vendor_text}) 吗？')
+            layout.addWidget(message)
+            
+            button_box = QDialogButtonBox()
+            remove_list_btn = button_box.addButton('仅从列表移除', QDialogButtonBox.ButtonRole.ActionRole)
+            remove_all_btn = button_box.addButton('删除文件夹', QDialogButtonBox.ButtonRole.ActionRole)
+            cancel_btn = button_box.addButton('取消', QDialogButtonBox.ButtonRole.RejectRole)
+            layout.addWidget(button_box)
+            
+            # 设置按钮样式
+            remove_list_btn.setStyleSheet("""
+                QPushButton {
+                    padding: 6px 12px;
+                    border: 1px solid #dc3545;
+                    border-radius: 4px;
+                    background-color: white;
+                    color: #dc3545;
+                }
+                QPushButton:hover {
+                    background-color: #dc3545;
+                    color: white;
+                }
+            """)
+            
+            remove_all_btn.setStyleSheet("""
+                QPushButton {
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    background-color: #dc3545;
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #c82333;
+                }
+            """)
+            
+            cancel_btn.setStyleSheet("""
+                QPushButton {
+                    padding: 6px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background-color: white;
+                    color: #666;
+                }
+                QPushButton:hover {
+                    background-color: #f8f9fa;
+                }
+            """)
+            
+            # 连接按钮信号
+            remove_list_btn.clicked.connect(lambda: dialog.done(1))  # 1 表示仅从列表移除
+            remove_all_btn.clicked.connect(lambda: dialog.done(2))   # 2 表示删除文件夹
+            cancel_btn.clicked.connect(dialog.reject)
+            
+            result = dialog.exec()
+            
+            if result > 0:  # 用户选择了某种删除方式
                 # 如果是当前使用的版本，先取消链接
                 junction_path = self.config.get('junction_path')
                 if os.path.exists(junction_path):
                     try:
-                        if os.path.samefile(path, os.path.realpath(junction_path)):
+                        junction_real_path = os.path.normpath(os.path.realpath(junction_path))
+                        if os.path.normcase(junction_real_path) == os.path.normcase(jdk_path):
                             os.unlink(junction_path)
                     except Exception as e:
                         logger.error(f"取消软链接失败: {str(e)}")
                 
                 # 从配置中移除
-                self.config.remove_jdk(path, jdk.get('type') == 'mapped')
+                is_mapped = jdk_info.get('type') == 'mapped'
+                self.config.remove_jdk(jdk_path, is_mapped)  # 移除配置中的 JDK 记录
                 
                 # 如果选择删除文件夹，才进行文件系统操作
-                if result == QDialog.DialogCode.Accepted:
+                if result == 2:  # 删除文件夹
                     import shutil
-                    if os.path.exists(path):
-                        shutil.rmtree(path)
-                        message = f'JDK {version} 及其文件夹已成功删除'
+                    if os.path.exists(jdk_path):
+                        shutil.rmtree(jdk_path)
+                        message = f'JDK {version_text} ({vendor_text}) 及其文件夹已成功删除'
                     else:
-                        message = f'JDK {version} 文件夹不存在，已从列表移除'
-                else:
-                    message = f'JDK {version} 已从列表移除'
+                        message = f'JDK {version_text} ({vendor_text}) 文件夹不存在，已从列表移除'
+                else:  # 仅从列表移除
+                    message = f'JDK {version_text} ({vendor_text}) 已从列表移除'
                 
                 # 刷新列表
                 self.refresh_jdk_list()
+                self.update_current_version()
                 
                 QMessageBox.information(self, '成功', message)
                 
-            except Exception as e:
-                logger.error(f"移除JDK失败: {str(e)}")
-                QMessageBox.warning(self, '错误', f'移除JDK失败: {str(e)}')
+        except Exception as e:
+            logger.error(f"删除JDK失败: {str(e)}")
+            QMessageBox.warning(self, '错误', f'删除JDK失败: {str(e)}')
 
     def open_jdk_dir(self, path):
         """打开JDK目录"""
@@ -577,3 +691,98 @@ class LocalTab(QWidget):
         except Exception as e:
             logger.error(f"打开目录失败: {str(e)}")
             QMessageBox.warning(self, '错误', f'打开目录失败: {str(e)}') 
+
+    def on_set_current_clicked(self):
+        """处理设为当前版本按钮点击"""
+        try:
+            # 获取按钮关联的JDK路径
+            button = self.sender()
+            jdk_path = button.property('jdk_path')
+            if not jdk_path:
+                return
+            
+            # 创建软链接
+            junction_path = self.config.get('junction_path')
+            from utils.system_utils import create_junction
+            
+            # 如果已存在软链接，先删除
+            if os.path.exists(junction_path):
+                try:
+                    os.unlink(junction_path)
+                except Exception as e:
+                    logger.error(f"删除已存在的软链接失败: {str(e)}")
+                    QMessageBox.warning(self, '错误', '切换JDK版本失败：无法删除已存在的软链接')
+                    return
+            
+            # 创建新的软链接
+            if create_junction(jdk_path, junction_path):
+                # 获取JDK信息用于显示消息
+                jdk_info = None
+                for jdk in self.config.get_all_jdks():
+                    if jdk['path'] == jdk_path:
+                        jdk_info = jdk
+                        break
+                
+                version_text = jdk_info['version'] if jdk_info else '未知版本'
+                vendor_text = jdk_info.get('vendor', '未知')
+                
+                # 刷新列表和当前版本显示
+                self.refresh_jdk_list()
+                self.update_current_version()
+                QMessageBox.information(self, '成功', f'已切换到 JDK {version_text} ({vendor_text})')
+            else:
+                QMessageBox.warning(self, '错误', '切换JDK版本失败：创建软链接失败')
+                
+        except Exception as e:
+            logger.error(f"设置当前版本失败: {str(e)}")
+            QMessageBox.warning(self, '错误', f'设置当前版本失败: {str(e)}')
+
+    def on_delete_clicked(self):
+        """处理删除按钮点击"""
+        try:
+            # 获取按钮关联的JDK路径
+            button = self.sender()
+            if not button:
+                logger.error("无法获取触发事件的按钮")
+                return
+                
+            jdk_path = button.property('jdk_path')
+            if not jdk_path:
+                logger.error("按钮未关联JDK路径")
+                return
+            
+            # 调用移除方法
+            self.remove_jdk(jdk_path)
+                
+        except Exception as e:
+            logger.error(f"删除JDK失败: {str(e)}")
+            QMessageBox.warning(self, '错误', f'删除JDK失败: {str(e)}') 
+
+    def _get_version_type(self, version):
+        """获取版本类型"""
+        try:
+            major_version = int(version.split('.')[0])
+            if major_version in [8, 11, 17, 21]:
+                return "LTS"
+            elif major_version >= 21:
+                return "最新版"
+            elif major_version >= 17:
+                return "过渡版"
+            elif major_version >= 11:
+                return "旧版本"
+            else:
+                return "传统版"
+        except:
+            return "未知版本"
+
+    def _get_version_type_color(self, version_type):
+        """获取版本类型对应的颜色"""
+        colors = {
+            "LTS": "#17a2b8",       # 蓝绿色
+            "最新版": "#28a745",    # 绿色
+            "过渡版": "#fd7e14",    # 橙色
+            "旧版本": "#6c757d",    # 灰色
+            "传统版": "#dc3545",    # 红色
+            "未知版本": "#6c757d"   # 灰色
+        }
+        return colors.get(version_type, "#6c757d") 
