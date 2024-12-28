@@ -3,6 +3,8 @@ import json
 import requests
 from loguru import logger
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
+from datetime import datetime
+import time
 
 class VersionUpdateThread(QThread):
     """版本更新线程"""
@@ -156,6 +158,18 @@ class JDKDownloader(QObject):
         """从API获取版本信息"""
         # JDK版本特性映射
         version_features = {
+            '22': {
+                'release_date': '2024-03-19',
+                'version_detail': '22',
+                'features': [
+                    '作用域值（Scoped Values）',
+                    '字符串模板（正式版）',
+                    '未命名模式和变量（正式版）',
+                    '外部函数和内存 API（第二次预览）',
+                    '矢量 API（第九次孵化）'
+                ],
+                'lts': False
+            },
             '21': {
                 'release_date': '2023-09-19',
                 'version_detail': '21.0.2',
@@ -209,6 +223,45 @@ class JDKDownloader(QObject):
             }
         }
 
+        # 检查是否是 EA 版本
+        is_ea = False
+        is_temurin = False
+        try:
+            if vendor == 'OpenJDK':
+                # 检查是否是 EA 版本
+                if version in version_features:
+                    # 如果在版本特性映射中，说明是已发布的正式版本
+                    is_ea = False
+                else:
+                    # 检查是否是 EA 版本
+                    ea_url = f'https://jdk.java.net/{version}'
+                    response = requests.get(ea_url, timeout=5)
+                    if response.status_code == 200:
+                        # 更精确的 EA 检测：检查当前版本的下载链接是否包含 ea 或 early_access
+                        import re
+                        download_links = re.findall(r'https://download\.java\.net/java/[^"]+?openjdk-[^"]+?windows-x64_bin\.(?:zip|tar\.gz)', response.text)
+                        if download_links:
+                            is_ea = any('ea' in link.lower() or 'early_access' in link.lower() for link in download_links)
+                        else:
+                            # 如果找不到下载链接，检查页面内容
+                            is_ea = 'early access' in response.text.lower() and f'jdk {version}' in response.text.lower()
+                    
+                    # 如果不是 EA 版本，检查是否有正式发布版本
+                    if not is_ea:
+                        ga_url = 'https://jdk.java.net/archive/'
+                        response = requests.get(ga_url, timeout=5)
+                        if response.status_code == 200:
+                            # 检查是否存在该版本的 GA 发布
+                            pattern = f'jdk{version}[^"]*?/GPL/openjdk-{version}[^"]*?windows-x64_bin\.(?:zip|tar\.gz)'
+                            if not re.search(pattern, response.text, re.I):
+                                # 如果既不是 EA 也找不到 GA 版本，尝试使用 Temurin
+                                temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot"
+                                response = requests.get(temurin_url, timeout=5)
+                                if response.status_code == 200:
+                                    is_temurin = True
+        except:
+            pass
+
         base_info = {
             'version': version,
             'version_detail': version_features.get(version, {}).get('version_detail', version),
@@ -220,81 +273,110 @@ class JDKDownloader(QObject):
             'release_notes': '',
             'support_policy': '',
             'version_features': version_features.get(version, {}).get('features', []),
-            'is_lts': version_features.get(version, {}).get('lts', False)
+            'is_lts': version_features.get(version, {}).get('lts', False),
+            'is_ea': is_ea,
+            'is_temurin': is_temurin
         }
 
         try:
-            if vendor == 'Eclipse Temurin (Adoptium)':
-                url = self.api_config[vendor]['api_url'].format(version=version)
-                response = requests.get(url)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and len(data) > 0:
-                        release = data[0]
-                        base_info.update({
-                            'release_date': release.get('release_name', base_info['release_date']),
-                            'features': [
-                                '✓ Eclipse Adoptium 质量认证',
-                                '✓ 企业级生产就绪',
-                                '✓ TCK 合规认证',
-                                '✓ AQAvit 质量验证',
-                                '✓ 持续的安全更新'
-                            ],
-                            'support_policy': '社区支持 + Eclipse Foundation 支持',
-                            'release_notes': '基于 OpenJDK，由 Eclipse Foundation 维护的高质量构建版本'
-                        })
-            
-            elif vendor == 'Oracle JDK':
-                base_info.update({
-                    'features': [
-                        '✓ 商业特性支持',
-                        '✓ GraalVM 企业版集成',
-                        '✓ 高级监控和诊断工具',
-                        '✓ 飞行记录器(JFR)',
-                        '✓ 任务控制(JMC)',
-                        '✓ 应用程序类数据共享'
-                    ],
-                    'support_policy': '商业支持 + 长期技术支持(LTS)',
-                    'release_notes': '官方JDK发行版，提供全面的商业支持和企业特性'
-                })
-            
+            if vendor == 'Oracle JDK':
+                features = [
+                    '✓ 商业特性支持',
+                    '✓ GraalVM 企业版集成',
+                    '✓ 高级监控和诊断工具',
+                    '✓ 飞行记录器(JFR)',
+                    '✓ 任务控制(JMC)',
+                    '✓ 应用程序类数据共享'
+                ]
+                
+                # 添加版本特定标记
+                if base_info['is_lts']:
+                    features.insert(0, '✓ 长期技术支持（LTS）')
+                    base_info['support_policy'] = '商业支持 + Oracle 长期技术支持（至少 8 年）'
+                    base_info['release_notes'] = '官方 JDK 发行版，提供全面的商业支持和企业特性，建议用于生产环境'
+                else:
+                    features.insert(0, '⚠️ 短期支持版本（非 LTS）')
+                    base_info['support_policy'] = '商业支持（6 个月）'
+                    base_info['release_notes'] = '非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本'
+                
+                # 添加许可提醒
+                features.append('⚠️ 需要 Oracle 订阅许可（生产环境使用）')
+                
+                base_info['features'] = features
+                
             elif vendor == 'OpenJDK':
-                base_info.update({
-                    'features': [
-                        '✓ 开源参考实现',
-                        '✓ 社区驱动开发',
-                        '✓ 标准Java特性',
-                        '✓ 快速迭代更新',
-                        '✓ 透明的开发程'
-                    ],
-                    'support_policy': '社区支持',
-                    'release_notes': 'Java SE 平台的开源参考实现，由 OpenJDK 社区维护'
-                })
+                features = [
+                    '✓ 开源参考实现',
+                    '✓ 社区驱动开发',
+                    '✓ 标准Java特性',
+                    '✓ 快速迭代更新',
+                    '✓ 透明的开发过程'
+                ]
+                
+                # 添加版本特定标记
+                if is_ea:
+                    features.insert(0, '⚠️ 预览版本（Early Access）')
+                    base_info['support_policy'] = '预览版本，仅供测试使用'
+                    base_info['release_notes'] = '早期访问版本，可能包含不稳定特性，不建议用于生产环境'
+                elif is_temurin:
+                    features.insert(0, '📦 由 Eclipse Temurin 提供的构建版本')
+                    base_info['support_policy'] = '社区支持 + Eclipse Foundation 支持'
+                    base_info['release_notes'] = '由 Eclipse Temurin 提供的稳定构建版本，可用于生产环境'
+                elif not base_info['is_lts']:
+                    features.insert(0, '⚠️ 短期支持版本（非 LTS）')
+                    base_info['support_policy'] = '短期社区支持（6 个月）'
+                    base_info['release_notes'] = '非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本'
+                else:
+                    features.insert(0, '✓ 长期支持版本（LTS）')
+                    base_info['support_policy'] = '长期社区支持（至少 4 年）'
+                    base_info['release_notes'] = 'Java SE 平台的开源参考实现，由 OpenJDK 社区维护，建议用于生产环境'
+                
+                base_info['features'] = features
             
             elif vendor == 'Amazon Corretto':
-                base_info.update({
-                    'features': [
+                features = [
                         '✓ AWS 云平台优化',
                         '✓ 长期安全补丁',
                         '✓ 企业级性能调优',
                         '✓ 亚马逊生产环境验证',
                         '✓ 跨平台支持'
-                    ],
-                    'support_policy': 'Amazon 免费长期支持(LTS)',
-                    'release_notes': '由亚马逊开发和维护的OpenJDK发行版，针对AWS优化'
+                ]
+                
+                # 添加版本特定标记
+                if base_info['is_lts']:
+                    features.insert(0, '✓ 长期支持版本（LTS）')
+                    base_info['support_policy'] = 'Amazon 免费长期支持（至少 4 年）'
+                    base_info['release_notes'] = '由亚马逊开发和维护的 OpenJDK 行版，针对 AWS 优化，建议用于生产环境'
+                else:
+                    features.insert(0, '⚠️ 短期支持版本（非 LTS）')
+                    base_info['support_policy'] = 'Amazon 支持（6 个月）'
+                    base_info['release_notes'] = '非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本'
+                
+                base_info.update({
+                    'features': features
                 })
             
             elif vendor == 'Azul Zulu':
-                base_info.update({
-                    'features': [
+                features = [
                         '✓ 完整 TCK 认证',
                         '✓ 性能优化版本',
                         '✓ 可构建定制版本',
                         '✓ 云原生支持',
                         '✓ 容器优化'
-                    ],
-                    'support_policy': '社区版免费 + 商业版付费支持',
-                    'release_notes': '由Azul Systems提供的OpenJDK构建版本，提供企业级支持'
+                ]
+                
+                # 添加版本特定标记
+                if base_info['is_lts']:
+                    features.insert(0, '✓ 长期支持版本（LTS）')
+                    base_info['support_policy'] = '社区版免费长期支持 + 商业版付费支持（至少 8 年）'
+                    base_info['release_notes'] = '由 Azul Systems 提供的 OpenJDK 构建版本，提供企业级支持，建议用于生产环境'
+                else:
+                    features.insert(0, '⚠️ 短期支持版本（非 LTS）')
+                    base_info['support_policy'] = '社区版支持（6 个月）'
+                    base_info['release_notes'] = '非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本'
+                
+                base_info.update({
+                    'features': features
                 })
 
             # 获取下载链接
@@ -337,6 +419,24 @@ class JDKDownloader(QObject):
                     background-color: {'#1a73e8' if base_info['is_lts'] else '#34A853'};
                     color: white;
                 }}
+                .warning-badge {{
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    margin-left: 8px;
+                    background-color: {'#EA4335' if base_info['is_ea'] else '#FBBC05'};
+                    color: white;
+                }}
+                .provider-badge {{
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    margin-left: 8px;
+                    background-color: #4285F4;
+                    color: white;
+                }}
                 .version-feature {{
                     color: #1a73e8;
                     margin: 3px 0;
@@ -362,14 +462,24 @@ class JDKDownloader(QObject):
                 .download-link:hover {{
                     text-decoration: underline;
                 }}
+                .warning-text {{
+                    color: #EA4335;
+                    font-weight: bold;
+                    margin: 8px 0;
+                }}
             </style>
             <div class='title'>
                 <div class='version-info'>
                     JDK {base_info['version']} ({base_info['version_detail']})
                     <span class='vendor'>{vendor}</span>
+                    <span class='badge'>{('LTS' if base_info['is_lts'] else '短期支持')}</span>
+                    {f'<span class="warning-badge">预览版本</span>' if base_info['is_ea'] else ''}
+                    {f'<span class="provider-badge">Temurin</span>' if base_info['is_temurin'] else ''}
                 </div>
-                <span class='badge'>{('LTS' if base_info['is_lts'] else '短期支持')}</span>
             </div>
+            
+            {f'<div class="warning-text">⚠️ 此版本为预览版本，仅供测试使用，不建议在生产环境中使用。</div>' if base_info['is_ea'] else ''}
+            {f'<div class="warning-text">⚠️ 此版本为短期支持版本，建议仅用于开发和测试环境。</div>' if not base_info['is_lts'] and not base_info['is_ea'] else ''}
             
             <div class='section'>
                 <span class='label'>发布时间:</span>
@@ -416,107 +526,9 @@ class JDKDownloader(QObject):
                 return 'https://www.oracle.com/java/technologies/downloads/'
             
             elif vendor == 'OpenJDK':
-                return 'https://jdk.java.net/'
-            
-            elif vendor == 'Eclipse Temurin (Adoptium)':
-                return 'https://adoptium.net/temurin/releases/'
-            
-            elif vendor == 'Amazon Corretto':
-                return 'https://aws.amazon.com/corretto/'
-            
-            elif vendor == 'Azul Zulu':
-                return 'https://www.azul.com/downloads/'
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"获取下载链接失败: {str(e)}")
-            return None
-
-    def download_jdk(self, vendor, version, target_dir, progress_callback=None):
-        """下载指定版本的JDK"""
-        try:
-            # 获取下载链接
-            download_url = self._get_download_url(vendor, version)
-            if not download_url:
-                if vendor == 'Oracle JDK':
-                    return False, "需要登录 Oracle 账号才能下载，请前往官网手动下载"
-                else:
-                    return False, "无法获取下载链接，请尝试手动下载"
-
-            # 创建目标目录
-            os.makedirs(target_dir, exist_ok=True)
-            file_name = os.path.join(target_dir, f"jdk-{version}.zip")
-
-            # 下载文件
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-
-            try:
-                # 先检查链接是否可用
-                head_response = requests.head(download_url, headers=headers, timeout=10)
-                if head_response.status_code != 200:
-                    return False, f"下载链接无效，HTTP状态码: {head_response.status_code}"
-
-                # 开始下载
-                response = requests.get(download_url, headers=headers, stream=True, timeout=30)
-                if response.status_code != 200:
-                    return False, f"下载失败，HTTP状态码: {response.status_code}"
-
-                total_size = int(response.headers.get('content-length', 0))
-                if total_size == 0:
-                    return False, "无法获取文件大小信息"
-
-                block_size = 1024 * 1024  # 1 MB
-                downloaded_size = 0
-
-                with open(file_name, 'wb') as f:
-                    for data in response.iter_content(block_size):
-                        downloaded_size += len(data)
-                        f.write(data)
-                        # 发送进度回调
-                        if progress_callback:
-                            progress_callback(downloaded_size, total_size)
-
-                # 验证下载的文件大小
-                if os.path.getsize(file_name) != total_size:
-                    os.remove(file_name)
-                    return False, "下载的文件不完整，请重试"
-
-                return True, "下载完成"
-
-            except requests.Timeout:
-                return False, "下载超时，请检查网络连接"
-            except requests.ConnectionError:
-                return False, "网络连接错误，请检查网络设置"
-            except Exception as e:
-                if os.path.exists(file_name):
-                    os.remove(file_name)
-                return False, f"下载过程中出错: {str(e)}"
-
-        except Exception as e:
-            logger.error(f"下载JDK失败: {str(e)}")
-            return False, str(e)
-
-    def _get_download_url(self, vendor, version):
-        """获取下载链接"""
-        try:
-            if vendor == 'Eclipse Temurin (Adoptium)':
-                # 使用 Adoptium API v3 获取下载链接
-                url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse"
-                response = requests.get(url, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and len(data) > 0:
-                        binary = data[0].get('binary')
-                        if binary:
-                            return binary.get('package', {}).get('link')
-            
-            elif vendor == 'OpenJDK':
-                # OpenJDK 官方下载链接
+                # OpenJDK 官方下���链接
                 version_map = {
-                    '23': 'https://download.java.net/java/GA/jdk23/36/GPL/openjdk-23_windows-x64_bin.zip',
+                    '23': 'https://download.java.net/java/early_access/jdk23/31/GPL/openjdk-23-ea+31_windows-x64_bin.zip',
                     '22': 'https://download.java.net/java/GA/jdk22/4184dcf0b2d7-1/17/GPL/openjdk-22_windows-x64_bin.zip',
                     '21': 'https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip',
                     '20': 'https://download.java.net/java/GA/jdk20.0.2/6e380f22cbe7469fa75fb448bd903d8e/9/GPL/openjdk-20.0.2_windows-x64_bin.zip',
@@ -533,6 +545,50 @@ class JDKDownloader(QObject):
                     '9': 'https://download.java.net/java/GA/jdk9/9.0.4/binaries/openjdk-9.0.4_windows-x64_bin.tar.gz',
                     '8': 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u402b06.zip'
                 }
+                
+                # 如果版本不在映射表中，尝试获取最新链接
+                if version not in version_map:
+                    try:
+                        # 1. 先检查是否有 EA（早期访问）版本
+                        ea_url = f'https://jdk.java.net/{version}'
+                        response = requests.get(ea_url, timeout=5)
+                        if response.status_code == 200:
+                            # 从页面解析实际下载链接
+                            import re
+                            match = re.search(r'https://download\.java\.net/java/[^"]+?openjdk-[^"]+?windows-x64_bin\.(?:zip|tar\.gz)', response.text)
+                            if match:
+                                # 更新版本映射表
+                                version_map[version] = match.group(0)
+                                return match.group(0)
+                        
+                        # 2. 如果没有 EA 版本，检查正式发布版本
+                        ga_url = f'https://jdk.java.net/archive/'
+                        response = requests.get(ga_url, timeout=5)
+                        if response.status_code == 200:
+                            pattern = f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?windows-x64_bin\\.(?:zip|tar\\.gz)'
+                            match = re.search(pattern, response.text)
+                            if match:
+                                # 更新版本映射表
+                                version_map[version] = match.group(0)
+                                return match.group(0)
+                        
+                        # 3. 如果都没有找到，尝试使用 Eclipse Temurin
+                        logger.warning(f"未找到 OpenJDK {version} 的直接下载链接，尝试使用 Eclipse Temurin")
+                        temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse"
+                        temurin_response = requests.get(temurin_url, timeout=5)
+                        if temurin_response.status_code == 200:
+                            data = temurin_response.json()
+                            if data and len(data) > 0:
+                                binary = data[0].get('binary')
+                                if binary:
+                                    link = binary.get('package', {}).get('link')
+                                    if link:
+                                        # 更新版本映射表
+                                        version_map[version] = link
+                                        return link
+                    except Exception as e:
+                        logger.error(f"检查 OpenJDK {version} 版本下载链接失败: {str(e)}")
+                
                 return version_map.get(version)
             
             elif vendor == 'Amazon Corretto':
@@ -559,6 +615,179 @@ class JDKDownloader(QObject):
             
             # 如果没有找到下载链接，返回 None
             return None
+            
+        except Exception as e:
+            logger.error(f"获取下载链接失败: {str(e)}")
+            return None
+
+    def download_jdk(self, vendor, version, target_dir, progress_callback=None):
+        """下载指定版本的JDK"""
+        file_name = None
+        response = None
+        file_handle = None
+        try:
+            # 获取下载链接
+            download_url = self._get_download_url(vendor, version)
+            if not download_url:
+                # 根据不同供应商提供不同的手动下载指导
+                if vendor == 'Oracle JDK':
+                    manual_url = 'https://www.oracle.com/java/technologies/downloads/'
+                    return False, f"需要登录 Oracle 账号才能下载。\n\n请按以下步骤操作：\n1. 访问 {manual_url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{target_dir}", None
+                elif vendor == 'OpenJDK':
+                    manual_url = 'https://jdk.java.net/'
+                    return False, f"无法获取直接下载链接。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 JDK {version}\n3. 下载 Windows 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                elif vendor == 'Amazon Corretto':
+                    manual_url = 'https://aws.amazon.com/corretto/'
+                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Corretto {version}\n3. 下载 Windows x64 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                elif vendor == 'Azul Zulu':
+                    manual_url = 'https://www.azul.com/downloads/'
+                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Zulu JDK {version}\n3. 下载 Windows x64 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                else:
+                    return False, f"无法获取下载链接。请访问 {vendor} 官网手动下载 JDK {version} 版本。", None
+
+            # 创建目标目录
+            os.makedirs(target_dir, exist_ok=True)
+            file_name = os.path.join(target_dir, f"jdk-{version}.zip")
+
+            # 下载文件
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Cache-Control': 'max-age=0'
+            }
+
+            try:
+                # 先检查链接是否可用
+                head_response = requests.head(download_url, headers=headers, timeout=10)
+                if head_response.status_code == 403:
+                    # 特殊处理 403 错误（通常是需要登录）
+                    if vendor == 'Oracle JDK':
+                        manual_url = 'https://www.oracle.com/java/technologies/downloads/'
+                        return False, f"需要登录 Oracle 账号才能下载。\n\n请按以下步骤操作：\n1. 访问 {manual_url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{target_dir}", None
+                    return False, f"访问下载链接被拒绝（HTTP 403）。请尝试手动下载或稍后重试。\n下载链接：{download_url}", None
+                elif head_response.status_code != 200:
+                    return False, f"下载链接无效（HTTP {head_response.status_code}）。请尝试手动下载或稍后重试。\n下载链接：{download_url}", None
+
+                # 开始下载
+                response = requests.get(download_url, headers=headers, stream=True, timeout=30)
+                if response.status_code != 200:
+                    return False, f"下载失败（HTTP {response.status_code}）。请尝试手动下载或稍后重试。\n下载链接：{download_url}", None
+
+                total_size = int(response.headers.get('content-length', 0))
+                if total_size == 0:
+                    return False, f"无法获取文件大小信息。请尝试手动下载：\n{download_url}", None
+
+                block_size = 1024 * 1024  # 1MB
+                downloaded_size = 0
+                last_progress_time = time.time()
+
+                # 打开文件
+                file_handle = open(file_name, 'wb')
+                
+                # 如果progress_callback有file_handle属性，设置它
+                if hasattr(progress_callback, 'set_handles'):
+                    progress_callback.set_handles(response, file_handle)
+                
+                # 下载数据
+                for data in response.iter_content(block_size):
+                    # 检查是否取消下载
+                    if hasattr(progress_callback, 'cancelled') and progress_callback.cancelled:
+                        file_handle.close()
+                        response.close()
+                        if os.path.exists(file_name):
+                            try:
+                                os.remove(file_name)
+                            except Exception as e:
+                                logger.error(f"删除取消的下载文件失败: {str(e)}")
+                        return False, "下载已取消", None
+
+                    downloaded_size += len(data)
+                    file_handle.write(data)
+                    
+                    # 限制进度回调的频率，每0.1秒最多一次
+                    current_time = time.time()
+                    if progress_callback and (current_time - last_progress_time >= 0.1):
+                        progress_callback(downloaded_size, total_size)
+                        last_progress_time = current_time
+
+                # 最后一次进度更新
+                if progress_callback:
+                    progress_callback(downloaded_size, total_size)
+
+                # 关闭文件和响应
+                file_handle.close()
+                file_handle = None
+                response.close()
+                response = None
+
+                # 验证下载的文件大小
+                if os.path.getsize(file_name) != total_size:
+                    if os.path.exists(file_name):
+                        os.remove(file_name)
+                    return False, f"下载的文件不完整。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 使用手动下载：{download_url}\n3. 将下载的文件放到目录：{target_dir}", None
+
+                # 获取版本信息
+                version_info = self.get_version_info(vendor, version)
+                
+                # 准备JDK信息
+                jdk_info = {
+                    'path': file_name,  # 先使用zip文件路径，解压后会更新为实际JDK目录
+                    'version': version,
+                    'type': 'downloaded',
+                    'vendor': vendor,  # 添加发行商信息
+                    'features': version_info.get('features', []) if version_info else [],
+                    'import_time': int(datetime.now().timestamp())
+                }
+
+                # 如果是 OpenJDK 且使用了 Temurin 构建
+                if vendor == 'OpenJDK' and version_info and 'is_temurin' in version_info and version_info['is_temurin']:
+                    jdk_info['vendor'] = 'Eclipse Temurin'
+
+                return True, "下载成功", jdk_info
+
+            except requests.Timeout:
+                if file_handle:
+                    file_handle.close()
+                if os.path.exists(file_name):
+                    os.remove(file_name)
+                return False, f"下载超时。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 使用手动下载：{download_url}\n3. 将下载的文件放到目录：{target_dir}", None
+            except requests.ConnectionError:
+                if file_handle:
+                    file_handle.close()
+                if os.path.exists(file_name):
+                    os.remove(file_name)
+                return False, f"网络连接错误。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 检查代理设置\n3. 使用手动下载：{download_url}\n4. 将下载的文件放到目录：{target_dir}", None
+            except Exception as e:
+                if file_handle:
+                    file_handle.close()
+                if os.path.exists(file_name):
+                    os.remove(file_name)
+                return False, f"下载过程中出错: {str(e)}\n\n请尝试手动下载：\n{download_url}", None
+            finally:
+                if response:
+                    response.close()
+                if file_handle:
+                    file_handle.close()
+
+        except Exception as e:
+            if file_handle:
+                file_handle.close()
+            if response:
+                response.close()
+            if file_name and os.path.exists(file_name):
+                os.remove(file_name)
+            logger.error(f"下载JDK失败: {str(e)}")
+            return False, f"下载失败: {str(e)}\n\n请尝试手动下载对应版本的JDK。", None
+
+    def _get_download_url(self, vendor, version):
+        """获取下载链接"""
+        try:
+            # 直接返回 _get_download_link 的结果
+            return self._get_download_link(vendor, version)
             
         except Exception as e:
             logger.error(f"获取下载链接失败: {str(e)}")

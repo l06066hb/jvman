@@ -5,44 +5,37 @@ from loguru import logger
 class ConfigManager:
     """配置管理器"""
     
-    def __init__(self):
-        self.config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config')
-        self.config_file = os.path.join(self.config_dir, 'settings.json')
-        self.default_config = {
-            'jdk_store_path': os.path.join(os.path.expanduser('~'), 'jdk_versions'),
-            'junction_path': os.path.join(os.path.expanduser('~'), 'current_jdk'),
-            'theme': 'light',
-            'auto_start': False,
-            'mapped_jdks': [],
-            'downloaded_jdks': []
-        }
-        self.config = self.load_config()
-
-    def load_config(self):
+    def __init__(self, config_file='config/settings.json'):
+        self.config_file = config_file
+        self.config = {}  # 初始化为空字典
+        self.load()  # 加载配置
+        
+    def load(self):
         """加载配置"""
         try:
-            if not os.path.exists(self.config_dir):
-                os.makedirs(self.config_dir)
-            
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    # 合并默认配置，确保所有必要的键都存在
-                    return {**self.default_config, **config}
-            return self.default_config.copy()
+                    self.config = json.load(f)
+            return self.config
         except Exception as e:
             logger.error(f"加载配置失败: {str(e)}")
-            return self.default_config.copy()
+            self.config = {}
+            return self.config
 
-    def save_config(self):
+    def save(self):
         """保存配置"""
         try:
+            # 确保配置目录存在
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            
+            # 保存配置
             with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=4, ensure_ascii=False)
-            return True
+                json.dump(self.config, f, ensure_ascii=False, indent=4)
+                f.flush()  # 确保写入磁盘
+                os.fsync(f.fileno())  # 强制同步到磁盘
         except Exception as e:
             logger.error(f"保存配置失败: {str(e)}")
-            return False
+            raise Exception(f"保存配置失败: {str(e)}")
 
     def get(self, key, default=None):
         """获取配置项"""
@@ -51,7 +44,7 @@ class ConfigManager:
     def set(self, key, value):
         """设置配置项"""
         self.config[key] = value
-        return self.save_config()
+        self.save()
 
     def add_mapped_jdk(self, jdk_info):
         """添加映射的JDK"""
@@ -76,12 +69,31 @@ class ConfigManager:
 
     def add_downloaded_jdk(self, jdk_info):
         """添加下载的JDK"""
-        downloaded_jdks = self.get('downloaded_jdks', [])
-        if jdk_info not in downloaded_jdks:
+        try:
+            # 重新加载配置以确保获取最新数据
+            self.load()
+            
+            downloaded_jdks = self.get('downloaded_jdks', [])
+            
+            # 检查是否已存在相同路径的JDK
+            for existing_jdk in downloaded_jdks:
+                if existing_jdk['path'] == jdk_info['path']:
+                    # 更新现有JDK的信息
+                    existing_jdk.update(jdk_info)
+                    self.set('downloaded_jdks', downloaded_jdks)
+                    logger.debug(f"更新已存在的JDK信息: {jdk_info}")
+                    return True
+            
+            # 如果不存在，添加新的JDK
+            jdk_info['type'] = 'downloaded'  # 确保设置了类型
             downloaded_jdks.append(jdk_info)
             self.set('downloaded_jdks', downloaded_jdks)
+            logger.debug(f"成功添加下载的JDK: {jdk_info}")
             return True
-        return False
+            
+        except Exception as e:
+            logger.error(f"添加下载的JDK失败: {str(e)}")
+            raise Exception(f"添加下载的JDK失败: {str(e)}")
 
     def remove_jdk(self, jdk_path, is_mapped=True):
         """移除JDK记录"""
@@ -92,9 +104,43 @@ class ConfigManager:
 
     def get_all_jdks(self):
         """获取所有JDK列表"""
-        mapped_jdks = self.get('mapped_jdks', [])
-        downloaded_jdks = self.get('downloaded_jdks', [])
-        return mapped_jdks + downloaded_jdks 
+        try:
+            # 重新加载配置以确保获取最新数据
+            self.load()
+            
+            # 获取所有类型的JDK
+            jdks = []
+            
+            # 获取映射的JDK
+            mapped_jdks = self.get('mapped_jdks', [])
+            for jdk in mapped_jdks:
+                if not jdk.get('type'):
+                    jdk['type'] = 'mapped'
+                jdks.append(jdk)
+            
+            # 获取下载的JDK
+            downloaded_jdks = self.get('downloaded_jdks', [])
+            for jdk in downloaded_jdks:
+                if not jdk.get('type'):
+                    jdk['type'] = 'downloaded'
+                jdks.append(jdk)
+            
+            # 获取其他JDK（如果有）
+            other_jdks = self.get('jdks', [])
+            jdks.extend(other_jdks)
+            
+            # 过滤掉重复的JDK（基于路径）
+            unique_jdks = []
+            paths = set()
+            for jdk in jdks:
+                if jdk['path'] not in paths:
+                    paths.add(jdk['path'])
+                    unique_jdks.append(jdk)
+            
+            return unique_jdks
+        except Exception as e:
+            logger.error(f"获取JDK列表失败: {str(e)}")
+            return []
 
     def get_current_jdk(self):
         """获取当前使用的JDK信息"""
@@ -168,3 +214,48 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"获取自启动状态失败: {str(e)}")
             return False 
+
+    def add_jdk(self, jdk_info):
+        """添加JDK到配置"""
+        try:
+            if jdk_info.get('type') == 'mapped':
+                return self.add_mapped_jdk(jdk_info)
+            elif jdk_info.get('type') == 'downloaded':
+                return self.add_downloaded_jdk(jdk_info)
+            else:
+                # 获取当前的JDK列表
+                jdks = self.get('jdks', [])
+                
+                # 检查是否已存在相同路径的JDK
+                for jdk in jdks:
+                    if jdk['path'] == jdk_info['path']:
+                        # 如果存在，更新信息
+                        jdk.update(jdk_info)
+                        self.save()
+                        return True
+                
+                # 如果不存在，添加到列表
+                jdks.append(jdk_info)
+                self.set('jdks', jdks)
+                return True
+            
+        except Exception as e:
+            logger.error(f"添加JDK到配置失败: {str(e)}")
+            raise Exception(f"添加JDK到配置失败: {str(e)}")
+
+    def remove_jdk(self, jdk_path, is_mapped=False):
+        """从配置中移除JDK"""
+        try:
+            if is_mapped:
+                mapped_jdks = self.get('mapped_jdks', [])
+                self.set('mapped_jdks', [jdk for jdk in mapped_jdks if jdk['path'] != jdk_path])
+            else:
+                downloaded_jdks = self.get('downloaded_jdks', [])
+                self.set('downloaded_jdks', [jdk for jdk in downloaded_jdks if jdk['path'] != jdk_path])
+                
+                # 同时也从 jdks 列表中移除
+                jdks = self.get('jdks', [])
+                self.set('jdks', [jdk for jdk in jdks if jdk['path'] != jdk_path])
+        except Exception as e:
+            logger.error(f"从配置中移除JDK失败: {str(e)}")
+            raise Exception(f"从配置中移除JDK失败: {str(e)}") 
