@@ -1,11 +1,12 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-一个简单易用的 Windows JDK 版本管理工具，支持在线下载和本地 JDK 管理。
+一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
 
 [English Document](README.en.md)
 
@@ -13,23 +14,52 @@
 
 - 🚀 在线下载 JDK：支持多个 JDK 发行版（Oracle JDK、OpenJDK、Adoptium、Amazon Corretto、Zulu OpenJDK）
 - 📂 本地 JDK 管理：轻松导入和管理已安装的 JDK
-- 🔄 智能版本切换：快速切换不同版本的 JDK
+- 🔄 智能版本切换：快速切换不同版本的 JDK，支持多平台
 - 🛠 环境变量管理：自动配置 JAVA_HOME、PATH 和 CLASSPATH
 - 💡 系统托盘：快速查看和切换当前 JDK 版本
 - 🎨 主题切换：支持浅色、深色和青色主题
-- 🌐 国际化：支持中文和英文界面（暂未开放）
+- 🌐 国际化：支持中文和英文界面
+- 🖥 多平台支持：
+  - Windows：使用符号链接进行版本切换
+  - macOS：支持 Homebrew 安装的 JDK，使用符号链接切换
+  - Linux：支持 apt/yum 包管理器，使用符号链接切换
+- 📝 日志记录：详细的操作日志，支持文件记录
+- 🔧 便携版支持：无需安装，解压即用
+- 🔄 自动更新：支持检查和下载新版本
 
 ## 系统要求
 
-- Windows 10/11
+- Windows 10/11、macOS 10.15+ 或 Linux（主流发行版）
 - Python 3.8+
-- PyQt6
+- PyQt6 >= 6.4.0
+- 磁盘空间：至少 100MB（不含下载的 JDK）
 
 ## 安装使用
 
+### Windows
+1. 下载最新版本的安装包（推荐）
+   - 从 [Releases](https://gitee.com/l06066hb/jvman.git/releases) 页面下载最新的安装包
+   - 运行安装程序，按照向导完成安装
+   - 从开始菜单或桌面快捷方式启动程序
+2. 便携版
+   - 下载最新的便携版 ZIP 文件
+   - 解压到任意目录
+   - 运行 jvman.exe
+
+### macOS
+1. 下载最新版本的 DMG 文件
+2. 打开 DMG 文件并将应用拖到应用程序文件夹
+3. 首次运行时需要输入管理员密码
+
+### Linux
+1. 下载最新版本的 AppImage 或 deb/rpm 包
+2. 安装对应的包或直接运行 AppImage
+3. 首次运行时需要 sudo 权限
+
+### 从源码安装
 1. 克隆仓库：
 ```bash
-git clone https://github.com/yourusername/jvman.git
+git clone https://gitee.com/l06066hb/jvman.git
 cd jvman
 ```
 
@@ -82,12 +112,62 @@ python src/main.py
 2. 点击"切换版本"
 3. 等待切换完成
 
+### 平台特定说明
+
+#### Windows
+- 使用符号链接进行版本切换
+- 需要管理员权限修改系统环境变量
+- 支持 Windows 10/11 的原生符号链接
+
+#### macOS
+- 支持 Homebrew 安装的 JDK
+- 使用符号链接进行版本切换
+- 自动更新 shell 配置文件（bash/zsh）
+- 需要管理员权限创建符号链接
+
+#### Linux
+- 支持 apt/yum 包管理器安装的 JDK
+- 使用符号链接进行版本切换
+- 自动更新 shell 配置文件（bash/zsh/fish）
+- 需要 sudo 权限创建符号链接
+
 ### 注意事项
 - 建议使用 ZIP 版本的 JDK，避免与已安装版本的环境变量冲突
-- 首次使用时需要以管理员权限运行以配置环境变量
+- 首次使用时需要管理员/sudo 权限以配置环境变量
 - 如遇下载失败，可尝试使用手动下载功能
+- Unix 系统（macOS/Linux）需要重新加载 shell 配置文件使环境变量生效
+
+## 构建说明
+
+### 构建便携版
+```bash
+python scripts/build.py --platform windows --type portable
+```
+
+### 构建安装版
+```bash
+python scripts/build.py --platform windows --type installer
+```
+
+### 构建全部
+```bash
+python scripts/build.py --platform windows --type all
+```
 
 ## 更新日志
+
+### v1.0.4 (2024-01-05)
+- 添加安装包支持
+- 添加多平台支持（Windows/macOS/Linux）
+- 优化版本切换机制，支持不同平台的符号链接
+- 添加包管理器支持（Homebrew/apt/yum）
+- 改进 shell 配置文件管理
+- 优化环境变量设置方式
+- 提升程序稳定性
+- 优化构建系统，支持便携版和安装版
+- 统一版本管理，使用 app.json 集中配置
+- 改进图标显示和资源管理
+- 优化日志系统，支持文件记录
 
 ### v1.0.3 (2024-12-28)
 - 修复主题切换保存问题
@@ -151,6 +231,10 @@ jvman/
 │   └── i18n/          # 国际化资源文件
 ├── tests/             # 测试用例
 ├── docs/              # 文档
+├── scripts/           # 构建和工具脚本
+├── config/            # 配置文件
+├── resources/         # 资源文件
+│   └── icons/        # 图标资源
 └── requirements/      # 依赖配置文件
 ```
 
@@ -165,9 +249,8 @@ A: 可以在设置中配置代理服务器，或使用手动下载功能。
 ### Q: 如何备份当前配置？
 A: 程序配置文件存储在 `%APPDATA%/jvman` 目录下，可直接复制该目录进行备份。
 
-## 相关项目
-- [SDKMAN](https://github.com/sdkman/sdkman-cli) - 类 Unix 系统的 SDK 管理工具
-- [Jabba](https://github.com/shyiko/jabba) - 跨平台 Java 版本管理器
+### Q: 如何处理版本切换失败？
+A: 检查是否有足够的权限，确保目标 JDK 目录存在且完整。
 
 ## 安全说明
 如发现任何安全漏洞，请发送邮件至 [security@example.com](mailto:security@example.com)。

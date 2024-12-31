@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon, QFont
-from utils.system_utils import set_environment_variable, update_path_variable
+from src.utils.system_utils import set_environment_variable, update_path_variable
+from src.utils.platform_manager import platform_manager
 
 class SettingsTab(QWidget):
     """设置标签页"""
@@ -52,7 +53,7 @@ class SettingsTab(QWidget):
         self.store_path_edit.setText(self.config.get('jdk_store_path'))
         self.store_path_button = QPushButton('浏览')
         self.store_path_button.setProperty('browse', True)
-        self.store_path_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'folder.png')))
+        self.store_path_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'folder.png')))
         self.store_path_button.setStyleSheet("""
             QPushButton {
                 padding: 5px 15px;
@@ -81,7 +82,7 @@ class SettingsTab(QWidget):
         self.junction_path_edit.setText(self.config.get('junction_path'))
         self.junction_path_button = QPushButton('浏览')
         self.junction_path_button.setProperty('browse', True)
-        self.junction_path_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'folder.png')))
+        self.junction_path_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'folder.png')))
         self.junction_path_button.setStyleSheet(self.store_path_button.styleSheet())
         
         junction_layout.addWidget(junction_label)
@@ -105,7 +106,7 @@ class SettingsTab(QWidget):
                 padding-right: 10px;
             }
             QComboBox::down-arrow {
-                image: url(icon/down-arrow.png);
+                image: url(resources/icons/down-arrow.png);
             }
             QComboBox QAbstractItemView {
                 border: 1px solid #E0E0E0;
@@ -154,7 +155,7 @@ class SettingsTab(QWidget):
                 border: none;
                 border-radius: 3px;
                 background-color: #1a73e8;
-                image: url(icon/check.png);
+                image: url(resources/icons/check.png);
             }
         """)
         self.auto_start_checkbox.setChecked(self.config.get_auto_start_status())
@@ -172,7 +173,7 @@ class SettingsTab(QWidget):
         # 保存按钮
         self.save_button = QPushButton('保存设置')
         self.save_button.setObjectName('save_button')
-        self.save_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'save.png')))
+        self.save_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'save.png')))
         self.save_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
@@ -251,7 +252,7 @@ class SettingsTab(QWidget):
                 border: none;
                 border-radius: 3px;
                 background-color: #1a73e8;
-                image: url(icon/check.png);
+                image: url(resources/icons/check.png);
             }
         """
         self.env_java_home.setStyleSheet(checkbox_style)
@@ -265,7 +266,7 @@ class SettingsTab(QWidget):
         # 应用环境变量按钮
         self.apply_env_button = QPushButton('应用环境变量设置')
         self.apply_env_button.setObjectName('apply_env_button')
-        self.apply_env_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'apply.png')))
+        self.apply_env_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'apply.png')))
         self.apply_env_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
@@ -394,6 +395,37 @@ class SettingsTab(QWidget):
         # 连接路径编辑框变更信号以更新说明文本
         self.junction_path_edit.textChanged.connect(self.update_env_description)
 
+        # Shell 设置组 (仅在非 Windows 平台显示)
+        if not platform_manager.is_windows:
+            shell_group = QGroupBox("Shell 设置")
+            shell_layout = QVBoxLayout()
+            
+            # Shell 类型选择
+            shell_type_layout = QHBoxLayout()
+            shell_type_label = QLabel("Shell 类型:")
+            self.shell_combo = QComboBox()
+            self.shell_combo.addItems(['auto', 'bash', 'zsh', 'fish'])
+            current_shell = self.config.get('shell_type', 'auto')
+            self.shell_combo.setCurrentText(current_shell)
+            self.shell_combo.currentTextChanged.connect(self.on_shell_changed)
+            shell_type_layout.addWidget(shell_type_label)
+            shell_type_layout.addWidget(self.shell_combo)
+            shell_layout.addLayout(shell_type_layout)
+            
+            # 配置文件路径
+            config_file_layout = QHBoxLayout()
+            config_file_label = QLabel("配置文件:")
+            self.config_file_path = QLineEdit(self.config.get('shell_config_path', ''))
+            config_file_button = QPushButton("浏览")
+            config_file_button.clicked.connect(self.select_config_file)
+            config_file_layout.addWidget(config_file_label)
+            config_file_layout.addWidget(self.config_file_path)
+            config_file_layout.addWidget(config_file_button)
+            shell_layout.addLayout(config_file_layout)
+            
+            shell_group.setLayout(shell_layout)
+            layout.addWidget(shell_group)
+
     def select_store_path(self):
         """选择JDK存储路径"""
         path = QFileDialog.getExistingDirectory(
@@ -418,20 +450,22 @@ class SettingsTab(QWidget):
 
     def save_settings(self):
         """保存设置"""
-        # 保存JDK存储路径
-        self.config.set('jdk_store_path', self.store_path_edit.text())
-        
-        # 保存软链接路径
-        self.config.set('junction_path', self.junction_path_edit.text())
-        
-        # 保存自启动设置
-        self.config.set_auto_start(self.auto_start_checkbox.isChecked())
-        
-        # 发送设置变更信号
-        self.settings_changed.emit()
-        
-        # 显示保存成功提示
-        QMessageBox.information(self, '成功', '设置已保存')
+        try:
+            # 保存基本设置
+            self.config.set('storage_path', self.store_path_edit.text())
+            self.config.set('junction_path', self.junction_path_edit.text())
+            self.config.set('theme', self.theme_combo.currentText())
+            
+            # 保存 shell 设置
+            if not platform_manager.is_windows:
+                self.config.set('shell_type', self.shell_combo.currentText())
+                self.config.set('shell_config_path', self.config_file_path.text())
+            
+            self.config.save()
+            self.settings_changed.emit()
+            QMessageBox.information(self, "成功", "设置已保存")
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"保存设置失败: {str(e)}")
 
     def apply_env_settings(self):
         """应用环境变量设置"""
@@ -478,3 +512,32 @@ class SettingsTab(QWidget):
         self.config.set('close_action', None)
         self.config.save()
         QMessageBox.information(self, '提示', '关闭行为已重置，下次关闭窗口时将重新询问。') 
+
+    def on_shell_changed(self, shell_type):
+        """处理 shell 类型变更"""
+        if shell_type == 'auto':
+            # 自动检测 shell 配置文件
+            config_file = platform_manager.get_shell_config_file()
+            if config_file:
+                self.config_file_path.setText(config_file)
+        else:
+            # 根据选择的 shell 类型设置默认配置文件
+            home = os.path.expanduser('~')
+            if shell_type == 'zsh':
+                config_file = os.path.join(home, '.zshrc')
+            elif shell_type == 'bash':
+                config_file = os.path.join(home, '.bashrc')
+            elif shell_type == 'fish':
+                config_file = os.path.join(home, '.config/fish/config.fish')
+            self.config_file_path.setText(config_file)
+    
+    def select_config_file(self):
+        """选择 shell 配置文件"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择 Shell 配置文件",
+            os.path.expanduser("~"),
+            "Shell 配置文件 (*.rc *.profile *.fish);;所有文件 (*.*)"
+        )
+        if file_path:
+            self.config_file_path.setText(file_path) 

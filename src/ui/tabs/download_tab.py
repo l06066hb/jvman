@@ -522,7 +522,7 @@ class DownloadTab(QWidget):
                 padding-right: 10px;
             }
             QComboBox::down-arrow {
-                image: url(icon/down-arrow.png);
+                image: url(resources/icons/down-arrow.png);
             }
             QComboBox QAbstractItemView {
                 border: 1px solid #E0E0E0;
@@ -561,7 +561,7 @@ class DownloadTab(QWidget):
         button_group = QHBoxLayout()
         
         self.refresh_button = QPushButton('刷新')
-        self.refresh_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'refresh.png')))
+        self.refresh_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'refresh.png')))
         self.refresh_button.setStyleSheet("""
             QPushButton {
                 padding: 5px 15px;
@@ -578,7 +578,7 @@ class DownloadTab(QWidget):
         """)
         
         self.download_button = QPushButton('下载')
-        self.download_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'icon', 'download.png')))
+        self.download_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'download.png')))
         self.download_button.setStyleSheet("""
             QPushButton {
                 padding: 5px 15px;

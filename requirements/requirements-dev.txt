@@ -1,0 +1,35 @@
+# 基础依赖
+PyQt6>=6.4.0
+PyQt6-Qt6>=6.4.0
+PyQt6-sip>=13.4.0
+
+# 网络请求
+requests>=2.28.0
+
+# 日志管理
+loguru>=0.7.0
+
+# 开发工具
+black>=23.0.0  # 代码格式化
+flake8>=6.0.0  # 代码检查
+pytest>=7.0.0  # 单元测试
+pytest-qt>=4.2.0  # PyQt测试支持
+pytest-cov>=4.1.0  # 测试覆盖率
+
+# 文档工具
+sphinx>=7.0.0  # 文档生成
+sphinx-rtd-theme>=1.3.0  # Read the Docs 主题
+
+# 类型检查
+mypy>=1.0.0
+types-requests>=2.28.0
+types-pywin32>=305; platform_system == "Windows"
+
+# 打包工具
+pyinstaller>=5.13.0  # 可执行文件打包
+setuptools>=68.0.0
+wheel>=0.40.0
+
+# 开发辅助
+python-dotenv>=1.0.0  # 环境变量管理
+pre-commit>=3.3.0  # Git hooks管理 

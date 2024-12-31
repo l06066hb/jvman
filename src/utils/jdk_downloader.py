@@ -526,7 +526,7 @@ class JDKDownloader(QObject):
                 return 'https://www.oracle.com/java/technologies/downloads/'
             
             elif vendor == 'OpenJDK':
-                # OpenJDK 官方下���链接
+                # OpenJDK 官方下载链接
                 version_map = {
                     '23': 'https://download.java.net/java/early_access/jdk23/31/GPL/openjdk-23-ea+31_windows-x64_bin.zip',
                     '22': 'https://download.java.net/java/GA/jdk22/4184dcf0b2d7-1/17/GPL/openjdk-22_windows-x64_bin.zip',

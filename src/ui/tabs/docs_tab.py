@@ -1,10 +1,54 @@
+import os
+import sys
+import webbrowser
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QScrollArea, QFrame, QPushButton
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap, QPainter
-import webbrowser
+from loguru import logger
+
+def get_icon_path(icon_name):
+    """获取图标路径，支持多个场景
+    
+    Args:
+        icon_name: 图标文件名
+        
+    Returns:
+        str: 图标的完整路径，如果找不到则返回 None
+    """
+    # 可能的基础路径列表
+    base_paths = []
+    
+    # 1. 打包后环境路径
+    if getattr(sys, 'frozen', False):
+        base_paths.append(os.path.join(sys._MEIPASS, 'resources', 'icons'))
+    
+    # 2. 开发环境路径
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    base_paths.extend([
+        os.path.join(project_root, 'resources', 'icons'),  # 主项目resources目录
+        os.path.join(current_dir, '..', '..', '..', 'resources', 'icons'),  # 相对路径
+        os.path.join(os.path.dirname(sys.executable), 'resources', 'icons'),  # 可执行文件目录
+    ])
+    
+    # 3. 作为模块安装的环境路径
+    if '__file__' in globals():
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        base_paths.append(os.path.join(module_dir, 'resources', 'icons'))
+    
+    # 遍历所有可能的路径
+    for base_path in base_paths:
+        icon_path = os.path.join(base_path, icon_name)
+        if os.path.exists(icon_path):
+            return icon_path
+            
+    # 如果找不到图标，记录警告并返回 None
+    logger.warning(f"Icon not found: {icon_name}")
+    logger.debug(f"Searched paths: {base_paths}")
+    return None
 
 class DocsTab(QWidget):
     """API文档标签页"""
@@ -36,8 +80,8 @@ class DocsTab(QWidget):
         
         # 搜索图标
         search_icon = QLabel()
-        search_icon_pixmap = QIcon("icon/search.png").pixmap(QSize(16, 16))
-        search_icon.setPixmap(search_icon_pixmap)
+        if icon_path := get_icon_path('search.png'):
+            search_icon.setPixmap(QIcon(icon_path).pixmap(QSize(16, 16)))
         search_icon.setStyleSheet("""
             QLabel {
                 background: transparent;
@@ -109,37 +153,39 @@ class DocsTab(QWidget):
     def add_doc_sections(self):
         """添加文档分区"""
         # JDK API 文档
-        self.add_section_title("JDK API 文档", "icon/api.png")
+        self.add_section_title("JDK API 文档", "api.png")
         self.add_api_docs()
         
         # 添加分隔线
         self.add_separator()
         
         # Java 教程和指南
-        self.add_section_title("Java 教程和指南", "icon/book.png")
+        self.add_section_title("Java 教程和指南", "book.png")
         self.add_tutorial_docs()
         
         # 添加分隔线
         self.add_separator()
         
         # 开发者资源
-        self.add_section_title("开发者资源", "icon/dev.png")
-        self.add_dev_resources()
+        self.add_section_title("开发者资源", "dev.png")
+        self.add_dev_resourcess()
         
         # 添加分隔线
         self.add_separator()
         
         # 中文资料
-        self.add_section_title("中文资料", "icon/cn.png")
-        self.add_chinese_resources()
+        self.add_section_title("中文资料", "cn.png")
+        self.add_chinese_resourcess()
         
-    def add_section_title(self, title, icon_path):
+    def add_section_title(self, title, icon_name):
         """添加分区标题"""
         title_layout = QHBoxLayout()
         title_layout.setContentsMargins(0, 10, 0, 5)
         
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon(icon_path).pixmap(QSize(20, 20)))
+        icon_label.setFixedSize(20, 20)
+        if icon_path := get_icon_path(icon_name):
+            icon_label.setPixmap(QIcon(icon_path).pixmap(QSize(20, 20)))
         title_layout.addWidget(icon_label)
         
         title_label = QLabel(title)
@@ -162,11 +208,12 @@ class DocsTab(QWidget):
         separator.setStyleSheet("background-color: #E0E0E0;")
         self.content_layout.addWidget(separator)
         
-    def create_doc_button(self, text, url, icon_path=None):
+    def create_doc_button(self, text, url, icon_name=None):
         """创建文档按钮"""
         button = QPushButton(text)
-        if icon_path:
-            button.setIcon(QIcon(icon_path))
+        if icon_name:
+            if icon_path := get_icon_path(icon_name):
+                button.setIcon(QIcon(icon_path))
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.clicked.connect(lambda: webbrowser.open(url))
         button.setStyleSheet("""
@@ -197,7 +244,7 @@ class DocsTab(QWidget):
         }
         
         for version, url in api_docs.items():
-            button = self.create_doc_button(version, url, "icon/java.png")
+            button = self.create_doc_button(version, url, "java.png")
             self.content_layout.addWidget(button)
             
     def add_tutorial_docs(self):
@@ -211,12 +258,12 @@ class DocsTab(QWidget):
         }
         
         for title, url in tutorials.items():
-            button = self.create_doc_button(title, url, "icon/book.png")
+            button = self.create_doc_button(title, url, "book.png")
             self.content_layout.addWidget(button)
             
-    def add_dev_resources(self):
+    def add_dev_resourcess(self):
         """添加开发者资源链接"""
-        resources = {
+        resourcess = {
             'Java 开发者中心': 'https://dev.java/',
             'OpenJDK 文档': 'https://openjdk.org/guide/',
             'Java 发行说明': 'https://www.oracle.com/java/technologies/javase/jdk-relnotes-index.html',
@@ -224,13 +271,13 @@ class DocsTab(QWidget):
             'Java 性能优化指南': 'https://docs.oracle.com/en/java/javase/21/performance/index.html'
         }
         
-        for title, url in resources.items():
-            button = self.create_doc_button(title, url, "icon/dev.png")
+        for title, url in resourcess.items():
+            button = self.create_doc_button(title, url, "dev.png")
             self.content_layout.addWidget(button)
             
-    def add_chinese_resources(self):
+    def add_chinese_resourcess(self):
         """添加中文资料链接"""
-        resources = {
+        resourcess = {
             'Java 开发手册(阿里巴巴)': 'https://github.com/alibaba/p3c',
             'Java 虚拟机规范(中文版)': 'https://github.com/waylau/java-virtual-machine-specification',
             'Effective Java 中文版': 'https://github.com/clxering/Effective-Java-3rd-edition-Chinese-English-bilingual',
@@ -245,8 +292,8 @@ class DocsTab(QWidget):
             'JVM 底层原理解析': 'https://github.com/doocs/jvm'
         }
         
-        for title, url in resources.items():
-            button = self.create_doc_button(title, url, "icon/cn-doc.png")
+        for title, url in resourcess.items():
+            button = self.create_doc_button(title, url, "cn.png")
             self.content_layout.addWidget(button)
             
     def filter_docs(self, text):

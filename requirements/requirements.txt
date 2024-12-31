@@ -1,0 +1,18 @@
+# GUI框架
+PyQt6>=6.4.0
+PyQt6-Qt6>=6.4.0
+PyQt6-sip>=13.4.0
+
+# 网络请求
+requests>=2.28.0
+
+# 日志管理
+loguru>=0.7.0
+
+# 系统相关
+psutil>=5.9.0
+pywin32>=305; platform_system == "Windows"
+winshell>=0.6; platform_system == "Windows"
+
+# 打包工具
+pyinstaller>=5.13.0 

@@ -1,0 +1,54 @@
+{
+    "name": "JDK Version Manager",
+    "version": "1.0.4",
+    "description": "JDK版本管理工具，支持在线下载和本地映射，提供中英文国际化支持",
+    "author": "l6066hb",
+    "homepage": "https://gitee.com/l06066hb/jvman",
+    "license": "MIT",
+    "build": {
+        "app_id": "com.jvman.app",
+        "copyright": "Copyright © 2024",
+        "supported_platforms": ["windows", "macos", "linux"],
+        "min_python_version": "3.8.0",
+        "framework": "PyQt6"
+    },
+    "update": {
+        "check_url": "https://gitee.com/api/v5/repos/l06066hb/jvman/releases/latest",
+        "download_url": "https://gitee.com/l06066hb/jvman/releases",
+        "changelog_url": "https://gitee.com/l06066hb/jvman/blob/main/CHANGELOG.md"
+    },
+    "features": {
+        "online_download": true,
+        "local_mapping": true,
+        "version_switch": true,
+        "env_management": true,
+        "tray_support": true,
+        "settings": true,
+        "i18n": ["zh_CN", "en_US"]
+    },
+    "changelog": [
+        {
+            "version": "1.0.4",
+            "date": "2024-12-30",
+            "type": "feature",
+            "changes": [
+                "优化构建系统，支持便携版和安装版",
+                "统一版本管理，使用 app.json 集中配置",
+                "改进图标显示和资源管理",
+                "优化日志系统，支持文件记录",
+                "完善帮助文档和 API 文档",
+                "添加中英文 README 支持",
+                "改进托盘菜单和版本切换功能",
+                "优化界面样式和用户体验",
+                "添加构建脚本的平台支持"
+            ]
+        }
+    ],
+    "requirements": {
+        "python": ">=3.8.0",
+        "pyqt6": ">=6.4.0",
+        "loguru": ">=0.7.0",
+        "requests": ">=2.25.0",
+        "packaging": ">=20.0"
+    }
+} 
