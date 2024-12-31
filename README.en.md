@@ -1,11 +1,12 @@
-# JDK Version Manager (JVMAN)
+# JDK Version Manager
 
-![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-A user-friendly JDK version management tool for Windows, supporting online downloads and local JDK management.
+A user-friendly JDK version management tool that supports Windows, macOS, and Linux platforms.
 
 [中文文档](README.md)
 
@@ -17,19 +18,48 @@ A user-friendly JDK version management tool for Windows, supporting online downl
 - 🛠 Environment Variable Management: Automatic configuration of JAVA_HOME, PATH, and CLASSPATH
 - 💡 System Tray: Quick view and switch current JDK version
 - 🎨 Theme Switching: Support light, dark, and cyan themes
-- 🌐 Internationalization: Support for Chinese and English interfaces (not supported yet)
+- 🌐 Internationalization: Support for Chinese and English interfaces
+- 🖥 Multi-platform Support:
+  - Windows: Version switching using symbolic links
+  - macOS: Support for Homebrew-installed JDKs, symbolic link switching
+  - Linux: Support for apt/yum package managers, symbolic link switching
+- 📝 Logging: Detailed operation logs with file recording support
+- 🔧 Portable Support: No installation required, just extract and use
+- 🔄 Auto Update: Support checking and downloading new versions
 
 ## System Requirements
 
-- Windows 10/11
+- Windows 10/11, macOS 10.15+, or Linux (major distributions)
 - Python 3.8+
-- PyQt6
+- PyQt6 >= 6.4.0
+- Disk Space: At least 100MB (excluding downloaded JDKs)
 
 ## Installation
 
+### Windows
+1. Download the latest installer (Recommended)
+   - Download the latest installer from [Releases](https://gitee.com/l06066hb/jvman/releases)
+   - Run the installer and follow the wizard
+   - Launch the program from Start Menu or desktop shortcut
+2. Portable Version
+   - Download the latest portable ZIP file
+   - Extract to any directory
+   - Run jvman.exe
+
+### macOS
+1. Download the latest DMG file
+2. Open the DMG and drag the app to Applications
+3. Admin password required for first run
+
+### Linux
+1. Download the latest AppImage or deb/rpm package
+2. Install the package or run the AppImage directly
+3. Sudo privileges required for first run
+
+### From Source
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/jvman.git
+git clone https://gitee.com/l06066hb/jvman.git
 cd jvman
 ```
 
@@ -82,12 +112,62 @@ python src/main.py
 2. Click "Switch Version"
 3. Wait for the switch to complete
 
+### Platform-Specific Notes
+
+#### Windows
+- Version switching using symbolic links
+- Administrator privileges required for system environment variables
+- Native symbolic link support for Windows 10/11
+
+#### macOS
+- Support for Homebrew-installed JDKs
+- Version switching using symbolic links
+- Automatic shell config file updates (bash/zsh)
+- Admin privileges required for symbolic links
+
+#### Linux
+- Support for apt/yum package manager installed JDKs
+- Version switching using symbolic links
+- Automatic shell config file updates (bash/zsh/fish)
+- Sudo privileges required for symbolic links
+
 ### Notes
 - Recommended to use ZIP version of JDK to avoid conflicts with installed versions
-- First-time use requires administrator privileges for environment variable configuration
+- First-time use requires administrator/sudo privileges for environment variable configuration
 - If download fails, try manual download option
+- Unix systems (macOS/Linux) need to reload shell config file for environment variables to take effect
+
+## Build Instructions
+
+### Build Portable Version
+```bash
+python scripts/build.py --platform windows --type portable
+```
+
+### Build Installer Version
+```bash
+python scripts/build.py --platform windows --type installer
+```
+
+### Build All
+```bash
+python scripts/build.py --platform windows --type all
+```
 
 ## Changelog
+
+### v1.0.4 (2024-01-05)
+- Added installer support
+- Added multi-platform support (Windows/macOS/Linux)
+- Optimized version switching mechanism with cross-platform symbolic links
+- Added package manager support (Homebrew/apt/yum)
+- Improved shell configuration file management
+- Enhanced environment variable setup
+- Improved application stability
+- Optimized build system, supporting portable and installer versions
+- Unified version management using app.json for centralized configuration
+- Improved icon display and resource management
+- Enhanced logging system with file recording support
 
 ### v1.0.3 (2024-12-28)
 - Fixed theme switching configuration saving
@@ -151,23 +231,26 @@ jvman/
 │   └── i18n/          # Internationalization resources
 ├── tests/             # Test cases
 ├── docs/              # Documentation
+├── scripts/           # Build and utility scripts
+├── config/            # Configuration files
+├── resources/         # Resource files
+│   └── icons/        # Icon resources
 └── requirements/      # Dependency configuration files
 ```
 
 ## FAQ
 
 ### Q: How to resolve environment variable setup failure?
-A: Ensure running the program with administrator privileges or manually copy and set environment variable values.
+A: Ensure running the program with administrator/sudo privileges or manually copy and set environment variable values.
 
 ### Q: What to do if download speed is slow?
 A: Configure proxy server in settings or use manual download feature.
 
 ### Q: How to backup current configuration?
-A: Program configuration files are stored in `%APPDATA%/jvman` directory, you can directly copy this directory for backup.
+A: Program configuration files are stored in user directory, you can directly copy this directory for backup.
 
-## Related Projects
-- [SDKMAN](https://github.com/sdkman/sdkman-cli) - SDK Manager for Unix-based Systems
-- [Jabba](https://github.com/shyiko/jabba) - Cross-platform Java Version Manager
+### Q: How to handle version switching failure?
+A: Check if you have sufficient permissions and ensure the target JDK directory exists and is complete.
 
 ## Security
 Please report security vulnerabilities to [security@example.com](mailto:security@example.com).

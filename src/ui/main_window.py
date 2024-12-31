@@ -9,13 +9,32 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize, QPoint
 from PyQt6.QtGui import QIcon, QAction, QFont, QCursor
 
-from .tabs.download_tab import DownloadTab
-from .tabs.local_tab import LocalTab
-from .tabs.settings_tab import SettingsTab
-from .tabs.help_tab import HelpTab
-from .tabs.docs_tab import DocsTab
-from utils.system_utils import create_junction, set_environment_variable, update_path_variable
-from utils.theme_manager import ThemeManager
+from src.ui.tabs.download_tab import DownloadTab
+from src.ui.tabs.local_tab import LocalTab
+from src.ui.tabs.settings_tab import SettingsTab
+from src.ui.tabs.help_tab import HelpTab
+from src.ui.tabs.docs_tab import DocsTab
+from src.utils.system_utils import create_symlink, set_environment_variable, update_path_variable
+from src.utils.theme_manager import ThemeManager
+from src.utils.platform_manager import platform_manager
+from utils.version_manager import version_manager
+
+import sys
+
+def get_icon_path(icon_name):
+    """获取图标路径"""
+    if getattr(sys, 'frozen', False):
+        # 如果是打包后的环境
+        base_path = sys._MEIPASS
+    else:
+        # 如果是开发环境
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    icon_path = os.path.join(base_path, 'resources', 'icons', icon_name)
+    if not os.path.exists(icon_path):
+        logger.warning(f"Icon not found at: {icon_path}")
+        return None
+    return icon_path
 
 class MainWindow(QMainWindow):
     """主窗口"""
@@ -30,8 +49,8 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        version = self.config.get('version', '1.0.2')
-        self.setWindowTitle(f'JDK 管理工具 v{version}')
+        # 设置窗口标题和大小
+        self.setWindowTitle(f"{version_manager.app_name} v{version_manager.version}")
         self.setMinimumSize(800, 600)
         
         # 创建中心部件
@@ -67,14 +86,11 @@ class MainWindow(QMainWindow):
         self.tray_icon = QSystemTrayIcon(self)
         
         # 设置图标（使用绝对路径）
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'app.png')
-        if os.path.exists(icon_path):
+        icon_path = get_icon_path('app.ico')
+        if icon_path:
             icon = QIcon(icon_path)
             self.tray_icon.setIcon(icon)
             self.setWindowIcon(icon)
-        
-        # 获取版本号
-        version = self.config.get('version', '1.0.2')
         
         # 创建托盘菜单
         tray_menu = QMenu()
@@ -120,7 +136,7 @@ class MainWindow(QMainWindow):
         # 添加当前版本显示（禁用状态用于显示信息）
         version_text = self.get_formatted_version_text()
         self.current_version_action = QAction(version_text, self)
-        self.current_version_action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'java-version.png')))
+        self.current_version_action.setIcon(QIcon(get_icon_path('java-version.png')))
         self.current_version_action.setEnabled(False)
         tray_menu.addAction(self.current_version_action)
         
@@ -129,7 +145,7 @@ class MainWindow(QMainWindow):
         
         # 添加JDK切换子菜单
         self.jdk_menu = QMenu('切换版本')
-        self.jdk_menu.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'java.png')))
+        self.jdk_menu.setIcon(QIcon(get_icon_path('java.png')))
         self.jdk_menu.setStyleSheet(tray_menu.styleSheet())
         self.update_jdk_menu()
         tray_menu.addMenu(self.jdk_menu)
@@ -139,7 +155,7 @@ class MainWindow(QMainWindow):
         
         # 添加显示/隐藏动作
         show_action = QAction('显示窗口', self)
-        show_action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'window.png')))
+        show_action.setIcon(QIcon(get_icon_path('window.png')))
         show_action.triggered.connect(self.show)
         tray_menu.addAction(show_action)
         
@@ -148,7 +164,7 @@ class MainWindow(QMainWindow):
         
         # 添加退出动作（在最后）
         quit_action = QAction('退出程序', self)
-        quit_action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'exit.png')))
+        quit_action.setIcon(QIcon(get_icon_path('exit.png')))
         quit_action.triggered.connect(self.quit_application)
         tray_menu.addAction(quit_action)
         
@@ -171,8 +187,7 @@ class MainWindow(QMainWindow):
         """更新当前版本显示"""
         version_text = self.get_formatted_version_text()
         self.current_version_action.setText(version_text)
-        version = self.config.get('version', '1.0.2')
-        self.tray_icon.setToolTip(f"JDK管理工具 v{version}\n{version_text}")
+        self.tray_icon.setToolTip(f"{version_manager.app_name} v{version_manager.version}\n{version_text}")
 
     def update_jdk_menu(self):
         """更新JDK切换菜单"""
@@ -193,11 +208,11 @@ class MainWindow(QMainWindow):
             action = QAction(f"JDK {jdk['version']}", self)
             # 根据是否是当前版本设置不同的图标
             if jdk['version'] == current_version:
-                action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'java-version.png')))
+                action.setIcon(QIcon(get_icon_path('java-version.png')))
                 action.setCheckable(True)
                 action.setChecked(True)
             else:
-                action.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'icon', 'type_java.png')))
+                action.setIcon(QIcon(get_icon_path('type_java.png')))
             action.setData(jdk)
             action.triggered.connect(self.on_tray_jdk_switch)
             self.jdk_menu.addAction(action)
@@ -215,28 +230,45 @@ class MainWindow(QMainWindow):
             jdk = action.data()
             junction_path = self.config.get('junction_path')
             
+            # 检查权限
+            if not platform_manager.check_admin_rights():
+                error_msg = platform_manager.get_error_message('admin_rights')
+                QMessageBox.warning(self, '权限不足', error_msg)
+                return
+            
             # 创建软链接
-            if create_junction(jdk['path'], junction_path):
+            if create_symlink(jdk['path'], junction_path):
                 # 更新托盘菜单
                 self.update_jdk_menu()
                 # 更新本地标签页显示
-                self.local_tab.refresh_jdk_list()  # 刷新JDK列表
-                self.local_tab.update_current_version()  # 更新当前版本显示
+                self.local_tab.refresh_jdk_list()
+                self.local_tab.update_current_version()
                 # 更新当前版本显示
                 self.update_current_version_display()
-                # 显示通知
-                self.tray_icon.showMessage(
-                    'JDK切换成功',
-                    f"已切换到 JDK {jdk['version']}",
-                    QSystemTrayIcon.MessageIcon.Information,
-                    2000  # 显示2秒
-                )
+                
+                # 根据平台显示不同的成功消息
+                if not platform_manager.is_windows:
+                    reload_cmd = platform_manager.get_shell_reload_command()
+                    self.tray_icon.showMessage(
+                        'JDK切换成功',
+                        f"已切换到 JDK {jdk['version']}\n请运行命令使环境变量生效：{reload_cmd}",
+                        QSystemTrayIcon.MessageIcon.Information,
+                        3000
+                    )
+                else:
+                    self.tray_icon.showMessage(
+                        'JDK切换成功',
+                        f"已切换到 JDK {jdk['version']}",
+                        QSystemTrayIcon.MessageIcon.Information,
+                        2000
+                    )
             else:
+                error_msg = platform_manager.get_error_message('symlink_failed')
                 self.tray_icon.showMessage(
                     '切换失败',
-                    '无法切换JDK版本',
+                    error_msg,
                     QSystemTrayIcon.MessageIcon.Warning,
-                    2000
+                    3000
                 )
 
     def on_tray_activated(self, reason):
@@ -280,7 +312,7 @@ class MainWindow(QMainWindow):
             # 更新托盘图标提示
             if hasattr(self, 'tray_icon'):
                 current_version = self.get_current_version()
-                tooltip = f"JDK 管理工具 v{self.config.get('version', '1.0.2')}\n"
+                tooltip = f"{version_manager.app_name} v{version_manager.version}\n"
                 tooltip += f"当前 JDK: {current_version}" if current_version else "未设置 JDK 版本"
                 self.tray_icon.setToolTip(tooltip)
                 

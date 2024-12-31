@@ -1,6 +1,0 @@
-PyQt6>=6.4.0
-requests>=2.31.0
-psutil>=5.9.0
-loguru>=0.7.0
-darkdetect>=0.8.0
-QDarkStyle>=3.1.0 
