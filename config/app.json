@@ -1,6 +1,6 @@
 {
     "name": "JDK Version Manager",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "JDK版本管理工具，支持在线下载和本地映射，提供中英文国际化支持",
     "author": "l6066hb",
     "homepage": "https://gitee.com/l06066hb/jvman",
@@ -13,9 +13,10 @@
         "framework": "PyQt6"
     },
     "update": {
-        "check_url": "https://gitee.com/api/v5/repos/l06066hb/jvman/releases/latest",
-        "download_url": "https://gitee.com/l06066hb/jvman/releases",
-        "changelog_url": "https://gitee.com/l06066hb/jvman/blob/main/CHANGELOG.md"
+        "check_url": "https://gitee.com/l06066hb/jvman/raw/master/config/app.json",
+        "download_url": "https://gitee.com/l06066hb/jvman/releases/download/v{version}/jvman-{version}-windows.zip",
+        "auto_check": true,
+        "check_interval": 24
     },
     "features": {
         "online_download": true,
@@ -27,6 +28,25 @@
         "i18n": ["zh_CN", "en_US"]
     },
     "changelog": [
+        {
+            "version": "1.0.5",
+            "date": "2024-01-05",
+            "type": "feature",
+            "changes": [
+                "托盘菜单的版本切换功能",
+                "托盘图标显示当前版本信息",
+                "环境变量预览和同步状态显示",
+                "滚动条样式优化和主题适配",
+                "优化托盘菜单布局和样式",
+                "改进环境变量设置界面",
+                "优化版本切换后的状态同步",
+                "统一滚动条样式和交互体验",
+                "修复托盘菜单版本列表同步问题",
+                "修复环境变量设置后的显示更新",
+                "修复主题切换时的样式应用问题",
+                "修复版本切换后的状态刷新问题"
+            ]
+        },
         {
             "version": "1.0.4",
             "date": "2024-12-30",

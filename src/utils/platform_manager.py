@@ -64,17 +64,22 @@ class PlatformManager:
         return os.path.join(home, '.profile')
         
     def get_shell_reload_command(self):
-        """获取重新加载shell配置的命令"""
+        """获取shell重新加载命令"""
         if self.is_windows:
             return None
             
-        config_file = self.get_shell_config_file()
-        if not config_file:
-            return None
-            
-        if self.shell == 'fish':
+        if self.shell == 'zsh':
+            return 'source ~/.zshrc'
+        elif self.shell == 'bash':
+            config_file = self.get_shell_config_file()
             return f'source {config_file}'
-        return f'. {config_file}'
+        elif self.shell == 'fish':
+            return 'source ~/.config/fish/config.fish'
+        else:
+            config_file = self.get_shell_config_file()
+            if config_file:
+                return f'source {config_file}'
+        return None
         
     def get_package_manager(self):
         """获取包管理器信息"""
@@ -187,6 +192,26 @@ class PlatformManager:
     def get_path_separator(self):
         """获取路径分隔符"""
         return ';' if self.is_windows else ':'
+
+    def get_env_var_commands(self, name, value):
+        """获取设置环境变量的命令"""
+        if self.is_windows:
+            return None
+            
+        if self.shell == 'fish':
+            commands = [
+                f'set -x {name} "{value}"'
+            ]
+            if name == 'JAVA_HOME':
+                commands.append(f'set -x PATH $PATH "$JAVA_HOME/bin"')
+        else:
+            commands = [
+                f'export {name}="{value}"'
+            ]
+            if name == 'JAVA_HOME':
+                commands.append('export PATH="$PATH:$JAVA_HOME/bin"')
+            
+        return commands
 
 # 创建全局实例
 platform_manager = PlatformManager() 

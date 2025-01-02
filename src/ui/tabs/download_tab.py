@@ -630,15 +630,18 @@ class DownloadTab(QWidget):
             }
             QScrollBar:vertical {
                 border: none;
-                background: #F0F0F0;
-                width: 8px;
-                border-radius: 4px;
+                background: transparent;
+                width: 4px;
                 margin: 0;
             }
             QScrollBar::handle:vertical {
-                background: #C0C0C0;
-                border-radius: 4px;
-                min-height: 20px;
+                background: rgba(0, 0, 0, 0.2);
+                min-height: 30px;
+                border-radius: 2px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: rgba(0, 0, 0, 0.3);
+                width: 8px;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -1165,32 +1168,38 @@ class DownloadTab(QWidget):
                     <style>
                         .content-section {{
                             color: #3c4043;
-                            line-height: 1.6;
+                            line-height: 1.8;
                             text-align: justify;
                             margin: 15px 0;
+                            font-size: 13px;
                         }}
                         .link-section {{
                             margin-top: 25px;
                             padding-top: 15px;
-                            border-top: 1px solid #E0E0E0;
+                            border-top: 1px solid rgba(0, 0, 0, 0.08);
                         }}
                         .link-item {{
                             margin: 12px 0;
                             display: flex;
                             align-items: center;
-                            transition: transform 0.2s;
+                            transition: all 0.2s ease;
+                            padding: 8px 12px;
+                            border-radius: 6px;
                         }}
                         .link-item:hover {{
+                            background-color: rgba(26, 115, 232, 0.05);
                             transform: translateX(5px);
                         }}
                         .link-icon {{
                             margin-right: 12px;
                             color: #1a73e8;
                             font-size: 18px;
+                            opacity: 0.9;
                         }}
                         .link-text {{
                             flex: 1;
                             color: #1a73e8;
+                            font-size: 13px;
                         }}
                         a {{
                             color: #1a73e8;
@@ -1200,19 +1209,29 @@ class DownloadTab(QWidget):
                         }}
                         a:hover {{
                             text-decoration: none;
+                            color: #1557b0;
                         }}
                         .section-title {{
                             color: #1a73e8;
                             font-size: 14px;
-                            font-weight: bold;
-                            margin: 20px 0 10px 0;
+                            font-weight: 600;
+                            margin: 20px 0 15px 0;
                             display: flex;
                             align-items: center;
+                            opacity: 0.9;
                         }}
                         .section-title::before {{
                             content: "✦";
                             margin-right: 8px;
                             color: #1a73e8;
+                            font-size: 16px;
+                        }}
+                        .highlight {{
+                            background-color: rgba(26, 115, 232, 0.1);
+                            padding: 2px 5px;
+                            border-radius: 3px;
+                            color: #1a73e8;
+                            font-weight: 500;
                         }}
                     </style>
                     <div class='content-section'>
@@ -1236,7 +1255,7 @@ class DownloadTab(QWidget):
                 """)
             else:
                 self.version_info_label.setText("""
-                    <div style='color: #666666; font-style: italic; padding: 20px 0;'>
+                    <div style='color: #666666; font-style: italic; padding: 20px 0; text-align: center;'>
                         暂无版本信息
                     </div>
                 """)

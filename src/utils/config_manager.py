@@ -1,14 +1,33 @@
 import os
 import json
 from loguru import logger
+import sys
+import re
 
 class ConfigManager:
     """配置管理器"""
     
-    def __init__(self, config_file='config/settings.json'):
-        self.config_file = config_file
-        self.config = {}  # 初始化为空字典
-        self.load()  # 加载配置
+    def __init__(self):
+        self.config = {}
+        self.config_file = self._get_config_file()
+        self.load()
+        
+    def _get_config_file(self):
+        """获取配置文件路径"""
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的环境
+            base_path = os.path.dirname(sys.executable)
+        else:
+            # 如果是开发环境
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # 首先尝试加载用户配置
+        user_config = os.path.join(base_path, 'config', 'settings.json')
+        if os.path.exists(user_config):
+            return user_config
+            
+        # 如果没有用户配置，使用默认配置
+        return os.path.join(base_path, 'config', 'app.json')
         
     def load(self):
         """加载配置"""
@@ -16,57 +35,122 @@ class ConfigManager:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     self.config = json.load(f)
-            return self.config
+                logger.debug(f"配置加载成功: {self.config_file}")
+            else:
+                logger.warning(f"配置文件不存在: {self.config_file}")
+                self._create_default_config()
         except Exception as e:
             logger.error(f"加载配置失败: {str(e)}")
-            self.config = {}
-            return self.config
-
+            self._create_default_config()
+            
     def save(self):
         """保存配置"""
         try:
             # 确保配置目录存在
             os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
             
-            # 保存配置
             with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, ensure_ascii=False, indent=4)
-                f.flush()  # 确保写入磁盘
-                os.fsync(f.fileno())  # 强制同步到磁盘
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+            logger.debug(f"配置保存成功: {self.config_file}")
         except Exception as e:
             logger.error(f"保存配置失败: {str(e)}")
-            raise Exception(f"保存配置失败: {str(e)}")
-
+            
     def get(self, key, default=None):
         """获取配置项"""
-        return self.config.get(key, default)
-
+        try:
+            # 支持使用点号访问嵌套配置
+            keys = key.split('.')
+            value = self.config
+            for k in keys:
+                value = value.get(k, default)
+                if value is None:
+                    if k == 'theme':  # 如果是主题配置，默认返回青色
+                        return 'cyan'
+                    return default
+            return value
+        except Exception:
+            if key == 'theme':  # 如果是主题配置，默认返回青色
+                return 'cyan'
+            return default
+            
     def set(self, key, value):
         """设置配置项"""
-        self.config[key] = value
+        try:
+            # 支持使用点号设置嵌套配置
+            keys = key.split('.')
+            config = self.config
+            for k in keys[:-1]:
+                config = config.setdefault(k, {})
+            config[keys[-1]] = value
+            return True
+        except Exception as e:
+            logger.error(f"设置配置失败: {str(e)}")
+            return False
+            
+    def _create_default_config(self):
+        """创建默认配置"""
+        self.config = {
+            "version": "1.0.4",
+            "language": "zh_CN",
+            "theme": "cyan",  # 默认使用青色主题
+            "auto_set_java_home": True,
+            "auto_set_path": True,
+            "auto_set_classpath": True,
+            "update": {
+                "check_url": "https://gitee.com/api/v5/repos/l06066hb/jvman/releases/latest",
+                "download_url": "https://gitee.com/l06066hb/jvman/releases",
+                "changelog_url": "https://gitee.com/l06066hb/jvman/blob/main/CHANGELOG.md",
+                "auto_check": True,
+                "check_interval": 24  # 小时
+            },
+            "proxy": {
+                "enabled": False,
+                "host": "",
+                "port": "",
+                "username": "",
+                "password": ""
+            }
+        }
         self.save()
 
     def add_mapped_jdk(self, jdk_info):
         """添加映射的JDK"""
         mapped_jdks = self.get('mapped_jdks', [])
         
+        # 确保版本信息完整
+        if 'version' in jdk_info and not jdk_info['version'].startswith('1.'):
+            # 对于JDK 9及以上版本，保持原样
+            version = jdk_info['version']
+        else:
+            # 对于JDK 8及以下版本，确保使用完整版本号
+            path = jdk_info.get('path', '')
+            if 'jdk1.8' in path:
+                version_match = re.search(r'jdk1\.8\.0_(\d+)', path)
+                if version_match:
+                    version = f"1.8.0_{version_match.group(1)}"
+                else:
+                    version = "1.8.0"
+            else:
+                version = jdk_info.get('version', '')
+        
+        jdk_info['version'] = version
+        
         # 检查是否已存在相同路径的JDK
         for existing_jdk in mapped_jdks:
             try:
                 if os.path.samefile(existing_jdk['path'], jdk_info['path']):
-                    return False
+                    # 更新现有JDK的信息
+                    existing_jdk.update(jdk_info)
+                    self.set('mapped_jdks', mapped_jdks)
+                    return True
             except Exception:
                 continue
                 
-        # 检查是否已存在相同版本的JDK
-        for existing_jdk in mapped_jdks:
-            if existing_jdk['version'] == jdk_info['version'] and existing_jdk['path'] == jdk_info['path']:
-                return False
-                
+        # 如果不存在，添加到列表
         mapped_jdks.append(jdk_info)
         self.set('mapped_jdks', mapped_jdks)
         return True
-
+        
     def add_downloaded_jdk(self, jdk_info):
         """添加下载的JDK"""
         try:
@@ -74,6 +158,24 @@ class ConfigManager:
             self.load()
             
             downloaded_jdks = self.get('downloaded_jdks', [])
+            
+            # 确保版本信息完整
+            if 'version' in jdk_info and not jdk_info['version'].startswith('1.'):
+                # 对于JDK 9及以上版本，保持原样
+                version = jdk_info['version']
+            else:
+                # 对于JDK 8及以下版本，确保使用完整版本号
+                path = jdk_info.get('path', '')
+                if 'jdk1.8' in path:
+                    version_match = re.search(r'jdk1\.8\.0_(\d+)', path)
+                    if version_match:
+                        version = f"1.8.0_{version_match.group(1)}"
+                    else:
+                        version = "1.8.0"
+                else:
+                    version = jdk_info.get('version', '')
+            
+            jdk_info['version'] = version
             
             # 检查是否已存在相同路径的JDK
             for existing_jdk in downloaded_jdks:
@@ -94,7 +196,7 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"添加下载的JDK失败: {str(e)}")
             raise Exception(f"添加下载的JDK失败: {str(e)}")
-
+            
     def remove_jdk(self, jdk_path, is_mapped=True):
         """移除JDK记录"""
         key = 'mapped_jdks' if is_mapped else 'downloaded_jdks'
@@ -218,6 +320,24 @@ class ConfigManager:
     def add_jdk(self, jdk_info):
         """添加JDK到配置"""
         try:
+            # 确保版本信息完整
+            if 'version' in jdk_info and not jdk_info['version'].startswith('1.'):
+                # 对于JDK 9及以上版本，保持原样
+                version = jdk_info['version']
+            else:
+                # 对于JDK 8及以下版本，确保使用完整版本号
+                path = jdk_info.get('path', '')
+                if 'jdk1.8' in path:
+                    version_match = re.search(r'jdk1\.8\.0_(\d+)', path)
+                    if version_match:
+                        version = f"1.8.0_{version_match.group(1)}"
+                    else:
+                        version = "1.8.0"
+                else:
+                    version = jdk_info.get('version', '')
+            
+            jdk_info['version'] = version
+            
             if jdk_info.get('type') == 'mapped':
                 return self.add_mapped_jdk(jdk_info)
             elif jdk_info.get('type') == 'downloaded':

@@ -75,6 +75,7 @@ try:
     from utils.config_manager import ConfigManager
     from utils.platform_manager import platform_manager
     from utils.version_manager import version_manager
+    from utils.theme_manager import ThemeManager
 except Exception as e:
     error_msg = f"Failed to import required modules:\n{str(e)}\n{traceback.format_exc()}"
     logger.exception(error_msg)
@@ -169,21 +170,6 @@ def main():
         setup_logging()
         logger.debug("Logging setup completed")
         
-        # 初始化配置
-        config = ConfigManager()
-        logger.debug("Configuration initialized")
-        
-        # 设置平台管理器的配置
-        platform_manager.set_config(config)
-        
-        # 获取并记录平台信息
-        platform_info = platform_manager.get_platform_info()
-        logger.info(f"系统信息: {platform_info}")
-        
-        # 检查包管理器
-        if package_manager := platform_info.get('package_manager'):
-            logger.info(f"检测到包管理器: {package_manager['name']}")
-        
         # 创建应用
         app = QApplication(sys.argv)
         app.setApplicationName(version_manager.app_name)
@@ -195,6 +181,17 @@ def main():
             app_icon = QIcon(icon_path)
             app.setWindowIcon(app_icon)
             logger.debug(f"Application icon set from: {icon_path}")
+        
+        # 初始化配置
+        config = ConfigManager()
+        logger.debug("Configuration initialized")
+        
+        # 初始化主题管理器并应用主题
+        ThemeManager.initialize(config)
+        logger.debug("Theme manager initialized")
+        
+        # 设置平台管理器的配置
+        platform_manager.set_config(config)
         
         # 创建主窗口
         window = MainWindow(config)
