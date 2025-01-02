@@ -61,8 +61,8 @@ class JDKDownloader(QObject):
         self.base_versions = {
             'Oracle JDK': ['23', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8'],
             'OpenJDK': ['23', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8'],
-            'Eclipse Temurin (Adoptium)': ['23', '21', '17', '11', '8'],
-            'Amazon Corretto': ['23', '21', '17', '11', '8'],
+            'Eclipse Temurin (Adoptium)': ['23', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8'],
+            'Amazon Corretto': ['23', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8'],
             'Azul Zulu': ['23', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8']
         }
         
@@ -528,8 +528,6 @@ class JDKDownloader(QObject):
             elif vendor == 'OpenJDK':
                 # OpenJDK 官方下载链接
                 version_map = {
-                    '23': 'https://download.java.net/java/early_access/jdk23/31/GPL/openjdk-23-ea+31_windows-x64_bin.zip',
-                    '22': 'https://download.java.net/java/GA/jdk22/4184dcf0b2d7-1/17/GPL/openjdk-22_windows-x64_bin.zip',
                     '21': 'https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip',
                     '20': 'https://download.java.net/java/GA/jdk20.0.2/6e380f22cbe7469fa75fb448bd903d8e/9/GPL/openjdk-20.0.2_windows-x64_bin.zip',
                     '19': 'https://download.java.net/java/GA/jdk19.0.2/fdb695a9d9064ad6b064dc6df578380c/7/GPL/openjdk-19.0.2_windows-x64_bin.zip',
@@ -589,6 +587,28 @@ class JDKDownloader(QObject):
                     except Exception as e:
                         logger.error(f"检查 OpenJDK {version} 版本下载链接失败: {str(e)}")
                 
+                return version_map.get(version)
+            
+            elif vendor == 'Eclipse Temurin (Adoptium)':
+                # Eclipse Temurin 下载链接
+                version_map = {
+                    '23': 'https://github.com/adoptium/temurin23-binaries/releases/download/jdk-23-ea+36/OpenJDK23U-jdk_x64_windows_hotspot_ea_23-0-36.zip',
+                    '22': 'https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22%2B36/OpenJDK22U-jdk_x64_windows_hotspot_22_36.zip',
+                    '21': 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.zip',
+                    '20': 'https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20.0.2%2B9/OpenJDK20U-jdk_x64_windows_hotspot_20.0.2_9.zip',
+                    '19': 'https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.2%2B7/OpenJDK19U-jdk_x64_windows_hotspot_19.0.2_7.zip',
+                    '18': 'https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.2.1%2B1/OpenJDK18U-jdk_x64_windows_hotspot_18.0.2.1_1.zip',
+                    '17': 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.10_7.zip',
+                    '16': 'https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip',
+                    '15': 'https://github.com/adoptium/temurin15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_windows_hotspot_15.0.2_7.zip',
+                    '14': 'https://github.com/adoptium/temurin14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_windows_hotspot_14.0.2_12.zip',
+                    '13': 'https://github.com/adoptium/temurin13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_x64_windows_hotspot_13.0.2_8.zip',
+                    '12': 'https://github.com/adoptium/temurin12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
+                    '11': 'https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.22%2B7/OpenJDK11U-jdk_x64_windows_hotspot_11.0.22_7.zip',
+                    '10': 'https://github.com/adoptium/temurin10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_windows_hotspot_10.0.2_13.zip',
+                    '9': 'https://github.com/adoptium/temurin9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_x64_windows_hotspot_9.0.4_11.zip',
+                    '8': 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u402b06.zip'
+                }
                 return version_map.get(version)
             
             elif vendor == 'Amazon Corretto':

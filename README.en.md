@@ -156,6 +156,13 @@ python scripts/build.py --platform windows --type all
 
 ## Changelog
 
+### v1.0.5
+- Added version switching in tray menu for quick JDK version changes
+- Real-time display of current JDK version in tray icon
+- Enhanced environment variable settings interface with sync status
+- Improved UI styling with unified scrollbar appearance and interaction
+- Fixed multiple interface synchronization and status update issues
+
 ### v1.0.4 (2024-01-05)
 - Added installer support
 - Added multi-platform support (Windows/macOS/Linux)
