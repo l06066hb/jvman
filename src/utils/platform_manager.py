@@ -14,6 +14,7 @@ class PlatformManager:
         self.shell = self._detect_shell()
         self.config = None  # 将在 set_config 中设置
         self.requires_admin = self.is_windows
+        self._arch = self._detect_arch()  # 添加架构检测
         
     def set_config(self, config):
         """设置配置对象"""
@@ -212,6 +213,26 @@ class PlatformManager:
                 commands.append('export PATH="$PATH:$JAVA_HOME/bin"')
             
         return commands
+
+    def _detect_arch(self):
+        """检测系统架构"""
+        machine = platform.machine().lower()
+        
+        # 处理常见的架构标识
+        if machine in ('x86_64', 'amd64', 'x64'):
+            return 'x64'
+        elif machine in ('aarch64', 'arm64'):
+            return 'aarch64'
+        elif machine.startswith('arm'):
+            return 'arm'
+        elif machine in ('i386', 'i686', 'x86'):
+            return 'x86'
+        else:
+            return machine
+            
+    def get_arch(self):
+        """获取系统架构"""
+        return self._arch
 
 # 创建全局实例
 platform_manager = PlatformManager() 

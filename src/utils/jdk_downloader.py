@@ -522,26 +522,46 @@ class JDKDownloader(QObject):
     def _get_download_link(self, vendor, version):
         """获取官方下载链接"""
         try:
+            # 获取当前平台信息
+            from .platform_manager import platform_manager
+            is_windows = platform_manager.is_windows
+            is_macos = platform_manager.is_macos
+            is_linux = platform_manager.is_linux
+            arch = platform_manager.get_arch()  # 获取系统架构
+            
+            # 根据平台选择文件扩展名和系统标识
+            if is_windows:
+                ext = 'zip'
+                os_name = 'windows'
+            elif is_macos:
+                ext = 'tar.gz'
+                os_name = 'macos'
+            else:  # Linux
+                ext = 'tar.gz'
+                os_name = 'linux'
+            
             if vendor == 'Oracle JDK':
                 return 'https://www.oracle.com/java/technologies/downloads/'
             
             elif vendor == 'OpenJDK':
                 # OpenJDK 官方下载链接
                 version_map = {
-                    '21': 'https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip',
-                    '20': 'https://download.java.net/java/GA/jdk20.0.2/6e380f22cbe7469fa75fb448bd903d8e/9/GPL/openjdk-20.0.2_windows-x64_bin.zip',
-                    '19': 'https://download.java.net/java/GA/jdk19.0.2/fdb695a9d9064ad6b064dc6df578380c/7/GPL/openjdk-19.0.2_windows-x64_bin.zip',
-                    '18': 'https://download.java.net/java/GA/jdk18.0.2.1/db379da656dc47308e138f21b33976fa/1/GPL/openjdk-18.0.2.1_windows-x64_bin.zip',
-                    '17': 'https://download.java.net/java/GA/jdk17.0.10/f81d6d7e987c4195b39a77500ee79993/7/GPL/openjdk-17.0.10_windows-x64_bin.zip',
-                    '16': 'https://download.java.net/java/GA/jdk16.0.2/d4a915d82b4c4fbb9bde534da945d746/7/GPL/openjdk-16.0.2_windows-x64_bin.zip',
-                    '15': 'https://download.java.net/java/GA/jdk15.0.2/0d1cfde4252546c6931946de8db48ee2/7/GPL/openjdk-15.0.2_windows-x64_bin.zip',
-                    '14': 'https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_windows-x64_bin.zip',
-                    '13': 'https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_windows-x64_bin.zip',
-                    '12': 'https://download.java.net/java/GA/jdk12.0.2/e482c34c86bd4bf8b56c0b35558996b9/10/GPL/openjdk-12.0.2_windows-x64_bin.zip',
-                    '11': 'https://download.java.net/java/GA/jdk11.0.22/d3fd698c6a1c4aa6ad1fca312585d76b/7/GPL/openjdk-11.0.22_windows-x64_bin.zip',
-                    '10': 'https://download.java.net/java/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_windows-x64_bin.tar.gz',
-                    '9': 'https://download.java.net/java/GA/jdk9/9.0.4/binaries/openjdk-9.0.4_windows-x64_bin.tar.gz',
-                    '8': 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u402b06.zip'
+                    '23': f'https://download.java.net/java/early_access/jdk23/36/GPL/openjdk-23-ea+36_{os_name}-{arch}_bin.{ext}',
+                    '22': f'https://download.java.net/java/GA/jdk22/830ec9fcccef480bb3e73fb7ecafe059/36/GPL/openjdk-22_{os_name}-{arch}_bin.{ext}',
+                    '21': f'https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_{os_name}-{arch}_bin.{ext}',
+                    '20': f'https://download.java.net/java/GA/jdk20.0.2/6e380f22cbe7469fa75fb448bd903d8e/9/GPL/openjdk-20.0.2_{os_name}-{arch}_bin.{ext}',
+                    '19': f'https://download.java.net/java/GA/jdk19.0.2/fdb695a9d9064ad6b064dc6df578380c/7/GPL/openjdk-19.0.2_{os_name}-{arch}_bin.{ext}',
+                    '18': f'https://download.java.net/java/GA/jdk18.0.2.1/db379da656dc47308e138f21b33976fa/1/GPL/openjdk-18.0.2.1_{os_name}-{arch}_bin.{ext}',
+                    '17': f'https://download.java.net/java/GA/jdk17.0.10/f81d6d7e987c4195b39a77500ee79993/7/GPL/openjdk-17.0.10_{os_name}-{arch}_bin.{ext}',
+                    '16': f'https://download.java.net/java/GA/jdk16.0.2/d4a915d82b4c4fbb9bde534da945d746/7/GPL/openjdk-16.0.2_{os_name}-{arch}_bin.{ext}',
+                    '15': f'https://download.java.net/java/GA/jdk15.0.2/0d1cfde4252546c6931946de8db48ee2/7/GPL/openjdk-15.0.2_{os_name}-{arch}_bin.{ext}',
+                    '14': f'https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_{os_name}-{arch}_bin.{ext}',
+                    '13': f'https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_{os_name}-{arch}_bin.{ext}',
+                    '12': f'https://download.java.net/java/GA/jdk12.0.2/e482c34c86bd4bf8b56c0b35558996b9/10/GPL/openjdk-12.0.2_{os_name}-{arch}_bin.{ext}',
+                    '11': f'https://download.java.net/java/GA/jdk11.0.22/d3fd698c6a1c4aa6ad1fca312585d76b/7/GPL/openjdk-11.0.22_{os_name}-{arch}_bin.{ext}',
+                    '10': f'https://download.java.net/java/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_{os_name}-{arch}_bin.{ext}',
+                    '9': f'https://download.java.net/java/GA/jdk9/9.0.4/binaries/openjdk-9.0.4_{os_name}-{arch}_bin.{ext}',
+                    '8': f'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_{arch}_{os_name}_hotspot_8u402b06.{ext}'
                 }
                 
                 # 如果版本不在映射表中，尝试获取最新链接
@@ -553,27 +573,47 @@ class JDKDownloader(QObject):
                         if response.status_code == 200:
                             # 从页面解析实际下载链接
                             import re
-                            match = re.search(r'https://download\.java\.net/java/[^"]+?openjdk-[^"]+?windows-x64_bin\.(?:zip|tar\.gz)', response.text)
-                            if match:
-                                # 更新版本映射表
-                                version_map[version] = match.group(0)
-                                return match.group(0)
+                            patterns = [
+                                f'https://download\\.java\\.net/java/early_access/jdk{version}/[^"]+?/GPL/openjdk-{version}-ea\\+[^"]+?_{os_name}-{arch}_bin\\.{ext}',
+                                f'https://download\\.java\\.net/java/early_access/jdk{version}/[^"]+?/GPL/openjdk-{version}\\+[^"]+?_{os_name}-{arch}_bin\\.{ext}',
+                                f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?/GPL/openjdk-{version}[^"]+?_{os_name}-{arch}_bin\\.{ext}',
+                                f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?/binaries/openjdk-{version}[^"]+?_{os_name}-{arch}_bin\\.{ext}'
+                            ]
+                            
+                            for pattern in patterns:
+                                match = re.search(pattern, response.text)
+                                if match:
+                                    # 更新版本映射表
+                                    version_map[version] = match.group(0)
+                                    return match.group(0)
                         
                         # 2. 如果没有 EA 版本，检查正式发布版本
                         ga_url = f'https://jdk.java.net/archive/'
                         response = requests.get(ga_url, timeout=5)
                         if response.status_code == 200:
-                            pattern = f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?windows-x64_bin\\.(?:zip|tar\\.gz)'
-                            match = re.search(pattern, response.text)
-                            if match:
-                                # 更新版本映射表
-                                version_map[version] = match.group(0)
-                                return match.group(0)
+                            patterns = [
+                                f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?/GPL/openjdk-{version}[^"]+?_{os_name}-{arch}_bin\\.{ext}',
+                                f'https://download\\.java\\.net/java/GA/jdk{version}[^"]+?/binaries/openjdk-{version}[^"]+?_{os_name}-{arch}_bin\\.{ext}'
+                            ]
+                            
+                            for pattern in patterns:
+                                match = re.search(pattern, response.text)
+                                if match:
+                                    # 更新版本映射表
+                                    version_map[version] = match.group(0)
+                                    return match.group(0)
                         
                         # 3. 如果都没有找到，尝试使用 Eclipse Temurin
                         logger.warning(f"未找到 OpenJDK {version} 的直接下载链接，尝试使用 Eclipse Temurin")
-                        temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse"
-                        temurin_response = requests.get(temurin_url, timeout=5)
+                        temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot"
+                        params = {
+                            'architecture': arch,
+                            'image_type': 'jdk',
+                            'os': os_name,
+                            'vendor': 'eclipse',
+                            'page_size': 1
+                        }
+                        temurin_response = requests.get(temurin_url, params=params, timeout=5)
                         if temurin_response.status_code == 200:
                             data = temurin_response.json()
                             if data and len(data) > 0:
@@ -592,46 +632,113 @@ class JDKDownloader(QObject):
             elif vendor == 'Eclipse Temurin (Adoptium)':
                 # Eclipse Temurin 下载链接
                 version_map = {
-                    '23': 'https://github.com/adoptium/temurin23-binaries/releases/download/jdk-23-ea+36/OpenJDK23U-jdk_x64_windows_hotspot_ea_23-0-36.zip',
-                    '22': 'https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22%2B36/OpenJDK22U-jdk_x64_windows_hotspot_22_36.zip',
-                    '21': 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.zip',
-                    '20': 'https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20.0.2%2B9/OpenJDK20U-jdk_x64_windows_hotspot_20.0.2_9.zip',
-                    '19': 'https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.2%2B7/OpenJDK19U-jdk_x64_windows_hotspot_19.0.2_7.zip',
-                    '18': 'https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.2.1%2B1/OpenJDK18U-jdk_x64_windows_hotspot_18.0.2.1_1.zip',
-                    '17': 'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.10_7.zip',
-                    '16': 'https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip',
-                    '15': 'https://github.com/adoptium/temurin15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_windows_hotspot_15.0.2_7.zip',
-                    '14': 'https://github.com/adoptium/temurin14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_windows_hotspot_14.0.2_12.zip',
-                    '13': 'https://github.com/adoptium/temurin13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_x64_windows_hotspot_13.0.2_8.zip',
-                    '12': 'https://github.com/adoptium/temurin12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
-                    '11': 'https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.22%2B7/OpenJDK11U-jdk_x64_windows_hotspot_11.0.22_7.zip',
-                    '10': 'https://github.com/adoptium/temurin10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_x64_windows_hotspot_10.0.2_13.zip',
-                    '9': 'https://github.com/adoptium/temurin9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_x64_windows_hotspot_9.0.4_11.zip',
-                    '8': 'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_windows_hotspot_8u402b06.zip'
+                    '23': f'https://github.com/adoptium/temurin23-binaries/releases/download/jdk-23-ea+36/OpenJDK23U-jdk_{arch}_{os_name}_hotspot_ea_23-0-36.{ext}',
+                    '22': f'https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22%2B36/OpenJDK22U-jdk_{arch}_{os_name}_hotspot_22_36.{ext}',
+                    '21': f'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_{arch}_{os_name}_hotspot_21.0.2_13.{ext}',
+                    '20': f'https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20.0.2%2B9/OpenJDK20U-jdk_{arch}_{os_name}_hotspot_20.0.2_9.{ext}',
+                    '19': f'https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.2%2B7/OpenJDK19U-jdk_{arch}_{os_name}_hotspot_19.0.2_7.{ext}',
+                    '18': f'https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.2.1%2B1/OpenJDK18U-jdk_{arch}_{os_name}_hotspot_18.0.2.1_1.{ext}',
+                    '17': f'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jdk_{arch}_{os_name}_hotspot_17.0.10_7.{ext}',
+                    '16': f'https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7/OpenJDK16U-jdk_{arch}_{os_name}_hotspot_16.0.2_7.{ext}',
+                    '15': f'https://github.com/adoptium/temurin15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_{arch}_{os_name}_hotspot_15.0.2_7.{ext}',
+                    '14': f'https://github.com/adoptium/temurin14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_{arch}_{os_name}_hotspot_14.0.2_12.{ext}',
+                    '13': f'https://github.com/adoptium/temurin13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_{arch}_{os_name}_hotspot_13.0.2_8.{ext}',
+                    '12': f'https://github.com/adoptium/temurin12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_{arch}_{os_name}_hotspot_12.0.2_10.{ext}',
+                    '11': f'https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.22%2B7/OpenJDK11U-jdk_{arch}_{os_name}_hotspot_11.0.22_7.{ext}',
+                    '10': f'https://github.com/adoptium/temurin10-binaries/releases/download/jdk-10.0.2%2B13.1/OpenJDK10U-jdk_{arch}_{os_name}_hotspot_10.0.2_13.{ext}',
+                    '9': f'https://github.com/adoptium/temurin9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_{arch}_{os_name}_hotspot_9.0.4_11.{ext}',
+                    '8': f'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_{arch}_{os_name}_hotspot_8u402b06.{ext}'
                 }
+                
+                # 如果版本不在映射表中，尝试从 API 获取
+                if version not in version_map:
+                    try:
+                        api_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot"
+                        params = {
+                            'architecture': arch,
+                            'image_type': 'jdk',
+                            'os': os_name,
+                            'vendor': 'eclipse',
+                            'page_size': 1
+                        }
+                        response = requests.get(api_url, params=params, timeout=5)
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data and len(data) > 0:
+                                binary = data[0].get('binary')
+                                if binary:
+                                    link = binary.get('package', {}).get('link')
+                                    if link:
+                                        version_map[version] = link
+                                        return link
+                    except Exception as e:
+                        logger.error(f"获取 Temurin {version} 下载链接失败: {str(e)}")
+                
                 return version_map.get(version)
             
             elif vendor == 'Amazon Corretto':
-                # Amazon Corretto 最新下载链接
-                if version == '21':
-                    return 'https://corretto.aws/downloads/latest/amazon-corretto-21-x64-windows-jdk.zip'
-                elif version == '17':
-                    return 'https://corretto.aws/downloads/latest/amazon-corretto-17-x64-windows-jdk.zip'
-                elif version == '11':
-                    return 'https://corretto.aws/downloads/latest/amazon-corretto-11-x64-windows-jdk.zip'
-                elif version == '8':
-                    return 'https://corretto.aws/downloads/latest/amazon-corretto-8-x64-windows-jdk.zip'
+                # Amazon Corretto 下载链接
+                if is_windows:
+                    os_suffix = 'windows'
+                elif is_macos:
+                    os_suffix = 'macos'
+                else:
+                    os_suffix = 'linux'
+                
+                # 尝试获取具体版本号
+                try:
+                    api_url = f"https://corretto.aws/downloads/latest/{version}"
+                    response = requests.get(api_url, allow_redirects=False, timeout=5)
+                    if response.status_code == 302:
+                        redirect_url = response.headers.get('Location', '')
+                        if redirect_url:
+                            # 从重定向URL中提取完整版本号
+                            import re
+                            version_match = re.search(r'amazon-corretto-([^-]+)', redirect_url)
+                            if version_match:
+                                full_version = version_match.group(1)
+                                return f'https://corretto.aws/downloads/resources/{full_version}/amazon-corretto-{full_version}-{arch}-{os_suffix}-jdk.{ext}'
+                except Exception as e:
+                    logger.error(f"获取 Corretto {version} 版本信息失败: {str(e)}")
+                
+                # 如果无法获取具体版本号，使用通用链接
+                return f'https://corretto.aws/downloads/latest/amazon-corretto-{version}-{arch}-{os_suffix}-jdk.{ext}'
             
             elif vendor == 'Azul Zulu':
-                # Azul Zulu 最新下载链接
-                if version == '21':
-                    return 'https://cdn.azul.com/zulu/bin/zulu21.32.17-ca-jdk21.0.2-win_x64.zip'
-                elif version == '17':
-                    return 'https://cdn.azul.com/zulu/bin/zulu17.48.15-ca-jdk17.0.10-win_x64.zip'
-                elif version == '11':
-                    return 'https://cdn.azul.com/zulu/bin/zulu11.70.15-ca-jdk11.0.22-win_x64.zip'
-                elif version == '8':
-                    return 'https://cdn.azul.com/zulu/bin/zulu8.76.0.17-ca-jdk8.0.402-win_x64.zip'
+                # Azul Zulu 下载链接
+                if is_windows:
+                    os_suffix = 'win'
+                elif is_macos:
+                    os_suffix = 'macosx'
+                else:
+                    os_suffix = 'linux'
+                
+                # 尝试获取最新版本信息
+                try:
+                    api_url = "https://api.azul.com/zulu/download/community/v1.0/bundles/latest/"
+                    params = {
+                        'jdk_version': version,
+                        'os': os_suffix,
+                        'arch': arch,
+                        'ext': ext,
+                        'bundle_type': 'jdk'
+                    }
+                    response = requests.get(api_url, params=params, timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data and 'url' in data:
+                            return data['url']
+                except Exception as e:
+                    logger.error(f"获取 Zulu {version} 下载链接失败: {str(e)}")
+                
+                # 如果API调用失败，使用预定义的版本映射
+                version_map = {
+                    '21': f'https://cdn.azul.com/zulu/bin/zulu21.32.17-ca-jdk21.0.2-{os_suffix}_{arch}.{ext}',
+                    '17': f'https://cdn.azul.com/zulu/bin/zulu17.48.15-ca-jdk17.0.10-{os_suffix}_{arch}.{ext}',
+                    '11': f'https://cdn.azul.com/zulu/bin/zulu11.70.15-ca-jdk11.0.22-{os_suffix}_{arch}.{ext}',
+                    '8': f'https://cdn.azul.com/zulu/bin/zulu8.76.0.17-ca-jdk8.0.402-{os_suffix}_{arch}.{ext}'
+                }
+                return version_map.get(version)
             
             # 如果没有找到下载链接，返回 None
             return None
@@ -646,6 +753,14 @@ class JDKDownloader(QObject):
         response = None
         file_handle = None
         try:
+            # 获取平台信息
+            from .platform_manager import platform_manager
+            is_windows = platform_manager.is_windows
+            is_macos = platform_manager.is_macos
+            
+            # 根据平台选择文件扩展名
+            ext = 'zip' if is_windows else 'tar.gz'
+            
             # 获取下载链接
             download_url = self._get_download_url(vendor, version)
             if not download_url:
@@ -655,19 +770,19 @@ class JDKDownloader(QObject):
                     return False, f"需要登录 Oracle 账号才能下载。\n\n请按以下步骤操作：\n1. 访问 {manual_url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{target_dir}", None
                 elif vendor == 'OpenJDK':
                     manual_url = 'https://jdk.java.net/'
-                    return False, f"无法获取直接下载链接。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 JDK {version}\n3. 下载 Windows 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                    return False, f"无法获取直接下载链接。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{target_dir}", None
                 elif vendor == 'Amazon Corretto':
                     manual_url = 'https://aws.amazon.com/corretto/'
-                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Corretto {version}\n3. 下载 Windows x64 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Corretto {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{target_dir}", None
                 elif vendor == 'Azul Zulu':
                     manual_url = 'https://www.azul.com/downloads/'
-                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Zulu JDK {version}\n3. 下载 Windows x64 版本\n4. 将下载的文件放到目录：{target_dir}", None
+                    return False, f"下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {manual_url}\n2. 选择 Zulu JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{target_dir}", None
                 else:
                     return False, f"无法获取下载链接。请访问 {vendor} 官网手动下载 JDK {version} 版本。", None
 
             # 创建目标目录
             os.makedirs(target_dir, exist_ok=True)
-            file_name = os.path.join(target_dir, f"jdk-{version}.zip")
+            file_name = os.path.join(target_dir, f"jdk-{version}.{ext}")
 
             # 下载文件
             headers = {
@@ -755,7 +870,7 @@ class JDKDownloader(QObject):
                 
                 # 准备JDK信息
                 jdk_info = {
-                    'path': file_name,  # 先使用zip文件路径，解压后会更新为实际JDK目录
+                    'path': file_name,  # 先使用压缩文件路径，解压后会更新为实际JDK目录
                     'version': version,
                     'type': 'downloaded',
                     'vendor': vendor,  # 添加发行商信息
