@@ -20,6 +20,7 @@ from src.utils.platform_manager import platform_manager
 from utils.version_manager import version_manager
 from utils.config_manager import ConfigManager
 from utils.update_manager import UpdateManager
+from src.utils.i18n_manager import i18n_manager
 
 import sys
 
@@ -38,6 +39,9 @@ def get_icon_path(icon_name):
         return None
     return icon_path
 
+# 初始化翻译函数
+_ = i18n_manager.get_text
+
 class MainWindow(QMainWindow):
     """主窗口"""
     
@@ -50,12 +54,11 @@ class MainWindow(QMainWindow):
         
         # 初始化更新管理器
         self.update_manager = UpdateManager()
-        self.update_manager.update_available.connect(self.show_update_dialog)
-        self.update_manager.update_not_available.connect(self.handle_no_update)
-        self.update_manager.download_error.connect(self.handle_update_error)
+        self.update_manager.update_available.connect(self.show_update_notification)
+        self.update_manager.check_update_complete.connect(self.show_check_result)
         
         # 设置窗口标题和大小
-        self.setWindowTitle(f"{version_manager.app_name} v{version_manager.version}")
+        self.setWindowTitle(f"JDK Version Manager v{version_manager.get_version()}")
         self.setMinimumSize(800, 600)
         
         # 初始化UI
@@ -67,6 +70,9 @@ class MainWindow(QMainWindow):
         # 检查更新
         if self.update_manager.should_check_updates():
             self.update_manager.check_for_updates()
+            
+        # 连接语言变更信号
+        i18n_manager.language_changed.connect(self.on_language_changed)
         
     def setup_ui(self):
         """初始化界面"""
@@ -78,20 +84,55 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         
         # 创建标签页
-        tab_widget = QTabWidget()
+        self.tab_widget = QTabWidget()
         self.download_tab = DownloadTab(self.config)
         self.local_tab = LocalTab(self.config)
         self.settings_tab = SettingsTab(self.config, self)  # 传入配置对象和父组件
         self.help_tab = HelpTab()
         self.docs_tab = DocsTab()
         
-        tab_widget.addTab(self.download_tab, '在线下载')
-        tab_widget.addTab(self.local_tab, '本地管理')
-        tab_widget.addTab(self.settings_tab, '设置')
-        tab_widget.addTab(self.help_tab, '使用说明')
-        tab_widget.addTab(self.docs_tab, '文档')
+        self.tab_widget.addTab(self.local_tab, _("tabs.local"))
+        self.tab_widget.addTab(self.download_tab, _("tabs.download"))
+        self.tab_widget.addTab(self.help_tab, _("tabs.help"))
+        self.tab_widget.addTab(self.docs_tab, _("tabs.docs"))
+        self.tab_widget.addTab(self.settings_tab, _("tabs.settings"))
         
-        layout.addWidget(tab_widget)
+        layout.addWidget(self.tab_widget)
+        
+        # 设置标签页样式
+        self.tab_widget.setStyleSheet("""
+            QTabWidget {
+                background: transparent;
+            }
+            QTabWidget::pane {
+                border: none;
+                background: transparent;
+            }
+            QTabBar::tab {
+                padding: 8px 20px;
+                margin: 0;
+                border: none;
+                background: transparent;
+                color: #666666;
+                font-size: 13px;
+                font-weight: normal;
+            }
+            QTabBar::tab:hover {
+                color: #1a73e8;
+                background-color: rgba(26, 115, 232, 0.08);
+                border-radius: 6px;
+            }
+            QTabBar::tab:selected {
+                color: #1a73e8;
+                font-weight: bold;
+                background-color: rgba(26, 115, 232, 0.12);
+                border-radius: 6px;
+            }
+            QTabBar::tab:disabled {
+                color: #999999;
+                background: transparent;
+            }
+        """)
         
         # 连接信号
         self.download_tab.jdk_downloaded.connect(self.on_jdk_downloaded)
@@ -180,7 +221,7 @@ class MainWindow(QMainWindow):
         tray_menu.addSeparator()
         
         # 添加JDK切换子菜单
-        self.jdk_menu = QMenu('切换版本')
+        self.jdk_menu = QMenu(_("tray.switch_version"))
         self.jdk_menu.setIcon(QIcon(get_icon_path('java.png')))
         self.jdk_menu.setStyleSheet(tray_menu.styleSheet())
         self.update_jdk_menu()
@@ -190,7 +231,7 @@ class MainWindow(QMainWindow):
         tray_menu.addSeparator()
         
         # 添加显示/隐藏动作
-        show_action = QAction('显示窗口', self)
+        show_action = QAction(_("tray.show_window"), self)
         show_action.setIcon(QIcon(get_icon_path('window.png')))
         show_action.triggered.connect(self.toggle_window)
         tray_menu.addAction(show_action)
@@ -199,10 +240,13 @@ class MainWindow(QMainWindow):
         tray_menu.addSeparator()
         
         # 添加退出动作
-        quit_action = QAction('退出程序', self)
+        quit_action = QAction(_("tray.exit"), self)
         quit_action.setIcon(QIcon(get_icon_path('exit.png')))
         quit_action.triggered.connect(self.quit_application)
         tray_menu.addAction(quit_action)
+        
+        # 连接语言变化信号，更新托盘菜单文本
+        i18n_manager.language_changed.connect(lambda lang: self._update_tray_menu_text(show_action, quit_action))
         
         # 设置托盘菜单
         self.tray_icon.setContextMenu(tray_menu)
@@ -240,7 +284,7 @@ class MainWindow(QMainWindow):
                 
                 # 获取发行商
                 output_lower = output.lower()
-                vendor = '未知'
+                vendor = _("version.vendor.unknown")
                 for pattern, vendor_name in vendor_patterns.items():
                     if re.search(pattern, output_lower):
                         vendor = vendor_name
@@ -286,22 +330,22 @@ class MainWindow(QMainWindow):
                         arch = version_info['arch']
                     else:
                         version = current_jdk.get('version', '')
-                        vendor = current_jdk.get('vendor', '未知')
+                        vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                         arch = current_jdk.get('arch', '')
                 else:
                     version = current_jdk.get('version', '')
-                    vendor = current_jdk.get('vendor', '未知')
+                    vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                     arch = current_jdk.get('arch', '')
                 
                 # 构建显示文本（完整版本）
-                text = f"{vendor} JDK {version}"
+                text = _("version.format").format(vendor=vendor, version=version)
                 if arch:
                     text += f" ({arch})"
                 return text
             except Exception as e:
-                logger.error(f"获取格式化版本文本失败: {str(e)}")
-                return f"JDK {current_jdk.get('version', '')}"
-        return "未设置 JDK 版本"
+                logger.error(_("version.format_error").format(error=str(e)))
+                return _("version.format_simple").format(version=current_jdk.get('version', ''))
+        return _("version.not_set")
         
     def get_current_version(self):
         """获取当前JDK版本"""
@@ -315,7 +359,7 @@ class MainWindow(QMainWindow):
         """更新当前版本显示"""
         version_text = self.get_formatted_version_text()
         if hasattr(self, 'current_version_action'):
-            self.current_version_action.setText(f"当前: {version_text}")
+            self.current_version_action.setText(_("tray.current_version").format(version=version_text))
             
             # 设置详细的工具提示
             current_jdk = self.config.get_current_jdk()
@@ -329,18 +373,18 @@ class MainWindow(QMainWindow):
                         arch = version_info['arch']
                     else:
                         version = current_jdk.get('version', '')
-                        vendor = current_jdk.get('vendor', '未知')
+                        vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                         arch = current_jdk.get('arch', '')
                 else:
                     version = current_jdk.get('version', '')
-                    vendor = current_jdk.get('vendor', '未知')
+                    vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                     arch = current_jdk.get('arch', '')
                 
                 path = current_jdk.get('path', '')
-                tooltip = f"{vendor} JDK {version}"
+                tooltip = _("tray.tooltip.current").format(vendor=vendor, version=version)
                 if arch:
                     tooltip += f" ({arch})"
-                tooltip += f"\n路径: {path}"
+                tooltip += f"\n{_('tray.tooltip.path')}: {path}"
                 self.current_version_action.setToolTip(tooltip)
             
         if hasattr(self, 'tray_icon'):
@@ -356,22 +400,30 @@ class MainWindow(QMainWindow):
                         arch = version_info['arch']
                     else:
                         version = current_jdk.get('version', '')
-                        vendor = current_jdk.get('vendor', '未知')
+                        vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                         arch = current_jdk.get('arch', '')
                 else:
                     version = current_jdk.get('version', '')
-                    vendor = current_jdk.get('vendor', '未知')
+                    vendor = current_jdk.get('vendor', _("version.vendor.unknown"))
                     arch = current_jdk.get('arch', '')
                 
                 path = current_jdk.get('path', '')
-                tooltip = f"{version_manager.app_name} v{version_manager.version}\n"
-                tooltip += f"当前: {vendor} JDK {version}"
+                tooltip = _("tray.tooltip.app_info").format(
+                    app_name=version_manager.app_name,
+                    version=version_manager.version
+                )
+                tooltip += _("tray.tooltip.current").format(vendor=vendor, version=version)
                 if arch:
                     tooltip += f" ({arch})"
-                tooltip += f"\n路径: {path}"
+                tooltip += _("tray.tooltip.path").format(path=path)
                 self.tray_icon.setToolTip(tooltip)
             else:
-                self.tray_icon.setToolTip(f"{version_manager.app_name} v{version_manager.version}\n未设置 JDK 版本")
+                self.tray_icon.setToolTip(
+                    _("tray.tooltip.no_version").format(
+                        app_name=version_manager.app_name,
+                        version=version_manager.version
+                    )
+                )
         
     def update_jdk_menu(self):
         """更新JDK切换菜单"""
@@ -410,22 +462,25 @@ class MainWindow(QMainWindow):
                     arch = version_info['arch']
                 else:
                     version = jdk.get('version', '')
-                    vendor = jdk.get('vendor', '未知')
+                    vendor = jdk.get('vendor', _("version.vendor.unknown"))
                     arch = jdk.get('arch', '')
             else:
                 version = jdk.get('version', '')
-                vendor = jdk.get('vendor', '未知')
+                vendor = jdk.get('vendor', _("version.vendor.unknown"))
                 arch = jdk.get('arch', '')
             
             path = jdk.get('path', '')
             
             # 构建菜单项文本
-            action_text = f"{vendor} JDK {version}"
+            action_text = _("version.format").format(vendor=vendor, version=version)
             if arch:
                 action_text += f" ({arch})"
             
             # 构建详细的工具提示
-            tooltip = action_text + f"\n路径: {path}"
+            tooltip = _("tray.tooltip.version").format(vendor=vendor, version=version)
+            if arch:
+                tooltip += f" ({arch})"
+            tooltip += _("tray.tooltip.path").format(path=path)
             
             action = QAction(action_text, self)
             action.setToolTip(tooltip)  # 设置工具提示
@@ -443,7 +498,7 @@ class MainWindow(QMainWindow):
         
         # 如果没有有效的JDK，添加提示信息
         if not valid_jdks:
-            empty_action = QAction('未添加JDK', self)
+            empty_action = QAction(_("tray.no_jdk"), self)
             empty_action.setEnabled(False)
             self.jdk_menu.addAction(empty_action)
         
@@ -460,52 +515,85 @@ class MainWindow(QMainWindow):
             # 检查权限
             if not platform_manager.check_admin_rights():
                 error_msg = platform_manager.get_error_message('admin_rights')
-                QMessageBox.warning(self, '权限不足', error_msg)
+                QMessageBox.warning(self, _("dialog.error.title"), error_msg)
                 return
             
             # 创建软链接
             if create_symlink(jdk['path'], junction_path):
-                # 更新托盘菜单
-                self.update_jdk_menu()
-                # 更新本地标签页显示
-                self.local_tab.refresh_jdk_list()
-                self.local_tab.update_current_version()
-                # 更新当前版本显示
-                self.update_current_version_display()
-                
-                # 构建完整的版本显示文本
+                # 获取基本版本信息
                 version = jdk.get('version', '')
-                vendor = jdk.get('vendor', '未知')
-                arch = jdk.get('arch', '')
-                
-                # 构建显示文本
-                version_text = f"{vendor} JDK {version}"
-                if arch:
-                    version_text += f" ({arch})"
-                
-                # 根据平台显示不同的成功消息
-                if not platform_manager.is_windows:
-                    reload_cmd = platform_manager.get_shell_reload_command()
+                vendor = jdk.get('vendor', _("version.vendor.unknown"))
+                arch = ''
+
+                try:
+                    # 尝试获取详细版本信息
+                    java_path = os.path.join(jdk['path'], 'bin', 'java.exe')
+                    if os.path.exists(java_path):
+                        version_info = self.get_detailed_version(java_path)
+                        if version_info:
+                            if 'version' in version_info:
+                                version = version_info['version']
+                            if 'vendor' in version_info:
+                                vendor = version_info['vendor']
+                            if 'arch' in version_info:
+                                arch = version_info['arch']
+                except Exception as e:
+                    logger.error(f"获取版本详细信息失败: {str(e)}")
+
+                try:
+                    # 更新界面
+                    self.update_jdk_menu()
+                    self.local_tab.refresh_jdk_list()
+                    self.local_tab.update_current_version()
+                    self.update_current_version_display()
+                except Exception as e:
+                    logger.error(f"更新界面失败: {str(e)}")
+
+                try:
+                    # 构建显示文本
+                    try:
+                        version_text = f"{vendor} JDK {version}"
+                        if arch:
+                            version_text += f" ({arch})"
+                    except Exception as e:
+                        logger.error(f"格式化版本文本失败: {str(e)}")
+                        version_text = f"JDK {version}"
+
+                    # 显示通知
+                    if not platform_manager.is_windows:
+                        reload_cmd = platform_manager.get_shell_reload_command()
+                        self.tray_icon.showMessage(
+                            _("tray.switch_success"),
+                            _("tray.switch_success_unix").format(version_text=version_text, reload_cmd=reload_cmd),
+                            QSystemTrayIcon.MessageIcon.Information,
+                            3000
+                        )
+                    else:
+                        self.tray_icon.showMessage(
+                            _("tray.switch_success"),
+                            _("tray.switch_success_windows").format(version_text=version_text),
+                            QSystemTrayIcon.MessageIcon.Information,
+                            2000
+                        )
+                except Exception as e:
+                    logger.error(f"显示通知失败: {str(e)}")
+                    # 如果显示通知失败，使用最简单的版本
                     self.tray_icon.showMessage(
-                        'JDK切换成功',
-                        f"已切换到 {version_text}\n请运行命令使环境变量生效：{reload_cmd}",
-                        QSystemTrayIcon.MessageIcon.Information,
-                        3000
-                    )
-                else:
-                    self.tray_icon.showMessage(
-                        'JDK切换成功',
-                        f"已切换到 {version_text}",
+                        _("tray.switch_success"),
+                        _("tray.switch_success_windows").format(version_text=f"JDK {version}"),
                         QSystemTrayIcon.MessageIcon.Information,
                         2000
                     )
-                
-                # 发送版本变更信号
-                self.local_tab.version_changed.emit()
+
+                try:
+                    # 发送版本变更信号
+                    self.local_tab.version_changed.emit()
+                except Exception as e:
+                    logger.error(f"发送版本变更信号失败: {str(e)}")
             else:
                 error_msg = platform_manager.get_error_message('symlink_failed')
                 self.tray_icon.showMessage(
-                    '切换失败',
+                    _("tray.switch_failed"),
                     error_msg,
                     QSystemTrayIcon.MessageIcon.Warning,
                     3000
@@ -531,17 +619,17 @@ class MainWindow(QMainWindow):
             if close_action is None:
                 # 创建消息框
                 msg_box = QMessageBox(self)
-                msg_box.setWindowTitle('关闭选项')
-                msg_box.setText('您希望如何处理程序？')
+                msg_box.setWindowTitle(_("dialog.close.title"))
+                msg_box.setText(_("dialog.close.message"))
                 msg_box.setIcon(QMessageBox.Icon.Question)
                 
                 # 添加按钮
-                minimize_btn = msg_box.addButton('最小化到托盘', QMessageBox.ButtonRole.AcceptRole)
-                exit_btn = msg_box.addButton('退出程序', QMessageBox.ButtonRole.RejectRole)
+                minimize_btn = msg_box.addButton(_("dialog.close.minimize"), QMessageBox.ButtonRole.AcceptRole)
+                exit_btn = msg_box.addButton(_("dialog.close.exit"), QMessageBox.ButtonRole.RejectRole)
                 msg_box.setDefaultButton(minimize_btn)
                 
                 # 添加"不再提示"复选框
-                checkbox = QCheckBox("记住我的选择，不再提示", msg_box)
+                checkbox = QCheckBox(_("dialog.close.remember"), msg_box)
                 msg_box.setCheckBox(checkbox)
                 
                 # 显示对话框
@@ -612,24 +700,61 @@ class MainWindow(QMainWindow):
         self.update_jdk_menu()  # 更新托盘菜单
         self.update_current_version_display()  # 更新当前版本显示
 
-    def show_update_dialog(self, update_info):
-        """显示更新对话框"""
-        from .dialogs.update_dialog import UpdateDialog
-        dialog = UpdateDialog(update_info, self)
-        dialog.exec()
+    def show_update_notification(self, update_info):
+        """显示更新通知"""
+        version = update_info['version']
+        description = update_info['description']
+        is_manual = update_info.get('is_manual_check', False)
         
-    def handle_no_update(self):
-        """处理没有更新的情况"""
-        logger.info("当前已是最新版本")
+        # 创建通知消息框
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(_("update.new_version.title"))
+        msg_box.setIcon(QMessageBox.Icon.Information)
         
-    def handle_update_error(self, error_msg):
-        """处理更新错误"""
-        logger.error(f"更新检查失败: {error_msg}")
+        # 设置详细信息
+        msg_box.setText(_("update.new_version.found").format(version=version))
+        msg_box.setInformativeText(_("update.new_version.prompt"))
+        msg_box.setDetailedText(description)
         
-    def check_for_updates(self):
+        # 添加按钮
+        msg_box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | 
+            QMessageBox.StandardButton.No
+        )
+        msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+        
+        # 自定义按钮文本
+        msg_box.button(QMessageBox.StandardButton.Yes).setText(_("update.new_version.update_now"))
+        msg_box.button(QMessageBox.StandardButton.No).setText(_("update.new_version.remind_later"))
+        
+        # 显示消息框
+        if msg_box.exec() == QMessageBox.StandardButton.Yes:
+            self.start_update(update_info)
+            
+    def show_check_result(self, success, message):
+        """显示检查结果"""
+        if success:
+            QMessageBox.information(self, _("update.check.title"), message)
+        else:
+            QMessageBox.warning(self, _("update.check.title"), message)
+            
+    def manual_check_update(self):
         """手动检查更新"""
-        self.update_manager.check_for_updates() 
-
+        self.update_manager.manual_check_update()
+        
+    def start_update(self, update_info):
+        """开始更新"""
+        try:
+            # 获取下载URL和保存路径
+            download_url = update_info['download_url']
+            save_dir = self.update_manager.get_update_save_path()
+            save_path = os.path.join(save_dir, f"update_v{update_info['version']}.zip")
+            
+            # 开始下载
+            self.update_manager.download_update(download_url, save_path)
+        except Exception as e:
+            QMessageBox.warning(self, "更新错误", f"开始更新时发生错误：{str(e)}")
+            
     def toggle_window(self):
         """切换窗口显示状态"""
         if self.isHidden():
@@ -637,3 +762,39 @@ class MainWindow(QMainWindow):
             self.activateWindow()  # 激活窗口（置顶）
         else:
             self.hide() 
+
+    def on_language_changed(self):
+        """当语言改变时更新界面文本"""
+        try:
+            # 更新标签页文本
+            self.tab_widget.setTabText(0, _("tabs.local"))
+            self.tab_widget.setTabText(1, _("tabs.download"))
+            self.tab_widget.setTabText(2, _("tabs.help"))
+            self.tab_widget.setTabText(3, _("tabs.docs"))
+            self.tab_widget.setTabText(4, _("tabs.settings"))
+            
+            # 更新托盘菜单
+            if hasattr(self, 'jdk_menu'):
+                self.jdk_menu.setTitle(_("tray.switch_version"))
+            if hasattr(self, 'show_action'):
+                self.show_action.setText(_("tray.show_window"))
+            if hasattr(self, 'quit_action'):
+                self.quit_action.setText(_("tray.exit"))
+            
+            # 更新托盘菜单和版本显示
+            self.update_jdk_menu()
+            self.update_current_version_display()
+            
+            # 通知各个标签页更新文本
+            for i in range(self.tab_widget.count()):
+                tab = self.tab_widget.widget(i)
+                if hasattr(tab, '_update_texts'):
+                    tab._update_texts()
+                    
+        except Exception as e:
+            logger.error(f"更新界面文本失败: {e}") 
+
+    def _update_tray_menu_text(self, show_action, quit_action):
+        """更新托盘菜单文本"""
+        show_action.setText(_("tray.show_window"))
+        quit_action.setText(_("tray.exit")) 

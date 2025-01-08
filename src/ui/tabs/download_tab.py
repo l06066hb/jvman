@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal, Qt, QThread, QSize, QDateTime, QTimer
 from PyQt6.QtGui import QIcon
 from utils.jdk_downloader import JDKDownloader
+from src.utils.i18n_manager import i18n_manager
 import shutil
 import logging
 from datetime import datetime
@@ -17,11 +18,18 @@ import requests
 # 获取logger
 logger = logging.getLogger(__name__)
 
+_ = i18n_manager.get_text
+i18n_manager.language_changed.connect(lambda: logger.debug("Language changed")) 
+
+
+logger.debug(f"Translation test - install.confirm.title: {_('install.confirm.title')}")
+
+
 class ConfirmDialog(QDialog):
     """安装确认对话框"""
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("安装确认")
+        self.setWindowTitle(_("install.confirm.title"))
         self.setFixedWidth(450)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setModal(True)
@@ -31,7 +39,7 @@ class ConfirmDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # 标题
-        title_label = QLabel("安装确认")
+        title_label = QLabel(_("install.confirm.title"))
         title_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
@@ -58,8 +66,8 @@ class ConfirmDialog(QDialog):
         md5_hash = self.calculate_md5(file_path)
         
         # 文件信息
-        file_name_label = QLabel(f"文件名: {os.path.basename(file_path)}")
-        file_size_label = QLabel(f"文件大小: {self.format_size(file_size)}")
+        file_name_label = QLabel(f"{_('install.confirm.filename')}: {os.path.basename(file_path)}")
+        file_size_label = QLabel(f"{_('install.confirm.filesize')}: {self.format_size(file_size)}")
         md5_label = QLabel(f"MD5: {md5_hash}")
         
         for label in [file_name_label, file_size_label, md5_label]:
@@ -74,7 +82,7 @@ class ConfirmDialog(QDialog):
         layout.addWidget(info_frame)
         
         # 提示文本
-        hint_label = QLabel("确认安装将会解压JDK到指定目录。是否继续？")
+        hint_label = QLabel(_("install.confirm.hint"))
         hint_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -86,8 +94,8 @@ class ConfirmDialog(QDialog):
         
         # 按钮
         button_box = QDialogButtonBox()
-        install_button = QPushButton("安装")
-        cancel_button = QPushButton("取消")
+        install_button = QPushButton(_("install.confirm.button.install"))
+        cancel_button = QPushButton(_("install.confirm.button.cancel"))
         
         install_button.setStyleSheet("""
             QPushButton {
@@ -152,7 +160,7 @@ class ProgressDialog(QDialog):
     """进度对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("下载进度")
+        self.setWindowTitle(_("progress.dialog.title"))
         self.setFixedSize(400, 200)  # 增加对话框高度
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setModal(True)
@@ -162,7 +170,7 @@ class ProgressDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # 状态标签
-        self.status_label = QLabel("准备下载...")
+        self.status_label = QLabel(_("progress.dialog.status.preparing"))
         self.status_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
@@ -218,8 +226,15 @@ class ProgressDialog(QDialog):
         button_layout.setContentsMargins(0, 0, 0, 10)  # 减少底部边距
         
         # 手动下载按钮
-        self.manual_download_button = QPushButton("手动下载")
-        self.manual_download_button.setFixedSize(100, 32)
+        self.manual_download_button = QPushButton(_("progress.dialog.button.manual"))
+        # 计算文本宽度并设置合适的按钮大小
+        font_metrics = self.manual_download_button.fontMetrics()
+        text_width = font_metrics.horizontalAdvance(self.manual_download_button.text())
+        # 设置按钮宽度为文本宽度加上左右padding（40px）和边框（2px）
+        button_width = text_width + 45 + 2
+        # 确保最小宽度不小于100px
+        button_width = max(100, button_width)
+        self.manual_download_button.setFixedSize(button_width, 32)
         self.manual_download_button.setStyleSheet("""
             QPushButton {
                 padding: 6px 20px;
@@ -240,8 +255,11 @@ class ProgressDialog(QDialog):
         self.manual_download_button.clicked.connect(self.open_manual_download)
         self.manual_download_button.hide()
         
+        # 连接语言变更信号以更新按钮大小
+        i18n_manager.language_changed.connect(self._update_button_size)
+        
         # 取消按钮
-        self.cancel_button = QPushButton("取消")
+        self.cancel_button = QPushButton(_("progress.dialog.button.cancel"))
         self.cancel_button.setFixedSize(100, 32)
         self.cancel_button.setStyleSheet("""
             QPushButton {
@@ -262,7 +280,7 @@ class ProgressDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         
         # 完成按钮
-        self.close_button = QPushButton("完成")
+        self.close_button = QPushButton(_("progress.dialog.button.complete"))
         self.close_button.setFixedSize(100, 32)
         self.close_button.setStyleSheet("""
             QPushButton {
@@ -301,6 +319,11 @@ class ProgressDialog(QDialog):
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.update_progress_gradient)
         self.gradient_offset = 0.0
+        
+        # 添加vendor和version属性
+        self.vendor = None
+        self.version = None
+        self.manual_download_url = None
 
     def update_progress_gradient(self):
         """更新进度条渐变动画"""
@@ -318,7 +341,7 @@ class ProgressDialog(QDialog):
         base_style = current_style.split("QProgressBar::chunk")[0]
         self.progress_bar.setStyleSheet(base_style + gradient)
 
-    def set_progress(self, current, total, phase="下载"):
+    def set_progress(self, current, total, phase=None):
         """更新进度"""
         if total > 0:
             percentage = (current / total) * 100
@@ -328,15 +351,23 @@ class ProgressDialog(QDialog):
             if not self.animation_timer.isActive():
                 self.animation_timer.start(50)  # 50ms 更新一次
             
-            if phase == "下载":
-                self.status_label.setText("正在下载 JDK...")
+            if phase == _("progress.dialog.phase.downloading"):
+                self.status_label.setText(_("progress.dialog.status.downloading"))
                 self.detail_label.setText(
-                    f"已下载: {current/1024/1024:.1f}MB / {total/1024/1024:.1f}MB ({percentage:.1f}%)"
+                    _("progress.dialog.detail.downloading").format(
+                        downloaded=current/1024/1024,  # 转换为MB
+                        total=total/1024/1024,  # 转换为MB
+                        percentage=percentage
+                    )
                 )
-            else:  # 安装阶段
-                self.status_label.setText("正在安装 JDK...")
+            elif phase == _("progress.dialog.phase.installing"):
+                self.status_label.setText(_("progress.dialog.status.installing"))
                 self.detail_label.setText(
-                    f"正在处理: {current}/{total} 个文件 ({percentage:.1f}%)"
+                    _("progress.dialog.detail.installing").format(
+                        current=current,
+                        total=total,
+                        percentage=percentage
+                    )
                 )
 
     def set_complete(self, success=True, is_download=True):
@@ -346,11 +377,11 @@ class ProgressDialog(QDialog):
         
         if success:
             if is_download:
-                self.status_label.setText("下载完成！")
-                self.detail_label.setText("请在确认对话框中查看详细信息")
+                self.status_label.setText(_("progress.dialog.status.download.complete"))
+                self.detail_label.setText(_("progress.dialog.detail.download.complete"))
             else:
-                self.status_label.setText("安装完成！")
-                self.detail_label.setText("JDK 已成功安装到指定目录")
+                self.status_label.setText(_("progress.dialog.status.install.complete"))
+                self.detail_label.setText(_("progress.dialog.detail.install.complete"))
             
             self.status_label.setStyleSheet("""
                 QLabel {
@@ -381,7 +412,7 @@ class ProgressDialog(QDialog):
             self.cancel_button.hide()
             self.manual_download_button.hide()
         else:
-            self.status_label.setText("操作失败")
+            self.status_label.setText(_("progress.dialog.status.failed"))
             self.status_label.setStyleSheet("""
                 QLabel {
                     color: #EA4335;
@@ -409,17 +440,21 @@ class ProgressDialog(QDialog):
             self.close_button.show()
             self.cancel_button.hide()
 
-    def closeEvent(self, event):
-        """关闭事件处理"""
-        self.animation_timer.stop()  # 停止动画
-        if self.close_button.isVisible():
-            event.accept()
-        else:
-            event.ignore()  # 如果还在进行中，阻止关闭
+    def show_error(self, message):
+        """显示错误信息"""
+        self.status_label.setText(_("progress.dialog.status.download.failed"))
+        self.detail_label.setText(_("progress.dialog.detail.error").format(message=message))
+        self.close_button.setEnabled(True)
+        self.close_button.show()
+        self.cancel_button.hide()
 
     def show_manual_download_hint(self, vendor, version):
         """显示手动下载提示"""
-        self.status_label.setText("无法自动下载")
+        # 保存vendor和version信息
+        self.vendor = vendor
+        self.version = version
+        
+        self.status_label.setText(_("progress.dialog.status.manual.required"))
         self.status_label.setStyleSheet("""
             QLabel {
                 color: #F29900;
@@ -431,31 +466,80 @@ class ProgressDialog(QDialog):
         # 根据不同发行版提供不同的下载链接和提示
         if vendor == "Oracle JDK":
             self.manual_download_url = f"https://www.oracle.com/java/technologies/downloads/#java{version}-windows"
-            self.detail_label.setText("需要登录 Oracle 账号才能下载此版本。点击\"手动下载\"前往官网下载页面。")
+            self.detail_label.setText(_("progress.dialog.detail.manual.oracle"))
         elif vendor == "OpenJDK":
             self.manual_download_url = f"https://jdk.java.net/{version}"
-            self.detail_label.setText("此版本需要 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面")
+            self.detail_label.setText(_("progress.dialog.detail.manual.openjdk"))
         else:
-            self.detail_label.setText("此版本暂不支持自动下载，请前往对应官网下载。")
+            self.detail_label.setText(_("progress.dialog.detail.manual.other"))
         
         self.manual_download_button.show()
         self.close_button.show()
         self.cancel_button.hide()
         self.close_button.setEnabled(True)
 
-    def show_error(self, message):
-        """显示错误信息"""
-        self.status_label.setText("下载失败")
-        self.detail_label.setText(f"错误信息：{message}")
-        self.close_button.setEnabled(True)
-        self.close_button.show()
-        self.cancel_button.hide()
-
     def open_manual_download(self):
         """打开手动下载页面"""
-        if self.manual_download_url:
+        try:
             import webbrowser
-            webbrowser.open(self.manual_download_url)
+            
+            # 使用保存的vendor和version信息
+            if not self.vendor or not self.version:
+                QMessageBox.warning(
+                    self,
+                    _("download.manual.error.title"),
+                    _("download.manual.error.no_info")
+                )
+                return
+                
+            # 根据不同发行版构建下载URL
+            if self.vendor == "Oracle JDK":
+                url = f"https://www.oracle.com/java/technologies/downloads/#java{self.version}-windows"
+            elif self.vendor == "OpenJDK":
+                url = f"https://jdk.java.net/{self.version}"
+            elif "Temurin" in self.vendor or "Adoptium" in self.vendor:
+                url = f"https://adoptium.net/temurin/releases/?version={self.version}"
+            elif "Corretto" in self.vendor:
+                url = f"https://docs.aws.amazon.com/corretto/latest/corretto-{self.version}-ug/downloads-list.html"
+            elif "Zulu" in self.vendor:
+                url = "https://www.azul.com/downloads/"
+            else:
+                url = None
+                
+            if url:
+                webbrowser.open(url)
+            else:
+                QMessageBox.warning(
+                    self,
+                    _("download.manual.error.title"),
+                    _("download.manual.error.no_url")
+                )
+        except Exception as e:
+            logger.error(f"打开下载页面失败: {str(e)}")
+            QMessageBox.warning(
+                self,
+                _("download.manual.error.title"),
+                _("download.manual.error.failed").format(error=str(e))
+            )
+
+    def closeEvent(self, event):
+        """关闭事件处理"""
+        self.animation_timer.stop()  # 停止动画
+        if self.close_button.isVisible():
+            event.accept()
+        else:
+            event.ignore()  # 如果还在进行中，阻止关闭
+
+    def _update_button_size(self):
+        """更新按钮大小"""
+        if hasattr(self, 'manual_download_button'):
+            # 更新按钮文本
+            self.manual_download_button.setText(_("progress.dialog.button.manual"))
+            # 重新计算并设置按钮大小
+            font_metrics = self.manual_download_button.fontMetrics()
+            text_width = font_metrics.horizontalAdvance(self.manual_download_button.text())
+            button_width = max(100, text_width + 40 + 2)
+            self.manual_download_button.setFixedSize(button_width, 32)
 
 class DownloadTab(QWidget):
     """下载标签页"""
@@ -473,6 +557,56 @@ class DownloadTab(QWidget):
         self.is_downloading = False  # 添加下载状态标志
         self.init_ui()
         self.connect_signals()
+        # 连接语言切换信号
+        i18n_manager.language_changed.connect(self._update_texts)
+
+    def _update_texts(self):
+        """更新界面文本"""
+        # 更新选择区域组标题
+        select_group = self.findChild(QGroupBox, "select_group")
+        if select_group:
+            select_group.setTitle(_("download.group.select"))
+
+        # 更新版本信息组标题
+        info_group = self.findChild(QGroupBox, "info_group")
+        if info_group:
+            info_group.setTitle(_("download.group.info"))
+
+        # 更新发行商标签
+        vendor_label = self.findChild(QLabel, "vendor_label")
+        if vendor_label:
+            vendor_label.setText(_("download.label.vendor"))
+
+        # 更新版本标签
+        version_label = self.findChild(QLabel, "version_label")
+        if version_label:
+            version_label.setText(_("download.label.version"))
+
+        # 更新按钮文本
+        if hasattr(self, 'refresh_button'):
+            self.refresh_button.setText(_("download.button.refresh"))
+        if hasattr(self, 'download_button'):
+            self.download_button.setText(_("download.button.download"))
+
+        # 更新发行商列表
+        if hasattr(self, 'vendor_combo'):
+            current_vendor = self.vendor_combo.currentText()
+            self.vendor_combo.clear()
+            self.vendor_combo.addItems([
+                'Oracle JDK',
+                'OpenJDK',
+                'Eclipse Temurin (Adoptium)',
+                'Amazon Corretto',
+                'Azul Zulu'
+            ])
+            # 尝试恢复之前选择的发行商
+            index = self.vendor_combo.findText(current_vendor)
+            if index >= 0:
+                self.vendor_combo.setCurrentIndex(index)
+
+        # 如果有版本信息显示，更新版本信息
+        if hasattr(self, 'version_combo') and self.version_combo.currentText():
+            self.on_version_changed(self.version_combo.currentText())
 
     def init_ui(self):
         """初始化界面"""
@@ -480,8 +614,9 @@ class DownloadTab(QWidget):
         layout.setSpacing(20)
         
         # 创建选择区域组
-        select_group = QGroupBox("JDK 选择")
-        select_group.setFixedHeight(120)  # 减小选择区域高度
+        select_group = QGroupBox(_("download.group.select"))
+        select_group.setObjectName("select_group")  # 添加对象名
+        select_group.setFixedHeight(120)
         select_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -506,7 +641,8 @@ class DownloadTab(QWidget):
         vendor_container = QWidget()
         vendor_layout = QVBoxLayout(vendor_container)
         vendor_layout.setSpacing(5)
-        vendor_label = QLabel('发行版:')
+        vendor_label = QLabel(_('download.label.vendor'))
+        vendor_label.setObjectName("vendor_label")  # 添加对象名
         vendor_label.setStyleSheet("font-weight: bold; color: #666666;")
         self.vendor_combo = QComboBox()
         self.vendor_combo.setStyleSheet("""
@@ -545,7 +681,8 @@ class DownloadTab(QWidget):
         version_container = QWidget()
         version_layout = QVBoxLayout(version_container)
         version_layout.setSpacing(5)
-        version_label = QLabel('版本:')
+        version_label = QLabel(_('download.label.version'))
+        version_label.setObjectName("version_label")  # 添加对象名
         version_label.setStyleSheet("font-weight: bold; color: #666666;")
         self.version_combo = QComboBox()
         self.version_combo.setStyleSheet(self.vendor_combo.styleSheet())
@@ -560,7 +697,7 @@ class DownloadTab(QWidget):
         
         button_group = QHBoxLayout()
         
-        self.refresh_button = QPushButton('刷新')
+        self.refresh_button = QPushButton(_('download.button.refresh'))
         self.refresh_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'refresh.png')))
         self.refresh_button.setStyleSheet("""
             QPushButton {
@@ -577,7 +714,7 @@ class DownloadTab(QWidget):
             }
         """)
         
-        self.download_button = QPushButton('下载')
+        self.download_button = QPushButton(_('download.button.download'))
         self.download_button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons', 'download.png')))
         self.download_button.setStyleSheet("""
             QPushButton {
@@ -613,7 +750,8 @@ class DownloadTab(QWidget):
         select_layout.addLayout(selection_layout)
         
         # 版本信息区域
-        info_group = QGroupBox("版本信息")
+        info_group = QGroupBox(_("download.group.info"))
+        info_group.setObjectName("info_group")  # 添加对象名
         info_group.setStyleSheet(select_group.styleSheet())
         info_layout = QVBoxLayout(info_group)
         info_layout.setSpacing(0)
@@ -707,7 +845,7 @@ class DownloadTab(QWidget):
             
         self.progress_dialog.setWindowTitle(title)
         self.progress_dialog.progress_bar.setValue(0)
-        self.progress_dialog.status_label.setText("准备中...")
+        self.progress_dialog.status_label.setText(_("progress.dialog.status.preparing"))
         self.progress_dialog.detail_label.setText("")
         self.progress_dialog.close_button.hide()
         self.progress_dialog.cancel_button.show()
@@ -729,13 +867,13 @@ class DownloadTab(QWidget):
                 
                 # 更新进度对话框状态
                 if self.progress_dialog:
-                    self.progress_dialog.status_label.setText("正在取消...")
-                    self.progress_dialog.detail_label.setText("正在清理文件...")
+                    self.progress_dialog.status_label.setText(_("progress.dialog.status.cancelling"))
+                    self.progress_dialog.detail_label.setText(_("progress.dialog.detail.cleaning"))
                     self.progress_dialog.cancel_button.setEnabled(False)
                 
                 # 取消下载
                 self.download_thread.cancel()
-                return
+            return
             
             if self.install_thread and self.install_thread.isRunning():
                 self.install_thread.cancel()
@@ -750,9 +888,9 @@ class DownloadTab(QWidget):
                 self.progress_dialog = None
             
         except Exception as e:
-            logger.error(f"取消操作失败: {str(e)}")
+            logger.error(_("log.error.cancel_failed").format(error=str(e)))
             if self.progress_dialog:
-                self.progress_dialog.show_error(f"取消操作失败: {str(e)}")
+                self.progress_dialog.show_error(_("progress.dialog.error.cancel_failed").format(error=str(e)))
 
     def on_download_cleanup_complete(self):
         """下载清理完成回调"""
@@ -788,12 +926,12 @@ class DownloadTab(QWidget):
     def update_download_progress(self, current, total):
         """更新下载进度"""
         if self.progress_dialog and not self.progress_dialog.isHidden():
-            self.progress_dialog.set_progress(current, total, "下载")
+            self.progress_dialog.set_progress(current, total, _("progress.dialog.phase.downloading"))
 
     def update_install_progress(self, current, total):
         """更新安装进度"""
         if self.progress_dialog and not self.progress_dialog.isHidden():
-            self.progress_dialog.set_progress(current, total, "安装")
+            self.progress_dialog.set_progress(current, total, _("progress.dialog.phase.installing"))
 
     def on_download_complete(self, success, message):
         """下载完成回调"""
@@ -811,11 +949,14 @@ class DownloadTab(QWidget):
                     else:
                         # 用户取消安装，但保留下载的文件
                         self.progress_dialog.close()
-                        QMessageBox.information(self, '下载完成', 
-                            f'JDK {self.version} 下载完成！\n可以稍后在下载目录中找到安装包。')
+                        QMessageBox.information(
+                            self, 
+                            _("download.complete.title"), 
+                            _("download.complete.message").format(version=self.version)
+                        )
                 else:
                     # zip文件不存在，显示错误
-                    self.progress_dialog.show_error("下载完成但文件不存在，请重试下载")
+                    self.progress_dialog.show_error(_("download.error.file_not_found"))
             else:
                 # 如果消息中包含手动下载的指导，显示手动下载提示
                 if "请按以下步骤" in message or "需要登录" in message or "手动下载" in message:
@@ -825,14 +966,16 @@ class DownloadTab(QWidget):
                     )
                 else:
                     # 显示错误信息，并添加手动下载按钮
-                    self.progress_dialog.status_label.setText("下载失败")
-                    self.progress_dialog.detail_label.setText(f"错误信息：{message}\n\n您可尝试手动下载此版本。")
+                    self.progress_dialog.status_label.setText(_("download.status.failed"))
+                    self.progress_dialog.detail_label.setText(
+                        _("download.error.with_manual").format(message=message)
+                    )
                     self.progress_dialog.show_manual_download_hint(
                         self.vendor_combo.currentText(),
                         self.version_combo.currentData()
                     )
         except Exception as e:
-            self.progress_dialog.show_error(f"处理下载完成事件失败: {str(e)}")
+            self.progress_dialog.show_error(_("download.error.process_failed").format(error=str(e)))
         finally:
             # 重置下载状态
             self.is_downloading = False
@@ -842,7 +985,7 @@ class DownloadTab(QWidget):
         try:
             # 验证文件是否存在
             if not os.path.exists(zip_file):
-                raise Exception("安装文件不存在")
+                raise Exception(_("install.error.file_not_found"))
             
             # 验证是否是有效的 ZIP 文件
             import zipfile
@@ -850,9 +993,9 @@ class DownloadTab(QWidget):
                 with zipfile.ZipFile(zip_file, 'r') as zf:
                     # 验证 ZIP 文件的完整性
                     if zf.testzip() is not None:
-                        raise Exception("ZIP 文件已损坏")
+                        raise Exception(_("install.error.zip_corrupted"))
             except zipfile.BadZipFile:
-                raise Exception("不是有效的 ZIP 文件，下载可能未完成或文件已损坏")
+                raise Exception(_("install.error.invalid_zip"))
             
             # 保存当前选择的版本信息
             self.current_version = self.version_combo.currentData()
@@ -865,21 +1008,21 @@ class DownloadTab(QWidget):
             self.install_thread.finished.connect(self.on_install_complete)
             
             # 更新进度对话框状态
-            self.progress_dialog.status_label.setText("正在安装...")
-            self.progress_dialog.detail_label.setText("正在解压文件...")
+            self.progress_dialog.status_label.setText(_("progress.dialog.status.installing"))
+            self.progress_dialog.detail_label.setText(_("progress.dialog.detail.extracting"))
             self.progress_dialog.progress_bar.setValue(0)
             
             # 启动安装线程
             self.install_thread.start()
         except Exception as e:
-            logger.error(f"开始安装失败: {str(e)}")
-            self.progress_dialog.status_label.setText("安装失败")
-            self.progress_dialog.detail_label.setText(f"错误信息：{str(e)}")
-            self.progress_dialog.cancel_button.setText("关闭")
+            logger.error(_("log.error.install_failed").format(error=str(e)))
+            self.progress_dialog.status_label.setText(_("progress.dialog.status.install.failed"))
+            self.progress_dialog.detail_label.setText(_("progress.dialog.detail.error").format(message=str(e)))
+            self.progress_dialog.cancel_button.setText(_("common.close"))
             self.progress_dialog.cancel_button.setEnabled(True)
 
     def on_install_complete(self, success, message):
-        """安装完成的处理"""
+        """安装完成回调"""
         try:
             if success:
                 # 获取安装目录
@@ -888,9 +1031,9 @@ class DownloadTab(QWidget):
                     install_dir = self.target_dir  # 如果没有配置安装路径，使用下载目录
                 
                 if not install_dir or not os.path.exists(install_dir):
-                    raise Exception("安装目录不存在")
+                    raise Exception(_("install.status.directory_not_exist"))
                 
-                logger.debug(f"正在查找JDK目录，安装目录: {install_dir}")
+                logger.debug(_("install.status.finding_jdk").format(dir=install_dir))
                 
                 # 获取正确的 JDK 路径（安装目录下的具体版本目录）
                 jdk_name = None
@@ -902,28 +1045,28 @@ class DownloadTab(QWidget):
                             jdk_name = item
                 
                 if not jdk_name:
-                    raise Exception("无法找到安装的JDK目录")
+                    raise Exception(_("install.status.jdk_not_found"))
                 
                 jdk_path = os.path.join(install_dir, jdk_name)
-                logger.debug(f"找到JDK目录: {jdk_path}")
+                logger.debug(_("install.status.found_jdk").format(path=jdk_path))
                 
                 if not os.path.exists(jdk_path):
-                    raise Exception(f"JDK目录不存在: {jdk_path}")
+                    raise Exception(_("install.status.jdk_dir_not_exist").format(path=jdk_path))
                 
                 # 获取发行商信息
-                vendor = self.get_vendor_name(jdk_path)
-                logger.debug(f"获取到发行商信息: {vendor}")
+                vendor = self.vendor_combo.currentText()
+                if not vendor:
+                    vendor = _("vendor.unknown")
                 
-                # 获取当前时间作为导入时间
-                import datetime
-                import_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                # 获取导入时间
+                import_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
                 # 使用保存的版本信息
                 if not hasattr(self, 'current_version') or not self.current_version:
                     self.current_version = self.version  # 使用类成员变量中保存的版本
                 
                 if not self.current_version:
-                    raise Exception("无法获取版本信息")
+                    raise Exception(_("install.error.no_version"))
                 
                 # 添加到配置
                 jdk_info = {
@@ -934,19 +1077,19 @@ class DownloadTab(QWidget):
                     'import_time': import_time
                 }
                 
-                logger.debug(f"准备添加JDK信息到配置: {jdk_info}")
+                logger.debug(_("log.debug.adding_jdk").format(info=jdk_info))
                 # 确保添加到配置成功
                 if not self.config.add_downloaded_jdk(jdk_info):
-                    raise Exception("添加JDK到配置失败")
+                    raise Exception(_("install.error.add_failed"))
                 
                 # 强制保存配置
                 self.config.save()
-                logger.debug("配置已保存")
+                logger.debug(_("log.debug.config_saved"))
                 
                 # 更新进度对话框
-                self.progress_dialog.status_label.setText("安装完成！")
-                self.progress_dialog.detail_label.setText("JDK安装已完成，可以点击完成按钮关闭此窗口。")
-                self.progress_dialog.cancel_button.setText("完成")
+                self.progress_dialog.status_label.setText(_("progress.dialog.status.install.complete"))
+                self.progress_dialog.detail_label.setText(_("progress.dialog.detail.install.complete"))
+                self.progress_dialog.cancel_button.setText(_("common.complete"))
                 self.progress_dialog.cancel_button.setEnabled(True)
                 
                 # 连接完成按钮的点击事件
@@ -959,7 +1102,7 @@ class DownloadTab(QWidget):
                 # 立即刷新本地管理标签页
                 main_window = self.parent().parent()
                 if hasattr(main_window, 'local_tab'):
-                    logger.debug("开始刷新本地管理标签页")
+                    logger.debug(_("log.debug.refreshing_local"))
                     def do_refresh():
                         try:
                             # 重新加载配置
@@ -967,12 +1110,12 @@ class DownloadTab(QWidget):
                             self.config.load()  # 同时更新当前标签页的配置
                             # 刷新列表
                             main_window.local_tab.refresh_jdk_list()
-                            logger.debug("本地管理标签页刷新完成")
+                            logger.debug(_("log.debug.refresh_complete"))
                             
                             # 通知主窗口更新JDK菜单
                             main_window.update_jdk_menu()
                         except Exception as e:
-                            logger.error(f"刷新本地管理标签页失败: {str(e)}")
+                            logger.error(_("log.error.refresh_failed").format(error=str(e)))
                     
                     # 使用定时器确保配置文件已完全保存
                     QTimer.singleShot(1000, do_refresh)
@@ -980,16 +1123,16 @@ class DownloadTab(QWidget):
                     QTimer.singleShot(2000, do_refresh)
                     
             else:
-                self.progress_dialog.status_label.setText("安装失败")
-                self.progress_dialog.detail_label.setText(f"错误信息：{message}")
-                self.progress_dialog.cancel_button.setText("关闭")
+                self.progress_dialog.status_label.setText(_("progress.dialog.status.install.failed"))
+                self.progress_dialog.detail_label.setText(_("progress.dialog.detail.error").format(message=message))
+                self.progress_dialog.cancel_button.setText(_("common.close"))
                 self.progress_dialog.cancel_button.setEnabled(True)
                 
         except Exception as e:
-            logger.error(f"处理安装完成事件失败: {str(e)}")
-            self.progress_dialog.status_label.setText("安装失败")
-            self.progress_dialog.detail_label.setText(f"错误信息：{str(e)}")
-            self.progress_dialog.cancel_button.setText("关闭")
+            logger.error(_("log.error.install_complete_failed").format(error=str(e)))
+            self.progress_dialog.status_label.setText(_("progress.dialog.status.install.failed"))
+            self.progress_dialog.detail_label.setText(_("progress.dialog.detail.error").format(message=str(e)))
+            self.progress_dialog.cancel_button.setText(_("common.close"))
             self.progress_dialog.cancel_button.setEnabled(True)
 
     def on_install_dialog_complete(self):
@@ -1001,7 +1144,7 @@ class DownloadTab(QWidget):
             # 再次刷新本地管理标签页
             main_window = self.parent().parent()
             if hasattr(main_window, 'local_tab'):
-                logger.debug("安装完成后再次刷新本地管理标签页")
+                logger.debug(_("log.debug.refreshing_local"))
                 def do_refresh():
                     try:
                         # 重新加载配置
@@ -1009,19 +1152,19 @@ class DownloadTab(QWidget):
                         self.config.load()  # 同时更新当前标签页的配置
                         # 刷新列表
                         main_window.local_tab.refresh_jdk_list()
-                        logger.debug("本地管理标签页刷新完成")
+                        logger.debug(_("log.debug.refresh_complete"))
                         
                         # 通知主窗口更新JDK菜单
                         main_window.update_jdk_menu()
                     except Exception as e:
-                        logger.error(f"刷新本地管理标签页失败: {str(e)}")
+                        logger.error(_("log.error.refresh_failed").format(error=str(e)))
                 
                 # 使用定时器确保配置文件已完全保存
                 QTimer.singleShot(1000, do_refresh)
                 # 再次延迟刷新以确保更新
                 QTimer.singleShot(2000, do_refresh)
         except Exception as e:
-            logger.error(f"处理安装完成对话框关闭事件失败: {str(e)}")
+            logger.error(_("log.error.dialog_complete_failed").format(error=str(e)))
 
     def get_vendor_name(self, jdk_path):
         """获取JDK发行商信息"""
@@ -1109,7 +1252,7 @@ class DownloadTab(QWidget):
             return
             
         if self.version_combo.currentIndex() < 0:
-            QMessageBox.warning(self, "警告", "请先选择要下载的JDK版本")
+            QMessageBox.warning(self, _("download.warning.title"), _("download.warning.no_version"))
             return
         
         # 如果存在旧的下载线程，确保它已经停止并清理
@@ -1142,7 +1285,7 @@ class DownloadTab(QWidget):
         os.makedirs(self.target_dir, exist_ok=True)
         
         # 显示进度对话框
-        self.show_progress_dialog("正在下载")
+        self.show_progress_dialog(_("progress.dialog.title"))
         
         # 设置下载状态
         self.is_downloading = True
@@ -1226,37 +1369,30 @@ class DownloadTab(QWidget):
                             color: #1a73e8;
                             font-size: 16px;
                         }}
-                        .highlight {{
-                            background-color: rgba(26, 115, 232, 0.1);
-                            padding: 2px 5px;
-                            border-radius: 3px;
-                            color: #1a73e8;
-                            font-weight: 500;
-                        }}
                     </style>
                     <div class='content-section'>
                         {info}
                     </div>
                     <div class='link-section'>
-                        <div class='section-title'>相关资源</div>
+                        <div class='section-title'>{_("version.info.resources")}</div>
                         <div class='link-item'>
                             <span class='link-icon'>📚</span>
                             <a href='https://docs.oracle.com/en/java/javase/{version_number}/docs/api/' target='_blank'>
-                                <span class='link-text'>Java {version_number} API 文档</span>
+                                <span class='link-text'>{_("version.info.api_doc").format(version=version_number)}</span>
                             </a>
                         </div>
                         <div class='link-item'>
                             <span class='link-icon'>📖</span>
                             <a href='https://docs.oracle.com/en/java/javase/{version_number}/specs/' target='_blank'>
-                                <span class='link-text'>Java {version_number} 语言规范</span>
+                                <span class='link-text'>{_("version.info.language_spec").format(version=version_number)}</span>
                             </a>
                         </div>
                     </div>
                 """)
             else:
-                self.version_info_label.setText("""
+                self.version_info_label.setText(f"""
                     <div style='color: #666666; font-style: italic; padding: 20px 0; text-align: center;'>
-                        暂无版本信息
+                        {_("version.info.not_available")}
                     </div>
                 """)
         else:
@@ -1269,7 +1405,7 @@ class DownloadTab(QWidget):
         versions = self.downloader.get_available_versions(vendor)
         for version in versions:
             self.version_combo.addItem(f"JDK {version}", version)
-
+            
     def update_settings(self):
         """更新设置"""
         pass 
@@ -1299,7 +1435,7 @@ class DownloadThread(QThread):
             # 获取下载链接
             download_url = self.downloader._get_download_url(self.vendor, self.version)
             if not download_url:
-                self.finished.emit(False, "无法获取下载链接，请尝试手动下载")
+                self.finished.emit(False, _("download.error.no_url"))
                 return
 
             # 设置下载文件路径
@@ -1314,7 +1450,7 @@ class DownloadThread(QThread):
                 timeout=30
             )
             if not self.response or self.response.status_code != 200:
-                self.finished.emit(False, "创建下载请求失败，请检查网络连接")
+                self.finished.emit(False, _("download.error.request_failed"))
                 return
                 
             # 获取文件大小
@@ -1340,13 +1476,13 @@ class DownloadThread(QThread):
             # 检查文件是否下载完整
             if os.path.exists(self.current_file) and os.path.getsize(self.current_file) == total_size:
                 self.download_success = True
-                self.finished.emit(True, "下载完成")
+                self.finished.emit(True, _("download.success"))
             else:
-                self.finished.emit(False, "下载文件不完整，请重试")
+                self.finished.emit(False, _("download.error.incomplete"))
                 
         except Exception as e:
             logger.error(f"下载失败: {str(e)}")
-            self.finished.emit(False, f"下载失败: {str(e)}")
+            self.finished.emit(False, _("download.error.failed").format(error=str(e)))
             
         finally:
             self.close_handles()
@@ -1376,13 +1512,13 @@ class DownloadThread(QThread):
             if self.current_file and os.path.exists(self.current_file):
                 try:
                     os.remove(self.current_file)
-                    logger.info(f"成功删除文件: {self.current_file}")
+                    logger.info(_("log.debug.cleanup_success").format(file=self.current_file))
                 except Exception as e:
-                    logger.error(f"删除文件失败: {str(e)}")
+                    logger.error(_("log.error.cleanup_failed").format(error=str(e)))
             # 发送清理完成信号
             self.cleanup_complete.emit()
         except Exception as e:
-            logger.error(f"清理资源失败: {str(e)}")
+            logger.error(_("log.error.cleanup_failed").format(error=str(e)))
             self.cleanup_complete.emit()
         finally:
             # 确保线程能够正常退出
@@ -1397,7 +1533,7 @@ class DownloadThread(QThread):
                 try:
                     self.file_handle.close()
                 except Exception as e:
-                    logger.error(f"关闭文件句柄失败: {str(e)}")
+                    logger.error(_("log.error.close_handle_failed").format(error=str(e)))
                 self.file_handle = None
             
             # 关闭响应对象
@@ -1405,7 +1541,7 @@ class DownloadThread(QThread):
                 try:
                     self.response.close()
                 except Exception as e:
-                    logger.error(f"关闭响应对象失败: {str(e)}")
+                    logger.error(_("log.error.close_response_failed").format(error=str(e)))
                 self.response = None
                 
         except Exception as e:
@@ -1444,7 +1580,7 @@ class InstallThread(QThread):
                 # 解压所有文件
                 for index, member in enumerate(file_list, 1):
                     if self.is_cancelled:
-                        self.finished.emit(False, "安装已取消", "", "")
+                        self.finished.emit(False, _("install.status.cancelled"), "", "")
                         return
                     
                     zip_ref.extract(member, self.target_dir)
@@ -1452,6 +1588,7 @@ class InstallThread(QThread):
             
             # 计算安装时间
             install_time = start_time.msecsTo(QDateTime.currentDateTime()) / 1000.0
+            install_time_str = _("install.time.seconds").format(seconds=f"{install_time:.1f}")
             import_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
             
             # 删除zip文件
@@ -1470,14 +1607,14 @@ class InstallThread(QThread):
             try:
                 os.rename(old_path, new_path)
             except Exception as e:
-                logger.error(f"重命名目录失败: {str(e)}")
+                logger.error(_("log.error.rename_failed").format(error=str(e)))
                 # 如果重命名失败，尝试使用复制的方式
                 shutil.copytree(old_path, new_path)
                 shutil.rmtree(old_path, ignore_errors=True)
             
-            self.finished.emit(True, "安装完成", f"{install_time:.1f}秒", import_time)
+            self.finished.emit(True, _("install.status.success"), install_time_str, import_time)
         except Exception as e:
             self.finished.emit(False, str(e), "", "")
-            
+
     def cancel(self):
         self.is_cancelled = True 

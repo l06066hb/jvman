@@ -91,6 +91,7 @@ def build_portable(platform='windows', timestamp=None):
     build_args.extend([
         f'--add-data={os.path.join(root_dir, "resources", "icons")};resources/icons',
         f'--add-data={os.path.join(root_dir, "config", "app.json")};config',
+        f'--add-data={os.path.join(root_dir, "src", "i18n")};i18n',  # 添加国际化文件
         f'--add-data={os.path.join(root_dir, "LICENSE")};.',
     ])
     
@@ -179,7 +180,7 @@ def build_portable(platform='windows', timestamp=None):
         "downloaded_jdks": [],
         "jdks": [],
         "auto_start": False,
-        "close_action": "minimize",
+        "close_action": None,
         "proxy": {
             "enabled": False,
             "host": "",
