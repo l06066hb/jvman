@@ -1,6 +1,6 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -14,11 +14,12 @@
 
 - 🚀 在线下载 JDK：支持多个 JDK 发行版（Oracle JDK、OpenJDK、Adoptium、Amazon Corretto、Zulu OpenJDK）
 - 📂 本地 JDK 管理：轻松导入和管理已安装的 JDK
-- 🔄 智能版本切换：快速切换不同版本的 JDK，支持多平台
-- 🛠 环境变量管理：自动配置 JAVA_HOME、PATH 和 CLASSPATH
-- 💡 系统托盘：快速查看和切换当前 JDK 版本
+- 🔄 智能版本切换：快速切换不同版本的 JDK，支持多平台和托盘菜单快速切换
+- 🛠 环境变量管理：自动配置 JAVA_HOME、PATH 和 CLASSPATH，实时显示同步状态
+- 💡 系统托盘：实时显示和快速切换当前 JDK 版本
 - 🎨 主题切换：支持浅色、深色和青色主题
 - 🌐 国际化：支持中文和英文界面
+- 📚 文档中心：内置帮助文档和 API 文档，支持搜索功能
 - 🖥 多平台支持：
   - Windows：使用符号链接进行版本切换
   - macOS：支持 Homebrew 安装的 JDK，使用符号链接切换
@@ -26,6 +27,11 @@
 - 📝 日志记录：详细的操作日志，支持文件记录
 - 🔧 便携版支持：无需安装，解压即用
 - 🔄 自动更新：支持检查和下载新版本
+
+## 程序截图
+
+### 主界面
+![主界面](resources/screenshots/main_window_zh.png)
 
 ## 系统要求
 
@@ -137,6 +143,24 @@ python src/main.py
 - 如遇下载失败，可尝试使用手动下载功能
 - Unix 系统（macOS/Linux）需要重新加载 shell 配置文件使环境变量生效
 
+### IDE 集成
+本工具支持与主流 IDE（如 IntelliJ IDEA、VS Code、Eclipse）无缝集成。通过配置 IDE 使用软链接路径，可以实现 IDE 环境与系统 JDK 版本的自动同步。
+
+#### 快速配置
+1. 使用软链接路径（默认位置）：
+   - Windows: `%LOCALAPPDATA%\Programs\jvman\current`
+   - macOS: `/usr/local/opt/jvman/current`
+   - Linux: `/usr/local/jvman/current`
+
+2. 主流 IDE 配置示例：
+   - IntelliJ IDEA: 在 Settings > Build Tools > Gradle/Maven 中配置 JDK 路径
+   - VS Code: 在 settings.json 中配置 java.home
+   - Eclipse: 在 Installed JREs 中添加 JDK 路径
+
+详细配置指南请参考：
+- [IDE 集成指南（中文）](resources/docs/zh_CN/ide_integration.md)
+- [IDE Integration Guide (English)](resources/docs/en_US/ide_integration.md)
+
 ## 构建说明
 
 ### 构建便携版
@@ -155,6 +179,16 @@ python scripts/build.py --platform windows --type all
 ```
 
 ## 更新日志
+
+### v1.0.6
+- 优化帮助文档和国际化支持
+- 改进 IDE 配置指南内容
+- 完善中英文翻译质量
+- 优化文档搜索功能
+- 改进文档显示样式
+- 修复国际化切换问题
+- 优化文档内容格式化
+- 统一中英文文案风格
 
 ### v1.0.5
 - 新增托盘菜单版本切换功能，支持快速切换 JDK 版本

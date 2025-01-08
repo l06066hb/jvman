@@ -1,0 +1,967 @@
+{
+    "settings": {
+        "title": "设置",
+        "language": "语言",
+        "language_zh": "中文",
+        "language_en": "English",
+        "theme": "主题",
+        "theme_light": "浅色",
+        "theme_dark": "深色",
+        "theme_blue": "蓝色",
+        "auto_start": "开机启动",
+        "tray_icon": "托盘图标",
+        "proxy": "代理设置",
+        "proxy_enable": "启用代理",
+        "proxy_host": "代理主机",
+        "proxy_port": "代理端口",
+        "save": "保存",
+        "cancel": "取消",
+        "reset": "重置",
+        "sections": {
+            "basic": "基本设置",
+            "env": "环境变量设置",
+            "shell": "Shell 设置",
+            "update": "更新设置"
+        },
+        "items": {
+            "jdk_path": "JDK存储路径:",
+            "symlink_path": "软链接路径:",
+            "theme": "界面主题:",
+            "language": "界面语言:",
+            "auto_start": "开机自启动:",
+            "shell_type": "Shell 类型:",
+            "config_file": "配置文件:",
+            "auto_update": "自动检查更新"
+        },
+        "buttons": {
+            "browse": "浏览",
+            "apply_env": "应用环境变量设置",
+            "check_update": "检查更新",
+            "checking": "检查中..."
+        },
+        "theme_options": {
+            "cyan": "青色",
+            "light": "浅色",
+            "dark": "深色"
+        },
+        "language_options": {
+            "zh_CN": "中文",
+            "en_US": "English"
+        },
+        "env": {
+            "auto_method": "📌 方式一：自动设置环境变量",
+            "manual_method": "📋 方式二：手动设置环境变量",
+            "manual_tip": "复制以下内容到系统环境变量中：",
+            "auto_setup": "自动设置",
+            "not_set": "未设置",
+            "no_java_path": "未找到 Java 相关路径",
+            "synced": "环境变量已同步",
+            "change_warning": "⚠️ 检测到基本设置有变更，请点击'应用环境变量设置'使变更生效"
+        },
+        "messages": {
+            "restart_required": "重启提示",
+            "restart_message": "语言设置已更改，需要重启程序才能生效。",
+            "select_jdk_path": "选择JDK存储路径",
+            "select_symlink_path": "选择软链接路径",
+            "select_config_file": "选择 Shell 配置文件",
+            "env_update_success": "环境变量设置已更新",
+            "env_update_unix": "环境变量设置已更新\n请运行以下命令使环境变量生效：",
+            "env_update_error": "设置环境变量失败: {0}",
+            "reset_close_action": "关闭行为已重置，下次关闭窗口时将重新询问。"
+        },
+        "error": {
+            "title": "设置错误",
+            "save_failed": "保存设置失败：{error}",
+            "load_failed": "加载设置失败：{error}",
+            "invalid_path": "无效路径：{path}"
+        }
+    },
+    "jdk": {
+        "download": {
+            "title": "下载 JDK",
+            "vendor": "发行商",
+            "version": "版本",
+            "directory": "下载目录",
+            "browse": "浏览",
+            "download": "下载",
+            "downloading": "正在下载...",
+            "success": "下载成功",
+            "failed": "下载失败",
+            "manual_guide": "手动下载指南"
+        },
+        "manage": {
+            "title": "管理 JDK",
+            "current": "当前版本",
+            "installed": "已安装版本",
+            "add": "添加",
+            "remove": "移除",
+            "switch": "切换",
+            "open_dir": "打开目录"
+        },
+        "info": {
+            "release_date": "发布日期",
+            "runtime_env": "运行环境",
+            "features": "发行版特性",
+            "version_features": "版本特性",
+            "support_policy": "支持策略",
+            "warning_text": "⚠️ 此版本为短期支持版本，建议仅用于开发和测试环境。"
+        }
+    },
+    "common": {
+        "confirm": "确认",
+        "cancel": "取消",
+        "error": "错误",
+        "warning": "警告",
+        "info": "提示",
+        "processing": "处理中...",
+        "please_wait": "请稍候...",
+        "operation_success": "操作成功",
+        "operation_failed": "操作失败",
+        "unknown_error": "未知错误",
+        "loading": "获取中...",
+        "success": "成功",
+        "failed": "失败",
+        "debug": "调试",
+        "close": "关闭",
+        "open": "打开",
+        "save": "保存",
+        "delete": "删除",
+        "edit": "编辑",
+        "add": "添加",
+        "remove": "移除",
+        "refresh": "刷新",
+        "search": "搜索",
+        "filter": "筛选",
+        "sort": "排序",
+        "settings": "设置",
+        "help": "帮助",
+        "about": "关于",
+        "exit": "退出",
+        "back": "返回",
+        "next": "下一步",
+        "finish": "完成",
+        "start": "开始",
+        "stop": "停止",
+        "pause": "暂停",
+        "resume": "继续"
+    },
+    "install": {
+        "confirm": {
+            "title": "安装确认",
+            "filename": "文件名",
+            "filesize": "文件大小",
+            "hint": "请确认是否安装此 JDK 版本。",
+            "button": {
+                "install": "安装",
+                "cancel": "取消"
+            }
+        },
+        "status": {
+            "directory_not_exist": "安装目录不存在",
+            "finding_jdk": "正在查找 JDK，安装目录：{dir}",
+            "jdk_not_found": "未找到 JDK 目录",
+            "found_jdk": "找到 JDK 目录：{path}",
+            "jdk_dir_not_exist": "JDK 目录不存在：{path}",
+            "failed": "安装失败",
+            "installing": "正在安装...",
+            "complete": "安装完成",
+            "cancelled": "安装已取消",
+            "success": "安装成功"
+        },
+        "error": {
+            "file_not_found": "安装文件不存在",
+            "zip_corrupted": "ZIP 文件已损坏",
+            "invalid_zip": "无效的 ZIP 文件",
+            "no_version": "无法获取版本信息",
+            "add_failed": "添加 JDK 到配置失败"
+        },
+        "time": {
+            "seconds": "{seconds}秒"
+        }
+    },
+    "progress": {
+        "dialog": {
+            "title": "进度",
+            "status": {
+                "preparing": "准备中...",
+                "downloading": "正在下载...",
+                "installing": "正在安装...",
+                "download": {
+                    "complete": "下载完成！",
+                    "failed": "下载失败"
+                },
+                "install": {
+                    "complete": "安装完成！",
+                    "failed": "安装失败"
+                },
+                "failed": "操作失败",
+                "cancelling": "正在取消...",
+                "manual": {
+                    "required": "无法自动下载"
+                }
+            },
+            "detail": {
+                "downloading": "已下载：{downloaded:.1f}MB / {total:.1f}MB ({percentage:.1f}%)",
+                "installing": "已处理：{current} / {total} 个文件 ({percentage:.1f}%)",
+                "download": {
+                    "complete": "下载已成功完成！",
+                    "failed": "下载失败：{message}"
+                },
+                "install": {
+                    "complete": "安装已成功完成！",
+                    "failed": "安装失败：{message}"
+                },
+                "error": "错误：{message}",
+                "cleaning": "正在清理文件...",
+                "manual": {
+                    "oracle": "需要登录 Oracle 账号才能下载此版本。点击\"手动下载\"前往官网下载页面。",
+                    "openjdk": "此版本需要 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面。",
+                    "other": "此版本暂不支持自动下载，请前往对应官网下载。"
+                }
+            },
+            "button": {
+                "manual": "手动下载",
+                "cancel": "取消",
+                "complete": "完成"
+            }
+        },
+        "phase": {
+            "downloading": "下载"
+        },
+        "status": {
+            "downloading": "正在下载 JDK...",
+            "installing": "正在安装 JDK...",
+            "download": {
+                "complete": "下载完成！",
+                "failed": "下载失败"
+            },
+            "install": {
+                "complete": "安装完成！"
+            },
+            "failed": "操作失败",
+            "manual": {
+                "required": "无法自动下载"
+            }
+        },
+        "detail": {
+            "downloading": "已下载: {downloaded:.1f}MB / {total:.1f}MB ({percentage:.1f}%)",
+            "installing": "正在处理: {current}/{total} 个文件 ({percentage:.1f}%)",
+            "download": {
+                "complete": "请在确认对话框中查看详细信息"
+            },
+            "install": {
+                "complete": "JDK 已成功安装到指定目录"
+            },
+            "manual": {
+                "oracle": "需要登录 Oracle 账号才能下载此版本。点击\"手动下载\"前往官网下载页面。",
+                "openjdk": "此版本需要 OpenJDK 官网手动下载。点击\"手动下载\"前往下载页面",
+                "other": "此版本暂不支持自动下载，请前往对应官网下载。"
+            },
+            "error": "错误信息：{message}"
+        }
+    },
+    "download": {
+        "group": {
+            "select": "选择 JDK",
+            "info": "版本信息"
+        },
+        "label": {
+            "vendor": "发行商：",
+            "version": "版本："
+        },
+        "button": {
+            "refresh": "刷新",
+            "download": "下载",
+            "manual": "手动下载",
+            "cancel": "取消",
+            "complete": "完成"
+        },
+        "warning": {
+            "title": "警告",
+            "no_version": "请先选择要下载的 JDK 版本"
+        },
+        "progress": {
+            "title": "正在下载",
+            "preparing": "准备下载...",
+            "downloading": "正在下载...",
+            "installing": "正在安装...",
+            "extracting": "正在解压文件...",
+            "cleaning": "正在清理文件...",
+            "cancelling": "正在取消...",
+            "download_complete": "下载完成！",
+            "install_complete": "安装完成！",
+            "failed": "操作失败"
+        },
+        "complete": {
+            "title": "下载完成",
+            "message": "JDK {version} 下载完成！\n可以稍后在下载目录中找到安装包。"
+        },
+        "error": {
+            "file_not_found": "下载完成但文件不存在，请重试下载",
+            "with_manual": "错误：{message}\n\n您可以尝试手动下载此版本。",
+            "process_failed": "处理下载完成事件失败：{error}",
+            "no_url": "无法获取下载链接，请尝试手动下载",
+            "request_failed": "创建下载请求失败，请检查网络连接",
+            "incomplete": "下载文件不完整，请重试",
+            "failed": "下载失败：{error}",
+            "cleanup_failed": "清理资源失败：{error}",
+            "close_handle_failed": "关闭文件句柄失败：{error}",
+            "close_response_failed": "关闭响应对象失败：{error}",
+            "close_handles_failed": "关闭句柄失败：{error}",
+            "install_failed": "开始安装失败：{error}",
+            "install_complete_failed": "处理安装完成事件失败：{error}",
+            "refresh_failed": "刷新本地管理标签页失败：{error}",
+            "dialog_complete_failed": "处理安装完成对话框失败：{error}",
+            "cancel_failed": "取消操作失败：{error}",
+            "oracle_auth": "需要登录 Oracle 账号。\n\n请按以下步骤操作：\n1. 访问 {url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{dir}",
+            "access_denied": "访问下载链接被拒绝：{url}",
+            "invalid_url": "无效的下载链接（状态码：{status}）：{url}",
+            "download_failed": "下载失败（状态码：{status}）：{url}",
+            "no_size": "无法获取文件大小：{url}"
+        },
+        "manual": {
+            "oracle": "需要登录 Oracle 账号。\n\n请按以下步骤操作：\n1. 访问 {url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{dir}",
+            "openjdk": "无法获取直接下载链接。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "corretto": "下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 Corretto {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "zulu": "下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 Zulu JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "other": "无法获取下载链接。请访问 {vendor} 官网手动下载 JDK {version} 版本。",
+            "error": {
+                "title": "手动下载错误",
+                "no_info": "版本信息不可用",
+                "no_url": "下载链接不可用",
+                "failed": "打开下载页面失败：{error}"
+            }
+        },
+        "status": {
+            "download": {
+                "success": "下载成功",
+                "failed": "下载失败",
+                "cancelled": "下载已取消"
+            },
+            "install": {
+                "success": "安装成功",
+                "failed": "安装失败",
+                "cancelled": "安装已取消"
+            }
+        },
+        "detail": {
+            "download": {
+                "progress": "已下载: {current}/{total} ({percentage}%)",
+                "speed": "下载速度: {speed}/s",
+                "remaining": "剩余时间: {time}"
+            },
+            "install": {
+                "progress": "已处理: {current}/{total} 个文件 ({percentage}%)",
+                "extracting": "正在解压: {file}"
+            }
+        },
+        "vendor": {
+            "oracle": "Oracle JDK",
+            "openjdk": "OpenJDK",
+            "temurin": "Eclipse Temurin (Adoptium)",
+            "corretto": "Amazon Corretto",
+            "zulu": "Azul Zulu",
+            "microsoft": "微软 OpenJDK",
+            "unknown": "未知"
+        }
+    },
+    "version": {
+        "badge": {
+            "lts": "长期支持",
+            "sts": "短期支持",
+            "ea": "预览版本",
+            "temurin": "Temurin"
+        },
+        "warning": {
+            "ea": "⚠️ 这是预览版本，仅供测试使用，不建议用于生产环境。",
+            "sts": "⚠️ 这是短期支持版本，建议仅用于开发和测试环境。"
+        },
+        "info": {
+            "download_link": "➜ 点击访问官方下载页面",
+            "not_available": "暂无版本信息",
+            "resources": "相关资源",
+            "api_doc": "API 文档（JDK {version}）",
+            "language_spec": "语言规范（JDK {version}）",
+            "detail": {
+                "title": "版本详情",
+                "runtime": "运行环境",
+                "get_failed": "获取详细版本失败: {error}"
+            }
+        },
+        "feature": {
+            "23": {
+                "generics": "✦ 泛型类型推断增强",
+                "string_templates": "✦ 字符串模板增强",
+                "unnamed_patterns": "✦ 未命名模式和变量增强",
+                "foreign_memory": "✦ 外部内存访问 API（三期）",
+                "vector_api": "✦ 向量 API（七期）"
+            }
+        },
+        "format": "{vendor} JDK {version}",
+        "format.arch": " ({arch})",
+        "format.simple": "JDK {version}",
+        "format.error": "格式化版本信息失败: {error}",
+        "not_set": "未设置",
+        "vendor": {
+            "unknown": "未知"
+        }
+    },
+
+    "log": {
+        "debug": {
+            "adding_jdk": "正在添加 JDK 信息到配置：{info}",
+            "config_saved": "配置已保存",
+            "refreshing_local": "正在刷新本地管理标签页",
+            "refresh_complete": "本地管理标签页刷新完成",
+            "auto_update_disabled": "自动更新检查已禁用",
+            "check_interval_not_reached": "距离上次检查时间不足{hours}小时",
+            "refreshing_local": "正在刷新本地管理标签页",
+            "refresh_complete": "本地管理标签页刷新完成"
+        },
+        "error": {
+            "fetch_failed": "获取版本列表失败：{error}",
+            "info_failed": "获取版本信息失败：{error}",
+            "rename_failed": "重命名目录失败：{error}",
+            "get_jdk_info_failed": "获取 JDK 信息失败：{path}, {error}",
+            "cleanup_failed": "清理资源失败：{error}",
+            "close_handle_failed": "关闭文件句柄失败：{error}",
+            "close_response_failed": "关闭响应对象失败：{error}",
+            "close_handles_failed": "关闭句柄失败：{error}",
+            "install_failed": "开始安装失败：{error}",
+            "install_complete_failed": "处理安装完成事件失败：{error}",
+            "refresh_failed": "刷新本地管理标签页失败：{error}",
+            "dialog_complete_failed": "处理安装完成对话框失败：{error}",
+            "cancel_failed": "取消操作失败：{error}",
+            "check_update_failed": "检查更新状态时发生错误: {error}",
+            "get_system_version_failed": "获取系统Java版本失败",
+            "update_version_failed": "更新当前版本失败",
+            "check_version_failed": "检查版本失败",
+            "refresh_failed": "刷新失败: {error}"
+        },
+        "warning": {
+            "invalid_check_time": "上次检查时间格式无效，将重新检查"
+        }
+    },
+    "local": {
+        "current_version": {
+            "prefix": "当前应用版本",
+            "not_set": "当前应用版本: 未设置"
+        },
+        "system_version": {
+            "title": "环境变量版本",
+            "hint": "(通过系统环境变量获取的 Java 版本)",
+            "detecting": "检测中...",
+            "not_installed": "环境变量版本: 未安装",
+            "unknown": "未知"
+        },
+        "jdk": {
+            "type": {
+                "mapped": "已映射",
+                "downloaded": "已下载"
+            },
+            "vendor": {
+                "unknown": "未知"
+            },
+            "version": {
+                "unknown": "未知"
+            },
+            "status": {
+                "in_use": "应用中"
+            },
+            "import_time": {
+                "prefix": "导入时间",
+                "unknown": "未知"
+            }
+        },
+        "version": {
+            "type": {
+                "lts": "LTS",
+                "latest": "最新版",
+                "interim": "过渡版",
+                "old": "旧版本",
+                "legacy": "传统版",
+                "unknown": "未知版本"
+            }
+        },
+        "button": {
+            "add_local_jdk": "添加本地 JDK",
+            "open_dir": "打开目录",
+            "apply_version": "应用此版本",
+            "delete": "删除",
+            "remove_from_list": "仅从列表移除",
+            "delete_folder": "删除文件夹",
+            "cancel": "取消",
+            "ok": "确定"
+        },
+        "dialog": {
+            "select_jdk_dir": "选择JDK安装目录",
+            "warning": "警告",
+            "success": "成功",
+            "invalid_jdk_dir": "所选目录不是有效的JDK目录",
+            "jdk_already_added": "该JDK已经添加过了",
+            "cannot_get_version": "无法获取JDK版本信息",
+            "cannot_parse_version": "无法解析JDK版本号",
+            "jdk_added": "已添加 JDK {version}",
+            "add_jdk_failed": "添加JDK失败: {error}",
+            "select_version_first": "请先选择要切换的JDK版本",
+            "version_switched": "已切换到 JDK {version}",
+            "switch_failed": "切换JDK版本失败",
+            "jdk_not_found": "未找到指定的JDK信息",
+            "delete": {
+                "title": "删除 JDK",
+                "warning_title": "删除警告",
+                "warning_message": "⚠️ 警告：删除文件夹将会永久删除该目录下的所有文件和子文件夹，此操作执行后不可恢复！请确认您已备份需要保留的文件。",
+                "version_title": "版本:",
+                "path_title": "安装路径:",
+                "path_confirm": "您确定要删除以下 JDK 吗？\n\n版本: {vendor} JDK {version}\n路径: {path}",
+                "success_message": "已成功删除 {version} ({vendor}) 及其所有文件",
+                "success_message_not_exist": "已从列表中移除 {version} ({vendor})，文件夹已不存在",
+                "success_message_list_only": "已从列表中移除 {version} ({vendor})",
+                "warning": "警告",
+                "error": "错误",
+                "success": "成功"
+            },
+            "button": {
+                "remove_from_list": "仅从列表移除",
+                "delete_folder": "删除文件夹",
+                "cancel": "取消",
+                "ok": "确定"
+            },
+            "error": {
+                "delete_failed": "删除失败: {error}"
+            },
+            "switch": {
+                "title": "切换成功",
+                "success_title": "JDK 切换成功",
+                "success_message": "已成功切换到新的 JDK 版本",
+                "success_message_windows": "已成功切换到新的 JDK 版本\n环境变量已自动更新",
+                "success_message_unix": "已成功切换到新的 JDK 版本\n请运行以下命令更新环境变量：",
+                "error_title": "切换失败",
+                "error_message": "切换 JDK 版本失败\n请检查目录权限和路径"
+            }
+        },
+        "error": {
+            "symlink_failed": "取消软链接失败: {error}",
+            "open_dir_failed": "打开目录失败: {error}"
+        },
+        "vendor": {
+            "unknown": "未知"
+        },
+        "list": {
+            "empty": "未找到 JDK，请先下载或导入 JDK。"
+        }
+    },
+    "help": {
+        "navigation": {
+            "title": "目录导航",
+            "quick_nav": "快\n捷\n导\n航"
+        },
+        "sections": {
+            "jdk_vendors": "JDK 发行版说明",
+            "version_types": "版本标识说明",
+            "platform_support": "平台支持说明",
+            "feature_usage": "功能使用说明",
+            "env_management": "环境变量管理",
+            "usage_tips": "使用技巧",
+            "faq": "常见问题",
+            "ide": {
+                "title": "IDE 集成",
+                "overview": {
+                    "title": "概述",
+                    "description": "JDK 管理工具支持与主流 IDE 集成，包括 IntelliJ IDEA、Eclipse、VS Code 等。通过配置 IDE 的 JDK 路径，可以让 IDE 使用我们管理的 JDK 版本。"
+                },
+                "benefits": {
+                    "title": "集成优势",
+                    "description": "1. 统一管理：所有 IDE 使用同一个 JDK 版本管理工具\n2. 快速切换：可以随时切换 JDK 版本，IDE 会自动识别\n3. 多版本支持：可以为不同项目配置不同的 JDK 版本\n4. 环境一致：确保开发环境和构建环境使用相同的 JDK 版本"
+                },
+                "config": {
+                    "title": "IDE 配置指南",
+                    "description": "### IntelliJ IDEA 配置\n1. 打开 Settings (Ctrl+Alt+S)\n2. 转到 Build, Execution, Deployment > Build Tools\n3. 配置 Gradle JVM 或 Maven JVM 为软链接路径\n\n### VS Code 配置\n在 settings.json 中添加：\n```json\n{\n    \"java.jdt.ls.java.home\": \"C:\\Users\\YourUsername\\AppData\\Local\\Programs\\jvman\\current\",\n    \"java.configuration.runtimes\": [\n        {\n            \"name\": \"JavaSE-Current\",\n            \"path\": \"C:\\Users\\YourUsername\\AppData\\Local\\Programs\\jvman\\current\",\n            \"default\": true\n        }\n    ]\n}\n```\n\n### Eclipse 配置\n1. Window > Preferences\n2. Java > Installed JREs\n3. 添加 JRE，选择软链接路径\n\n### 构建工具配置\n\n#### Gradle 配置\n在 build.gradle 中：\n```groovy\ncompileJava {\n    sourceCompatibility = '17'\n    targetCompatibility = '17'\n    options.encoding = 'UTF-8'\n}\n```\n\n#### Maven 配置\n在 pom.xml 中：\n```xml\n<project>\n    <properties>\n        <maven.compiler.source>17</maven.compiler.source>\n        <maven.compiler.target>17</maven.compiler.target>\n    </properties>\n    \n    <build>\n        <plugins>\n            <plugin>\n                <groupId>org.apache.maven.plugins</groupId>\n                <artifactId>maven-compiler-plugin</artifactId>\n                <version>3.11.0</version>\n                <configuration>\n                    <release>17</release>\n                </configuration>\n            </plugin>\n        </plugins>\n    </build>\n</project>\n```"
+                },
+                "faq": {
+                    "title": "常见问题",
+                    "description": "### IDE 无法识别 JDK\n1. 确认软链接路径正确\n2. 重启 IDE\n3. 清除 IDE 缓存\n\n### 项目编译失败\n1. 检查项目 JDK 版本设置\n2. 确认构建工具配置正确\n3. 更新项目依赖\n\n### 环境变量问题\n1. 确认 JAVA_HOME 设置正确\n2. 检查 Path 变量是否包含 JDK 的 bin 目录\n3. 重启终端或 IDE"
+                }
+            }
+        },
+        "subtitles": {
+            "lifecycle": "版本生命周期",
+            "version_number": "版本号说明",
+            "update_frequency": "更新频率",
+            "selection_guide": "选择建议",
+            "online_download": "在线下载",
+            "local_management": "本地管理",
+            "version_switch": "版本切换",
+            "auto_management": "自动管理",
+            "manual_setting": "手动设置",
+            "platform_diff": "平台差异",
+            "tray_feature": "托盘功能",
+            "interface_operation": "界面操作",
+            "download_issues": "下载问题",
+            "env_issues": "环境变量问题",
+            "usage_issues": "使用问题",
+            "ide_issues": "IDE 相关问题"
+        }
+    },
+    "tabs": {
+        "local": "本地管理",
+        "download": "在线下载",
+        "settings": "设置",
+        "help": "帮助",
+        "docs": "文档",
+        "ide": "IDE 集成"
+    },
+    "tray": {
+        "switch_version": "切换版本",
+        "show_window": "显示窗口",
+        "exit": "退出程序",
+        "no_jdk": "未添加JDK",
+        "current_version": "当前: {version}",
+        "switch_success": "JDK切换成功",
+        "switch_success_unix": "已切换到 {version_text}\n请运行命令使环境变量生效：{reload_cmd}",
+        "switch_success_windows": "已切换到 {version_text}",
+        "switch_failed": "切换失败",
+        "tooltip": {
+            "current": "当前: {vendor} JDK {version}",
+            "no_version": "{app_name} v{version}\n未设置 JDK 版本",
+            "version": "{vendor} JDK {version}",
+            "path": "\n安装路径: {path}",
+            "app_info": "{app_name} v{version}\n"
+        }
+    },
+    "dialog": {
+        "error": {
+            "title": "错误"
+        },
+        "close": {
+            "title": "关闭确认",
+            "message": "确定要关闭吗？当前操作将被取消。",
+            "confirm": "确定",
+            "cancel": "取消"
+        }
+    },
+    "update": {
+        "error": {
+            "no_download_url": "未找到有效的下载URL",
+            "no_file_size": "无法获取文件大小",
+            "connection_failed": "网络连接错误，请检查网络连接",
+            "timeout": "请求超时，请稍后重试",
+            "request_failed": "请求错误：{error}",
+            "unknown": "检查更新时发生错误：{error}",
+            "json_decode_failed": "解析服务器响应失败",
+            "download_failed": "下载失败：HTTP {status}",
+            "download_error": "下载错误：{error}",
+            "no_permission": "更新目录没有写入权限",
+            "get_update_path_failed": "获取更新保存路径失败"
+        },
+        "changes": {
+            "no_details": "暂无更新说明",
+            "parse_failed": "解析更新说明失败",
+            "list": "更新内容：\n{changes}"
+        },
+        "no_update": "当前已是最新版本",
+        "check_failed": "更新检查失败: {error}",
+        "check": {
+            "title": "检查更新"
+        },
+        "new_version": {
+            "title": "发现新版本",
+            "found": "发现新版本 {version}",
+            "prompt": "是否现在更新？",
+            "update_now": "立即更新",
+            "remind_later": "稍后提醒"
+        }
+    },
+    "ide": {
+        "overview": {
+            "title": "概述",
+            "description": "JDK 版本管理器可以与主流 IDE 无缝集成，实现开发环境和运行环境的同步。通过配置 IDE 使用软链接路径，在切换系统 JDK 版本时，IDE 的 JDK 环境将自动同步。"
+        },
+        "usage": {
+            "title": "使用建议",
+            "description": "<h3>项目配置</h3>在构建配置文件（如 <code>build.gradle</code> 或 <code>pom.xml</code>）中使用相对路径引用 JDK：<pre>// Gradle 示例<br>java {<br>    toolchain {<br>        languageVersion = JavaLanguageVersion.of(17) // 指定 Java 版本<br>    }<br>}</pre><h3>团队协作</h3><ul><li>在团队中统一使用 JDK 版本管理器</li><li>在项目文档中记录软链接路径配置</li><li>将 IDE JDK 配置文件纳入版本控制（如 Git）</li></ul><h3>CI/CD 配置</h3><ul><li>在 CI/CD 环境中使用相同的软链接路径</li><li>确保构建服务器上安装了 JDK 版本管理器</li></ul>"
+        },
+        "faq": {
+            "title": "常见问题",
+            "description": "<h3>找不到软链接路径</h3><ul><li>验证 JDK 版本管理器安装</li><li>检查是否已选择并激活 JDK 版本</li></ul><h3>IDE 无法识别 JDK</h3><ul><li>验证软链接功能</li><li>尝试重启 IDE</li><li>清除 IDE 缓存并重新配置</li></ul><h3>切换版本后 IDE 未更新</h3><ul><li>某些 IDE 可能需要重新加载项目或重启</li><li>检查 IDE 自动刷新设置</li></ul>"
+        },
+        "config": {
+            "title": "配置指南",
+            "intellij": {
+                "title": "IntelliJ IDEA 配置",
+                "steps": [
+                    "File → Project Structure → SDKs → Add JDK → 选择软链接路径"
+                ]
+            },
+            "eclipse": {
+                "title": "Eclipse 配置",
+                "steps": [
+                    "Window → Preferences → Java → Installed JREs → Add → Select JDK → 选择软链接路径"
+                ]
+            },
+            "vscode": {
+                "title": "VS Code 配置",
+                "intro": "在 settings.json 中添加："
+            }
+        },
+        "benefits": {
+            "title": "优势",
+            "env_title": "无需手动配置环境变量",
+            "env_points": [
+                "软链接路径保持不变，IDE 配置一次即可",
+                "切换 JDK 版本时无需修改 IDE 配置",
+                "避免多个项目反复修改 JDK 路径"
+            ],
+            "project_title": "多项目管理更便捷",
+            "project_points": [
+                "不同项目可以使用不同的 JDK 版本",
+                "项目配置文件可以使用相同的 JDK 路径",
+                "团队成员间配置统一，避免版本冲突"
+            ],
+            "version_title": "版本切换更灵活",
+            "version_points": [
+                "随时切换 JDK 版本，IDE 自动识别",
+                "支持项目级和全局级的版本管理",
+                "便于测试不同 JDK 版本的兼容性"
+            ]
+        },
+        "practices": {
+            "title": "最佳实践",
+            "path_title": "路径配置建议",
+            "path_points": [
+                "使用绝对路径配置软链接，避免相对路径可能的问题",
+                "软链接路径避免使用中文和特殊字符",
+                "建议将软链接路径放在系统盘之外的稳定位置"
+            ],
+            "version_title": "版本管理建议",
+            "version_points": [
+                "在 .gitignore 中排除 IDE 特定的配置文件",
+                "在项目文档中说明所需的 JDK 版本要求",
+                "建议团队统一使用本工具管理 JDK"
+            ],
+            "performance_title": "性能优化建议",
+            "performance_points": [
+                "定期清理 IDE 缓存，特别是切换版本后",
+                "重启 IDE 以确保新版本配置生效",
+                "关闭不需要的 JDK 相关插件"
+            ]
+        }
+    },
+    "docs": {
+        "search": {
+            "placeholder": "搜索文档资料..."
+        },
+        "sections": {
+            "api": "JDK API 文档",
+            "tutorials": "Java 教程和指南",
+            "resources": "开发者资源",
+            "others": "其他资料"
+        },
+        "api": {
+            "jdk23": "Java 23 API 文档",
+            "jdk21": "Java 21 API 文档",
+            "jdk17": "Java 17 API 文档",
+            "jdk11": "Java 11 API 文档",
+            "jdk8": "Java 8 API 文档"
+        },
+        "tutorials": {
+            "spec": "Java 语言规范",
+            "tutorial": "Java 官方教程",
+            "jvm": "JVM 规范",
+            "security": "Java 安全编码指南",
+            "troubleshoot": "Java 故障排除指南"
+        },
+        "resources": {
+            "devcenter": "Java 开发者中心",
+            "openjdk": "OpenJDK 开发者指南",
+            "relnotes": "JDK 发行说明",
+            "adoption": "OpenJDK 采用指南",
+            "performance": "Java 性能指南",
+            "community": {
+                "openjdk": "OpenJDK 社区",
+                "usergroup": "Java 用户组",
+                "spring": "Spring 社区",
+                "jakarta": "Jakarta EE 社区",
+                "reddit": "Java Reddit",
+                "stackoverflow": "Stack Overflow Java"
+            }
+        },
+        "others": {
+            "alibaba": "阿里巴巴 Java 开发手册",
+            "jvm": "深入理解 Java 虚拟机",
+            "effective": "Effective Java 中文版",
+            "interview": "Java 面试指南",
+            "source": "JDK 源码分析",
+            "guide": "Java 学习指南",
+            "advanced": "Java 进阶知识",
+            "growth": "Java 工程师成长指南",
+            "awesome": "Java 资源大全",
+            "tech": "Java 核心知识库",
+            "concurrent": "Java 并发编程实战",
+            "jvmcore": "JVM 核心技术"
+        }
+    },
+    "downloader": {
+        "error": {
+            "unsupported_vendor": "不支持的JDK发行版: {vendor}",
+            "no_version": "未指定版本",
+            "no_url": "无法获取下载链接",
+            "parse_failed": "解析版本信息失败: {error}",
+            "request_failed": "请求失败: {error}",
+            "network_error": "网络错误: {error}",
+            "invalid_response": "无效的响应数据",
+            "no_download_url": "找不到下载链接",
+            "no_version_info": "无法获取版本信息",
+            "oracle_auth": "需要登录 Oracle 账号才能下载。\n\n请按以下步骤操作：\n1. 访问 {url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{dir}",
+            "access_denied": "访问下载链接被拒绝（HTTP 403）。请尝试手动下载或稍后重试。\n下载链接：{url}",
+            "invalid_url": "下载链接无效（HTTP {status}）。请尝试手动下载或稍后重试。\n下载链接：{url}",
+            "download_failed": "下载失败（HTTP {status}）。请尝试手动下载或稍后重试。\n下载链接：{url}",
+            "no_size": "无法获取文件大小信息。请尝试手动下载：\n{url}",
+            "cleanup_failed": "清理下载文件失败: {error}",
+            "incomplete": "下载的文件不完整。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 使用手动下载：{url}\n3. 将下载的文件放到目录：{dir}",
+            "timeout": "下载超时。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 使用手动下载：{url}\n3. 将下载的文件放到目录：{dir}",
+            "connection": "网络连接错误。\n\n请尝试以下方法：\n1. 检查网络连接\n2. 检查代理设置\n3. 使用手动下载：{url}\n4. 将下载的文件放到目录：{dir}",
+            "general": "下载过程中出错: {error}\n\n请尝试手动下载：\n{url}",
+            "manual_required": "下载失败: {error}\n\n请尝试手动下载对应版本的JDK。",
+            "fetch_failed": "获取版本列表失败：{error}",
+            "info_failed": "获取版本信息失败：{error}",
+            "fetch_adoptium_failed": "获取 Adoptium 版本列表失败：{error}",
+            "fetch_zulu_failed": "获取 Zulu 版本列表失败：{error}",
+            "check_link_failed": "检查 OpenJDK {version} 版本下载链接失败：{error}",
+            "async_update_failed": "异步更新版本列表失败：{error}",
+            "cleanup_thread_failed": "清理线程失败：{error}"
+        },
+        "manual": {
+            "oracle": "需要登录 Oracle 账号才能下载。\n\n请按以下步骤操作：\n1. 访问 {url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{dir}",
+            "openjdk": "无法获取直接下载链接。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "corretto": "下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 Corretto {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "zulu": "下载链接获取失败。\n\n请按以下步骤手动下载：\n1. 访问 {url}\n2. 选择 Zulu JDK {version}\n3. 下载对应系统版本\n4. 将下载的文件放到目录：{dir}",
+            "other": "无法获取下载链接。请访问 {vendor} 官网手动下载 JDK {version} 版本。"
+        },
+        "status": {
+            "success": "下载成功",
+            "cancelled": "下载已取消"
+        },
+        "log": {
+            "debug": {
+                "fetching_versions": "正在获取 {vendor} 的可用版本列表",
+                "getting_info": "正在获取 {vendor} JDK {version} 的详细信息",
+                "release_content": "发布文件完整内容：\n{content}",
+                "parsed_fields": "解析的字段：{fields}",
+                "implementor_field": "IMPLEMENTOR 字段值：{implementor}",
+                "cleanup_success": "成功删除文件：{file}"
+            },
+            "error": {
+                "fetch_failed": "获取版本列表失败：{error}",
+                "info_failed": "获取版本信息失败：{error}",
+                "unsupported_vendor": "不支持的发行商：{vendor}",
+                "no_version_info": "无法获取版本信息",
+                "download_failed": "下载失败：{error}",
+                "manual_required": "需要手动下载：{error}",
+                "fetch_adoptium_failed": "获取 Adoptium 版本列表失败：{error}",
+                "fetch_zulu_failed": "获取 Zulu 版本列表失败：{error}",
+                "check_link_failed": "检查 OpenJDK {version} 版本下载链接失败：{error}",
+                "async_update_failed": "异步更新版本列表失败：{error}",
+                "cleanup_thread_failed": "清理线程失败：{error}"
+            },
+            "warning": {
+                "use_temurin": "未找到 OpenJDK {version} 的直接下载链接，尝试使用 Eclipse Temurin"
+            }
+        }
+    },
+    "vendor": {
+        "oracle": {
+            "feature": {
+                "commercial": "✓ 商业特性支持",
+                "graalvm": "✓ GraalVM 企业版集成",
+                "monitoring": "✓ 高级监控和诊断工具",
+                "jfr": "✓ 飞行记录器(JFR)",
+                "jmc": "✓ 任务控制(JMC)",
+                "cds": "✓ 应用程序类数据共享",
+                "lts": "✓ 长期技术支持（LTS）",
+                "sts": "⚠️ 短期支持版本（非 LTS）",
+                "license": "⚠️ 需要 Oracle 订阅许可（生产环境使用）"
+            },
+            "support": {
+                "lts": "商业支持 + Oracle 长期技术支持（至少 8 年）",
+                "sts": "商业支持（6 个月）"
+            },
+            "notes": {
+                "lts": "官方 JDK 发行版，提供全面的商业支持和企业特性，建议用于生产环境",
+                "sts": "非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本"
+            }
+        },
+        "openjdk": {
+            "feature": {
+                "reference": "✓ 开源参考实现",
+                "community": "✓ 社区驱动开发",
+                "standard": "✓ 标准Java特性",
+                "updates": "✓ 快速迭代更新",
+                "transparent": "✓ 透明的开发过程",
+                "ea": "⚠️ 预览版本（Early Access）",
+                "temurin": "📦 由 Eclipse Temurin 提供的构建版本",
+                "lts": "✓ 长期支持版本（LTS）",
+                "sts": "⚠️ 短期支持版本（非 LTS）"
+            },
+            "support": {
+                "ea": "预览版本，仅供测试使用",
+                "temurin": "社区支持 + Eclipse Foundation 支持",
+                "lts": "长期社区支持（至少 4 年）",
+                "sts": "短期社区支持（6 个月）"
+            },
+            "notes": {
+                "ea": "早期访问版本，可能包含不稳定特性，不建议用于生产环境",
+                "temurin": "由 Eclipse Temurin 提供的稳定构建版本，可用于生产环境",
+                "lts": "Java SE 平台的开源参考实现，由 OpenJDK 社区维护，建议用于生产环境",
+                "sts": "非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本"
+            }
+        },
+        "corretto": {
+            "feature": {
+                "aws": "✓ AWS 云平台优化",
+                "security": "✓ 长期安全补丁",
+                "performance": "✓ 企业级性能调优",
+                "production": "✓ 亚马逊生产环境验证",
+                "platform": "✓ 跨平台支持",
+                "lts": "✓ 长期支持版本（LTS）",
+                "sts": "⚠️ 短期支持版本（非 LTS）"
+            },
+            "support": {
+                "lts": "Amazon 免费长期支持（至少 4 年）",
+                "sts": "Amazon 支持（6 个月）"
+            },
+            "notes": {
+                "lts": "由亚马逊开发和维护的 OpenJDK 行版，针对 AWS 优化，建议用于生产环境",
+                "sts": "非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本"
+            }
+        },
+        "zulu": {
+            "feature": {
+                "tck": "✓ 完整 TCK 认证",
+                "performance": "✓ 性能优化版本",
+                "custom": "✓ 可构建定制版本",
+                "cloud": "✓ 云原生支持",
+                "container": "✓ 容器优化",
+                "lts": "✓ 长期支持版本（LTS）",
+                "sts": "⚠️ 短期支持版本（非 LTS）"
+            },
+            "support": {
+                "lts": "社区版免费长期支持 + 商业版付费支持（至少 8 年）",
+                "sts": "社区版支持（6 个月）"
+            },
+            "notes": {
+                "lts": "由 Azul Systems 提供的 OpenJDK 构建版本，提供企业级支持，建议用于生产环境",
+                "sts": "非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本"
+            }
+        }
+    },
+    "menu": {
+        "help": "帮助",
+        "help.about": "关于"
+    },
+    "about": {
+        "title": "关于 JDK 版本管理工具",
+        "description": "一个简单易用的 JDK 版本管理工具，支持在线下载和本地管理。",
+        "copyright": "© 2024 JDK Version Manager. 保留所有权利。"
+    }
+} 

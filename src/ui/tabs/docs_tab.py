@@ -8,6 +8,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QPixmap, QPainter
 from loguru import logger
+from src.utils.i18n_manager import i18n_manager
+
+# 初始化翻译函数
+_ = i18n_manager.get_text
 
 def get_icon_path(icon_name):
     """获取图标路径，支持多个场景
@@ -55,8 +59,45 @@ class DocsTab(QWidget):
     
     def __init__(self):
         super().__init__()
+        
+        logger.debug("Initializing DocsTab")
+        
+        # 初始化界面
         self.init_ui()
         
+        # 连接语言切换信号
+        i18n_manager.language_changed.connect(self._update_texts)
+        logger.debug("Connected language change signal in DocsTab")
+        
+    def _update_texts(self):
+        """更新界面文本"""
+        logger.debug("Updating texts in DocsTab")
+        
+        # 更新搜索框占位符
+        if hasattr(self, 'search_input'):
+            placeholder = _("docs.search.placeholder")
+            logger.debug(f"Setting search placeholder: {placeholder}")
+            self.search_input.setPlaceholderText(placeholder)
+            
+        # 重新加载所有文档区块
+        if hasattr(self, 'content_layout'):
+            logger.debug("Reloading document sections")
+            # 清除现有内容
+            while self.content_layout.count():
+                item = self.content_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+                elif item.layout():
+                    # 清理布局中的所有部件
+                    while item.layout().count():
+                        sub_item = item.layout().takeAt(0)
+                        if sub_item.widget():
+                            sub_item.widget().deleteLater()
+                    item.layout().deleteLater()
+            
+            # 重新添加文档区块
+            self.add_doc_sections()
+            
     def init_ui(self):
         """初始化界面"""
         layout = QVBoxLayout(self)
@@ -76,23 +117,22 @@ class DocsTab(QWidget):
         """)
         search_layout = QHBoxLayout(search_frame)
         search_layout.setContentsMargins(12, 8, 12, 8)
-        search_layout.setSpacing(6)  # 调整图标和输入框的间距
+        search_layout.setSpacing(6)
         
         # 搜索图标
         search_icon = QLabel()
         if icon_path := get_icon_path('search.png'):
             search_icon.setPixmap(QIcon(icon_path).pixmap(QSize(16, 16)))
-        search_icon.setStyleSheet("""
-            QLabel {
-                background: transparent;
-                padding: 2px;
-            }
-        """)
+        search_icon.setStyleSheet("QLabel { background: transparent; padding: 2px; }")
         search_layout.addWidget(search_icon)
         
         # 搜索输入框
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("搜索文档资料...")
+        # 设置初始占位符
+        placeholder = _("docs.search.placeholder")
+        logger.debug(f"Initial search placeholder: {placeholder}")
+        self.search_input.setPlaceholderText(placeholder)
+        
         self.search_input.setStyleSheet("""
             QLineEdit {
                 border: none;
@@ -112,9 +152,7 @@ class DocsTab(QWidget):
         self.search_input.textChanged.connect(self.filter_docs)
         search_layout.addWidget(self.search_input)
         
-        # 添加伸缩项，确保搜索框靠左
         search_layout.addStretch()
-        
         layout.addWidget(search_frame)
         
         # 文档内容区域
@@ -147,38 +185,41 @@ class DocsTab(QWidget):
         content_area.setWidget(content_widget)
         layout.addWidget(content_area)
         
-        # 添加文档链接
-        self.add_doc_sections()
-        
+        logger.debug("UI initialized, calling _update_texts")
+        # 初始化文本
+        self._update_texts()
+
     def add_doc_sections(self):
         """添加文档分区"""
         # JDK API 文档
-        self.add_section_title("JDK API 文档", "api.png")
+        self.add_section_title(_("docs.sections.api"), "api.png")
         self.add_api_docs()
         
         # 添加分隔线
         self.add_separator()
         
         # Java 教程和指南
-        self.add_section_title("Java 教程和指南", "book.png")
+        self.add_section_title(_("docs.sections.tutorials"), "book.png")
         self.add_tutorial_docs()
         
         # 添加分隔线
         self.add_separator()
         
         # 开发者资源
-        self.add_section_title("开发者资源", "dev.png")
-        self.add_dev_resourcess()
+        self.add_section_title(_("docs.sections.resources"), "dev.png")
+        self.add_dev_resources()
         
         # 添加分隔线
         self.add_separator()
         
-        # 中文资料
-        self.add_section_title("中文资料", "cn.png")
-        self.add_chinese_resourcess()
-        
+        # 其他资料
+        self.add_section_title(_("docs.sections.others"), "cn.png")
+        self.add_chinese_resources()
+
     def add_section_title(self, title, icon_name):
         """添加分区标题"""
+        logger.debug(f"Adding section title: {title}")
+        
         title_layout = QHBoxLayout()
         title_layout.setContentsMargins(0, 10, 0, 5)
         
@@ -200,6 +241,7 @@ class DocsTab(QWidget):
         title_layout.addStretch()
         
         self.content_layout.addLayout(title_layout)
+        logger.debug(f"Section title added: {title}")
         
     def add_separator(self):
         """添加分隔线"""
@@ -235,85 +277,124 @@ class DocsTab(QWidget):
         
     def add_api_docs(self):
         """添加 API 文档链接"""
+        logger.debug("Adding API documentation links")
         api_docs = {
-            'JDK 23': 'https://docs.oracle.com/en/java/javase/23/docs/api/',
-            'JDK 21 (LTS)': 'https://docs.oracle.com/en/java/javase/21/docs/api/',
-            'JDK 17 (LTS)': 'https://docs.oracle.com/en/java/javase/17/docs/api/',
-            'JDK 11 (LTS)': 'https://docs.oracle.com/en/java/javase/11/docs/api/',
-            'JDK 8 (LTS)': 'https://docs.oracle.com/javase/8/docs/api/'
+            _("docs.api.jdk23"): 'https://docs.oracle.com/en/java/javase/23/docs/api/',
+            _("docs.api.jdk21"): 'https://docs.oracle.com/en/java/javase/21/docs/api/',
+            _("docs.api.jdk17"): 'https://docs.oracle.com/en/java/javase/17/docs/api/',
+            _("docs.api.jdk11"): 'https://docs.oracle.com/en/java/javase/11/docs/api/',
+            _("docs.api.jdk8"): 'https://docs.oracle.com/javase/8/docs/api/'
         }
         
         for version, url in api_docs.items():
+            logger.debug(f"Creating API doc button: {version} -> {url}")
             button = self.create_doc_button(version, url, "java.png")
             self.content_layout.addWidget(button)
+        logger.debug("API documentation links added")
             
     def add_tutorial_docs(self):
         """添加教程文档链接"""
         tutorials = {
-            'Java 语言规范': 'https://docs.oracle.com/javase/specs/',
-            'Java 教程 (Oracle)': 'https://docs.oracle.com/javase/tutorial/',
-            'JVM 规范': 'https://docs.oracle.com/javase/specs/jvms/se21/html/index.html',
-            'Java 安全编程指南': 'https://www.oracle.com/java/technologies/javase/seccodeguide.html',
-            'Java 故障排除指南': 'https://docs.oracle.com/en/java/javase/21/troubleshoot/index.html'
+            _("docs.tutorials.spec"): 'https://docs.oracle.com/javase/specs/',
+            _("docs.tutorials.tutorial"): 'https://docs.oracle.com/javase/tutorial/',
+            _("docs.tutorials.jvm"): 'https://docs.oracle.com/javase/specs/jvms/se21/html/index.html',
+            _("docs.tutorials.security"): 'https://www.oracle.com/java/technologies/javase/seccodeguide.html',
+            _("docs.tutorials.troubleshoot"): 'https://docs.oracle.com/en/java/javase/21/troubleshoot/index.html'
         }
         
         for title, url in tutorials.items():
             button = self.create_doc_button(title, url, "book.png")
             self.content_layout.addWidget(button)
             
-    def add_dev_resourcess(self):
+    def add_dev_resources(self):
         """添加开发者资源链接"""
-        resourcess = {
-            'Java 开发者中心': 'https://dev.java/',
-            'OpenJDK 文档': 'https://openjdk.org/guide/',
-            'Java 发行说明': 'https://www.oracle.com/java/technologies/javase/jdk-relnotes-index.html',
-            'Java 兼容性指南': 'https://wiki.openjdk.org/display/Adoption/Guide',
-            'Java 性能优化指南': 'https://docs.oracle.com/en/java/javase/21/performance/index.html'
+        resources = {
+            _("docs.resources.devcenter"): 'https://dev.java/',
+            _("docs.resources.openjdk"): 'https://openjdk.org/guide/',
+            _("docs.resources.relnotes"): 'https://www.oracle.com/java/technologies/javase/jdk-relnotes-index.html',
+            _("docs.resources.adoption"): 'https://wiki.openjdk.org/display/Adoption/Guide',
+            _("docs.resources.performance"): 'https://docs.oracle.com/en/java/javase/21/performance/index.html'
         }
         
-        for title, url in resourcess.items():
+        # 添加主要资源
+        for title, url in resources.items():
             button = self.create_doc_button(title, url, "dev.png")
             self.content_layout.addWidget(button)
             
-    def add_chinese_resourcess(self):
-        """添加中文资料链接"""
-        resourcess = {
-            'Java 开发手册(阿里巴巴)': 'https://github.com/alibaba/p3c',
-            'Java 虚拟机规范(中文版)': 'https://github.com/waylau/java-virtual-machine-specification',
-            'Effective Java 中文版': 'https://github.com/clxering/Effective-Java-3rd-edition-Chinese-English-bilingual',
-            'Java 核心技术面试精讲': 'https://github.com/CyC2018/CS-Notes/blob/master/notes/Java%20%E5%9F%BA%E7%A1%80.md',
-            'Java 源码分析': 'https://github.com/seaswalker/JDK',
-            'JavaGuide(Java面试+学习指南)': 'https://github.com/Snailclimb/JavaGuide',
-            'advanced-java(互联网 Java 工程师进阶知识完全扫盲)': 'https://github.com/doocs/advanced-java',
-            'Java 工程师成神之路': 'https://github.com/hollischuang/toBeTopJavaer',
-            'Java 优质开源项目集合': 'https://github.com/CodingDocs/awesome-java',
-            'Java 技术栈系列文章': 'https://github.com/crossoverJie/JCSprout',
-            'Java 并发知识点总结': 'https://github.com/RedSpider1/concurrent',
-            'JVM 底层原理解析': 'https://github.com/doocs/jvm'
+        # 添加社区资源
+        community_resources = {
+            _("docs.resources.community.openjdk"): 'https://openjdk.org/groups/gb/',
+            _("docs.resources.community.usergroup"): 'https://community.oracle.com/community/groundbreakers/java',
+            _("docs.resources.community.spring"): 'https://spring.io/community',
+            _("docs.resources.community.jakarta"): 'https://jakarta.ee/community/',
+            _("docs.resources.community.reddit"): 'https://www.reddit.com/r/java/',
+            _("docs.resources.community.stackoverflow"): 'https://stackoverflow.com/questions/tagged/java'
         }
         
-        for title, url in resourcess.items():
-            button = self.create_doc_button(title, url, "cn.png")
+        # 添加社区资源
+        for title, url in community_resources.items():
+            button = self.create_doc_button(title, url, "community.png")
             self.content_layout.addWidget(button)
             
+    def add_chinese_resources(self):
+        """添加其他资料链接"""
+        resources = {
+            _("docs.others.alibaba"): 'https://github.com/alibaba/p3c',
+            _("docs.others.jvm"): 'https://github.com/waylau/java-virtual-machine-specification',
+            _("docs.others.effective"): 'https://github.com/clxering/Effective-Java-3rd-edition-Chinese-English-bilingual',
+            _("docs.others.interview"): 'https://github.com/CyC2018/CS-Notes/blob/master/notes/Java%20%E5%9F%BA%E7%A1%80.md',
+            _("docs.others.source"): 'https://github.com/seaswalker/JDK',
+            _("docs.others.guide"): 'https://github.com/Snailclimb/JavaGuide',
+            _("docs.others.advanced"): 'https://github.com/doocs/advanced-java',
+            _("docs.others.growth"): 'https://github.com/hollischuang/toBeTopJavaer',
+            _("docs.others.awesome"): 'https://github.com/CodingDocs/awesome-java',
+            _("docs.others.tech"): 'https://github.com/crossoverJie/JCSprout',
+            _("docs.others.concurrent"): 'https://github.com/RedSpider1/concurrent',
+            _("docs.others.jvmcore"): 'https://github.com/doocs/jvm'
+        }
+        
+        # 分批添加资源，每行3个
+        items = list(resources.items())
+        for i in range(0, len(items), 3):
+            row_layout = QHBoxLayout()
+            row_layout.setSpacing(10)
+            
+            # 添加当前行的资源
+            for title, url in items[i:min(i+3, len(items))]:
+                button = self.create_doc_button(title, url, "book.png")
+                row_layout.addWidget(button)
+            
+            # 如果当前行不足3个，添加伸缩项
+            if len(items[i:min(i+3, len(items))]) < 3:
+                row_layout.addStretch()
+            
+            self.content_layout.addLayout(row_layout)
+            
     def filter_docs(self, text):
-        """过滤文档"""
-        search_text = text.lower()
+        """过滤文档链接"""
+        text = text.lower()
+        
+        # 遍历所有按钮
         for i in range(self.content_layout.count()):
             item = self.content_layout.itemAt(i)
-            if item:
-                widget = item.widget()
-                if isinstance(widget, QPushButton):
-                    if search_text in widget.text().lower():
-                        widget.show()
-                    else:
-                        widget.hide()
-                elif isinstance(widget, QFrame):  # 分隔线
-                    visible_count = 0
-                    # 检查分隔线前后的按钮是否可见
-                    for j in range(max(0, i-5), min(self.content_layout.count(), i+5)):
-                        prev_item = self.content_layout.itemAt(j)
-                        if prev_item and isinstance(prev_item.widget(), QPushButton):
-                            if prev_item.widget().isVisible():
-                                visible_count += 1
-                    widget.setVisible(visible_count > 0) 
+            widget = item.widget() if item else None
+            
+            # 只处理按钮和分隔线
+            if isinstance(widget, QPushButton):
+                # 如果搜索文本为空或文本匹配，则显示
+                if not text or text in widget.text().lower():
+                    widget.show()
+                else:
+                    widget.hide()
+            elif isinstance(widget, QFrame) and widget.frameShape() == QFrame.Shape.HLine:
+                # 分隔线的显示逻辑：如果下一个按钮可见则显示
+                next_visible = False
+                for j in range(i + 1, self.content_layout.count()):
+                    next_item = self.content_layout.itemAt(j)
+                    next_widget = next_item.widget() if next_item else None
+                    if isinstance(next_widget, QPushButton) and not next_widget.isHidden():
+                        next_visible = True
+                        break
+                    elif isinstance(next_widget, QFrame) and next_widget.frameShape() == QFrame.Shape.HLine:
+                        break
+                widget.setVisible(next_visible) 

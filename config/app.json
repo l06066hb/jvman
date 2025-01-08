@@ -1,6 +1,6 @@
 {
     "name": "JDK Version Manager",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "JDK版本管理工具，支持在线下载和本地映射，提供中英文国际化支持",
     "author": "l6066hb",
     "homepage": "https://gitee.com/l06066hb/jvman",
@@ -28,6 +28,21 @@
         "i18n": ["zh_CN", "en_US"]
     },
     "changelog": [
+        {
+            "version": "1.0.6",
+            "date": "2024-01-06",
+            "type": "feature",
+            "changes": [
+                "优化帮助文档和国际化支持",
+                "改进 IDE 配置指南内容",
+                "完善中英文翻译质量",
+                "优化文档搜索功能",
+                "改进文档显示样式",
+                "修复国际化切换问题",
+                "优化文档内容格式化",
+                "统一中英文文案风格"
+            ]
+        },
         {
             "version": "1.0.5",
             "date": "2024-01-05",

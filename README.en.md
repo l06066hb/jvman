@@ -1,6 +1,6 @@
 # JDK Version Manager
 
-![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -14,11 +14,12 @@ A user-friendly JDK version management tool that supports Windows, macOS, and Li
 
 - 🚀 Online JDK Downloads: Support multiple JDK distributions (Oracle JDK, OpenJDK, Adoptium, Amazon Corretto, Zulu OpenJDK)
 - 📂 Local JDK Management: Easily import and manage installed JDKs
-- 🔄 Smart Version Switching: Quick switching between different JDK versions with multi-platform support
-- 🛠 Environment Variable Management: Automatic configuration of JAVA_HOME, PATH, and CLASSPATH
-- 💡 System Tray: Quick view and switch current JDK version
+- 🔄 Smart Version Switching: Quick switching between different JDK versions with multi-platform support and tray menu quick switch
+- 🛠 Environment Variable Management: Automatic configuration of JAVA_HOME, PATH, and CLASSPATH with real-time sync status
+- 💡 System Tray: Real-time display and quick switch of current JDK version
 - 🎨 Theme Switching: Support light, dark, and cyan themes
 - 🌐 Internationalization: Support for Chinese and English interfaces
+- 🖥 Documentation Center: Built-in help documentation and API documentation with search functionality
 - 🖥 Multi-platform Support:
   - Windows: Version switching using symbolic links
   - macOS: Support for Homebrew-installed JDKs, symbolic link switching
@@ -26,6 +27,11 @@ A user-friendly JDK version management tool that supports Windows, macOS, and Li
 - 📝 Logging: Detailed operation logs with file recording support
 - 🔧 Portable Support: No installation required, just extract and use
 - 🔄 Auto Update: Support checking and downloading new versions
+
+## Screenshots
+
+### Main Interface
+![Main Interface](resources/screenshots/main_window_en.png) 
 
 ## System Requirements
 
@@ -46,12 +52,12 @@ A user-friendly JDK version management tool that supports Windows, macOS, and Li
    - Extract to any directory
    - Run jvman.exe
 
-### macOS
+### macOS (testing)
 1. Download the latest DMG file
 2. Open the DMG and drag the app to Applications
 3. Admin password required for first run
 
-### Linux
+### Linux (testing)
 1. Download the latest AppImage or deb/rpm package
 2. Install the package or run the AppImage directly
 3. Sudo privileges required for first run
@@ -137,6 +143,24 @@ python src/main.py
 - If download fails, try manual download option
 - Unix systems (macOS/Linux) need to reload shell config file for environment variables to take effect
 
+### IDE Integration
+This tool seamlessly integrates with mainstream IDEs (such as IntelliJ IDEA, VS Code, Eclipse). By configuring your IDE to use the symlink path, you can achieve automatic synchronization between IDE environment and system JDK version.
+
+#### Quick Setup
+1. Use symlink path (default location):
+   - Windows: `%LOCALAPPDATA%\Programs\jvman\current`
+   - macOS: `/usr/local/opt/jvman/current`
+   - Linux: `/usr/local/jvman/current`
+
+2. Common IDE configuration examples:
+   - IntelliJ IDEA: Configure JDK path in Settings > Build Tools > Gradle/Maven
+   - VS Code: Configure java.home in settings.json
+   - Eclipse: Add JDK path in Installed JREs
+
+For detailed configuration guide, please refer to:
+- [IDE Integration Guide (English)](resources/docs/en_US/ide_integration.md)
+- [IDE 集成指南（中文）](resources/docs/zh_CN/ide_integration.md)
+
 ## Build Instructions
 
 ### Build Portable Version
@@ -155,6 +179,16 @@ python scripts/build.py --platform windows --type all
 ```
 
 ## Changelog
+
+### v1.0.6
+- Enhanced help documentation and internationalization support
+- Improved IDE configuration guide content
+- Enhanced Chinese and English translation quality
+- Optimized documentation search functionality
+- Improved document display styles
+- Fixed language switching issues
+- Optimized document content formatting
+- Unified Chinese and English text styles
 
 ### v1.0.5
 - Added version switching in tray menu for quick JDK version changes
@@ -264,4 +298,4 @@ Please report security vulnerabilities to [security@example.com](mailto:security
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

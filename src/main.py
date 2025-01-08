@@ -137,6 +137,7 @@ def run_as_admin():
             script = os.path.abspath(sys.argv[0])
             
             if platform_manager.is_windows:
+          
                 # Windows使用ShellExecute
                 params = ' '.join([script] + sys.argv[1:] + ['asadmin'])
                 ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, params, None, 1)
@@ -205,6 +206,7 @@ def main():
         logger.exception(error_msg)
         show_error_message(error_msg)
         return 1
+    
 
 if __name__ == '__main__':
     try:

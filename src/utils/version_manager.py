@@ -5,10 +5,7 @@ from loguru import logger
 from packaging import version
 
 class VersionManager:
-    """版本管理器，统一管理应用程序版本信息"""
-    
-    # 基础版本号（不可修改）
-    BASE_VERSION = "1.0.4"
+    """版本管理器"""
     
     _instance = None
     _initialized = False
@@ -19,120 +16,95 @@ class VersionManager:
         return cls._instance
     
     def __init__(self):
-        if not self._initialized:
-            self._initialized = True
-            self._load_app_config()
-    
-    def _get_app_root(self):
-        """获取应用程序根目录"""
-        if getattr(sys, 'frozen', False):
-            # 如果是打包后的环境
-            return os.path.dirname(sys.executable)
-        else:
-            # 如果是开发环境
-            return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
-    def _load_app_config(self):
-        """加载应用程序配置"""
-        try:
-            # 首先尝试从打包后的config目录加载
-            app_root = self._get_app_root()
-            config_paths = [
-                os.path.join(app_root, 'config', 'app.json'),  # 打包后的路径
-                os.path.join(app_root, 'config', 'app.json'),  # 开发环境config目录
-            ]
-            
-            for config_path in config_paths:
-                if os.path.exists(config_path):
-                    with open(config_path, 'r', encoding='utf-8') as f:
-                        self._config = json.load(f)
-                        # 验证配置文件中的版本号
-                        if not self.is_version_compatible(self._config.get('version')):
-                            logger.warning(f"Config version {self._config.get('version')} is not compatible with base version {self.BASE_VERSION}")
-                            self._config['version'] = self.BASE_VERSION
-                        logger.debug(f"Loaded app config from: {config_path}")
-                        return
-                        
-            raise FileNotFoundError("No app.json found in any of the expected locations")
-            
-        except Exception as e:
-            logger.error(f"Failed to load app config: {e}")
-            self._config = {
-                "version": self.BASE_VERSION,
+        if not VersionManager._initialized:
+            VersionManager._initialized = True
+            self.version = "0.0.0"  # 默认版本号，实际从配置文件加载
+            self.default_language = "zh_CN"  # 默认语言
+            self.supported_languages = ["zh_CN", "en_US"]  # 支持的语言列表
+            self._app_info = {
                 "name": "JDK Version Manager",
-                "description": "JDK版本管理工具"
+                "description": "JDK版本管理工具",
+                "copyright": "Copyright © 2024",
+                "build": {
+                    "app_id": "com.jvman.app"
+                }
             }
+            self._load_version_info()
     
-    def is_version_compatible(self, check_version):
-        """检查版本号是否兼容
-        
-        Args:
-            check_version: 要检查的版本号
-            
-        Returns:
-            bool: 如果版本号兼容返回True，否则返回False
-        """
+    def _load_version_info(self):
+        """加载版本信息"""
         try:
-            if not check_version:
-                return False
-            # 使用 packaging.version 进行版本号比较
-            base_ver = version.parse(self.BASE_VERSION)
-            check_ver = version.parse(check_version)
-            # 主版本号必须相同，次版本号不能小于基础版本
-            return (base_ver.major == check_ver.major and 
-                   base_ver.minor <= check_ver.minor)
-        except Exception:
+            # 获取配置文件路径
+            if getattr(sys, 'frozen', False):
+                # 如果是打包后的环境
+                base_path = os.path.dirname(sys.executable)
+            else:
+                # 如果是开发环境
+                base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            
+            config_file = os.path.join(base_path, 'config', 'app.json')
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    self.version = config.get('version', self.version)
+                    # 从配置文件获取语言相关设置
+                    if 'features' in config and 'i18n' in config['features']:
+                        self.supported_languages = config['features']['i18n']
+                        if self.supported_languages:
+                            self.default_language = self.supported_languages[0]
+                    # 加载应用信息
+                    if 'name' in config:
+                        self._app_info['name'] = config['name']
+                    if 'description' in config:
+                        self._app_info['description'] = config['description']
+                    if 'copyright' in config:
+                        self._app_info['copyright'] = config['copyright']
+                    if 'build' in config:
+                        self._app_info['build'].update(config['build'])
+        except Exception as e:
+            logger.error(f"Failed to load version info: {str(e)}")
+    
+    def get_version(self):
+        """获取当前版本号"""
+        return self.version
+    
+    def get_default_language(self):
+        """获取默认语言"""
+        return self.default_language
+    
+    def get_supported_languages(self):
+        """获取支持的语言列表"""
+        return self.supported_languages
+    
+    def check_version(self, version_str):
+        """检查版本号是否大于当前版本"""
+        try:
+            current = version.parse(self.version)
+            new = version.parse(version_str)
+            return new > current
+        except Exception as e:
+            logger.error(f"Version check failed: {str(e)}")
             return False
-    
-    @property
-    def version(self):
-        """获取应用程序版本号"""
-        return self._config.get('version', self.BASE_VERSION)
-    
-    @property
-    def base_version(self):
-        """获取基础版本号（不可修改）"""
-        return self.BASE_VERSION
-    
+            
     @property
     def app_name(self):
         """获取应用程序名称"""
-        return self._config.get('name', 'JDK Version Manager')
+        return self._app_info['name']
     
     @property
     def description(self):
         """获取应用程序描述"""
-        return self._config.get('description', 'JDK版本管理工具')
-    
-    @property
-    def app_id(self):
-        """获取应用程序ID"""
-        return self._config.get('build', {}).get('app_id', 'com.jvman.app')
+        return self._app_info['description']
     
     @property
     def copyright(self):
         """获取版权信息"""
-        return self._config.get('build', {}).get('copyright', 'Copyright © 2024')
+        return self._app_info['copyright']
     
     @property
-    def changelog(self):
-        """获取更新日志"""
-        return self._config.get('changelog', [])
-    
-    def get_latest_changes(self):
-        """获取最新版本的更新内容"""
-        if self.changelog:
-            return self.changelog[0]
-        return None
-    
-    def check_update_available(self):
-        """检查是否有更新可用"""
-        try:
-            config_version = version.parse(self.version)
-            base_version = version.parse(self.BASE_VERSION)
-            return config_version > base_version
-        except Exception:
-            return False
+    def app_id(self):
+        """获取应用程序ID"""
+        return self._app_info['build']['app_id']
 
 # 创建全局实例
 version_manager = VersionManager() 

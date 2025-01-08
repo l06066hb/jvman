@@ -1,0 +1,975 @@
+{
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "language_zh": "中文",
+        "language_en": "English",
+        "theme": "Theme",
+        "theme_light": "Light",
+        "theme_dark": "Dark",
+        "theme_blue": "Blue",
+        "auto_start": "Auto Start",
+        "tray_icon": "Tray Icon",
+        "proxy": "Proxy Settings",
+        "proxy_enable": "Enable Proxy",
+        "proxy_host": "Proxy Host",
+        "proxy_port": "Proxy Port",
+        "save": "Save",
+        "cancel": "Cancel",
+        "reset": "Reset",
+        "error": {
+            "title": "Settings Error",
+            "save_failed": "Failed to save settings: {error}",
+            "load_failed": "Failed to load settings: {error}",
+            "invalid_path": "Invalid path: {path}"
+        },
+        "sections": {
+            "basic": "Basic Settings",
+            "env": "Environment Variables",
+            "shell": "Shell Settings",
+            "update": "Update Settings"
+        },
+        "items": {
+            "jdk_path": "JDK Storage Path",
+            "symlink_path": "Symlink Path",
+            "theme": "Theme",
+            "language": "Language",
+            "auto_start": "Auto Start",
+            "shell_type": "Shell Type",
+            "config_file": "Config File Path",
+            "auto_update": "Auto Check Updates"
+        },
+        "buttons": {
+            "browse": "Browse",
+            "apply_env": "Apply Environment Variables",
+            "check_update": "Check for Updates",
+            "checking": "Checking..."
+        },
+        "theme_options": {
+            "cyan": "Cyan",
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "language_options": {
+            "zh_CN": "中文",
+            "en_US": "English"
+        },
+        "env": {
+            "auto_method": "📌 Method 1: Auto Setup Environment Variables",
+            "manual_method": "📋 Method 2: Manual Setup Environment Variables",
+            "manual_tip": "Copy the following content to system environment variables:",
+            "auto_setup": "Auto Setup",
+            "not_set": "Not Set",
+            "no_java_path": "No Java related path found",
+            "synced": "Environment variables synced",
+            "change_warning": "⚠️ Basic settings have changed, please click 'Apply Environment Variables' to take effect"
+        },
+        "messages": {
+            "restart_required": "Restart Required",
+            "restart_message": "Language settings have been changed. Please restart the application to take effect.",
+            "select_jdk_path": "Select JDK Storage Path",
+            "select_symlink_path": "Select Symlink Path",
+            "select_config_file": "Select Shell Config File",
+            "env_update_success": "Environment variables have been updated",
+            "env_update_unix": "Environment variables have been updated\nPlease run the following command to take effect:",
+            "env_update_error": "Failed to set environment variables: {0}",
+            "reset_close_action": "Close action has been reset, you will be asked again next time."
+        }
+    },
+    "jdk": {
+        "download": {
+            "title": "Download JDK",
+            "vendor": "Vendor",
+            "version": "Version",
+            "directory": "Download Directory",
+            "browse": "Browse",
+            "download": "Download",
+            "downloading": "Downloading...",
+            "success": "Download Success",
+            "failed": "Download Failed",
+            "manual_guide": "Manual Download Guide"
+        },
+        "manage": {
+            "title": "Manage JDK",
+            "current": "Current Version",
+            "installed": "Installed Versions",
+            "add": "Add",
+            "remove": "Remove",
+            "switch": "Switch",
+            "open_dir": "Open Directory"
+        },
+        "info": {
+            "release_date": "Release Date",
+            "runtime_env": "Runtime Environment",
+            "features": "Distribution Features",
+            "version_features": "Version Features",
+            "support_policy": "Support Policy",
+            "warning_text": "⚠️ This is a short-term support version, recommended for development and testing environments only."
+        }
+    },
+    "common": {
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Info",
+        "success": "Success",
+        "failed": "Failed",
+        "loading": "Loading...",
+        "processing": "Processing...",
+        "please_wait": "Please wait...",
+        "operation_success": "Operation Success",
+        "operation_failed": "Operation Failed",
+        "unknown_error": "Unknown Error"
+    },
+    "install": {
+        "confirm": {
+            "title": "Install Confirmation",
+            "filename": "File Name",
+            "filesize": "File Size",
+            "hint": "Please confirm the installation of this JDK version.",
+            "button": {
+                "install": "Install",
+                "cancel": "Cancel"
+            }
+        },
+        "status": {
+            "directory_not_exist": "Installation directory does not exist",
+            "finding_jdk": "Looking for JDK in directory: {dir}",
+            "jdk_not_found": "JDK directory not found",
+            "found_jdk": "Found JDK at: {path}",
+            "jdk_dir_not_exist": "JDK directory does not exist: {path}",
+            "failed": "Installation Failed",
+            "installing": "Installing...",
+            "complete": "Installation Complete",
+            "cancelled": "Installation cancelled",
+            "success": "Installation successful"
+        },
+        "error": {
+            "file_not_found": "Installation file not found",
+            "zip_corrupted": "ZIP file is corrupted",
+            "invalid_zip": "Invalid ZIP file",
+            "no_version": "Version information not found",
+            "add_failed": "Failed to add JDK to configuration"
+        },
+        "time": {
+            "seconds": "{seconds} seconds"
+        }
+    },
+    "progress": {
+        "dialog": {
+            "title": "Progress",
+            "status": {
+                "preparing": "Preparing...",
+                "downloading": "Downloading...",
+                "installing": "Installing...",
+                "download": {
+                    "complete": "Download Complete!",
+                    "failed": "Download Failed"
+                },
+                "install": {
+                    "complete": "Installation Complete!",
+                    "failed": "Installation Failed"
+                },
+                "failed": "Operation Failed",
+                "cancelling": "Cancelling...",
+                "manual": {
+                    "required": "Cannot download automatically"
+                }
+            },
+            "detail": {
+                "downloading": "Downloaded: {downloaded:.1f}MB / {total:.1f}MB ({percentage:.1f}%)",
+                "installing": "Processed: {current} / {total} files ({percentage:.1f}%)",
+                "download": {
+                    "complete": "Download completed successfully!",
+                    "failed": "Download failed: {message}"
+                },
+                "install": {
+                    "complete": "Installation completed successfully!",
+                    "failed": "Installation failed: {message}"
+                },
+                "error": "Error: {message}",
+                "cleaning": "Cleaning up files...",
+                "manual": {
+                    "oracle": "Oracle account login is required to download this version. Click \"Manual Download\" to go to the official download page.",
+                    "openjdk": "This version requires manual download from OpenJDK website. Click \"Manual Download\" to go to the download page.",
+                    "other": "Automatic download is not supported for this version, please visit the official website."
+                }
+            },
+            "button": {
+                "manual": "Manual Download",
+                "cancel": "Cancel",
+                "complete": "Complete"
+            }
+        },
+        "phase": {
+            "downloading": "Downloading"
+        },
+        "status": {
+            "downloading": "Downloading JDK...",
+            "installing": "Installing JDK...",
+            "download": {
+                "complete": "Download Complete!",
+                "failed": "Download Failed"
+            },
+            "install": {
+                "complete": "Installation Complete!"
+            },
+            "failed": "Operation Failed",
+            "manual": {
+                "required": "Cannot download automatically"
+            }
+        },
+        "detail": {
+            "downloading": "Downloaded: {downloaded:.1f}MB / {total:.1f}MB ({percentage:.1f}%)",
+            "installing": "Processing: {current}/{total} files ({percentage:.1f}%)",
+            "download": {
+                "complete": "Please check details in the confirmation dialog"
+            },
+            "install": {
+                "complete": "JDK has been successfully installed to the specified directory"
+            },
+            "manual": {
+                "oracle": "Oracle account login is required to download this version. Click \"Manual Download\" to go to the official download page.",
+                "openjdk": "This version requires manual download from OpenJDK website. Click \"Manual Download\" to go to the download page.",
+                "other": "Automatic download is not supported for this version, please visit the official website."
+            },
+            "error": "Error message: {message}"
+        }
+    },
+    "download": {
+        "group": {
+            "select": "Select JDK",
+            "info": "Version Information"
+        },
+        "label": {
+            "vendor": "Vendor:",
+            "version": "Version:"
+        },
+        "button": {
+            "refresh": "Refresh",
+            "download": "Download",
+            "manual": "Manual Download",
+            "cancel": "Cancel",
+            "complete": "Complete"
+        },
+        "warning": {
+            "title": "Warning",
+            "no_version": "Please select a JDK version to download"
+        },
+        "progress": {
+            "title": "Downloading",
+            "preparing": "Preparing download...",
+            "downloading": "Downloading...",
+            "installing": "Installing...",
+            "extracting": "Extracting files...",
+            "cleaning": "Cleaning files...",
+            "cancelling": "Cancelling...",
+            "download_complete": "Download Complete!",
+            "install_complete": "Installation Complete!",
+            "failed": "Operation Failed"
+        },
+        "complete": {
+            "title": "Download Complete",
+            "message": "JDK {version} download completed!\nYou can find the installation package in the download directory."
+        },
+        "error": {
+            "file_not_found": "Download completed but file not found, please try downloading again",
+            "with_manual": "Error: {message}\n\nYou can try downloading this version manually.",
+            "process_failed": "Failed to process download completion: {error}",
+            "no_url": "Unable to get download link, please try manual download",
+            "request_failed": "Failed to create download request, please check network connection",
+            "incomplete": "Download file is incomplete, please try again",
+            "failed": "Download failed: {error}",
+            "cleanup_failed": "Failed to clean up resources: {error}",
+            "close_handle_failed": "Failed to close file handle: {error}",
+            "close_response_failed": "Failed to close response object: {error}",
+            "close_handles_failed": "Failed to close handles: {error}",
+            "install_failed": "Failed to start installation: {error}",
+            "install_complete_failed": "Failed to process installation completion: {error}",
+            "refresh_failed": "Failed to refresh local management tab: {error}",
+            "dialog_complete_failed": "Failed to process installation completion dialog: {error}",
+            "cancel_failed": "Failed to cancel operation: {error}",
+            "oracle_auth": "Oracle account login required.\n\nPlease follow these steps:\n1. Visit {url}\n2. Login to Oracle account (register if needed)\n3. Download JDK {version}\n4. Place the downloaded file in: {dir}",
+            "access_denied": "Access denied to download URL: {url}",
+            "invalid_url": "Invalid download URL (status code: {status}): {url}",
+            "download_failed": "Download failed (status code: {status}): {url}",
+            "no_size": "Unable to get file size: {url}",
+            "fetch_failed": "Failed to fetch version list: {error}",
+            "info_failed": "Failed to get version information: {error}",
+            "unsupported_vendor": "Unsupported vendor: {vendor}",
+            "no_version_info": "Unable to get version information",
+            "manual_required": "Manual download required: {error}",
+            "fetch_adoptium_failed": "Failed to fetch Adoptium version list: {error}",
+            "fetch_zulu_failed": "Failed to fetch Zulu version list: {error}",
+            "check_link_failed": "Failed to check OpenJDK {version} download link: {error}",
+            "async_update_failed": "Failed to update version list asynchronously: {error}",
+            "cleanup_thread_failed": "Failed to clean up thread: {error}"
+        },
+        "manual": {
+            "oracle": "Oracle account login required.\n\nPlease follow these steps:\n1. Visit {url}\n2. Login to Oracle account (register if needed)\n3. Download JDK {version}\n4. Place the downloaded file in: {dir}",
+            "openjdk": "Unable to get direct download link.\n\nPlease follow these steps:\n1. Visit {url}\n2. Select JDK {version}\n3. Download for your system\n4. Place the downloaded file in: {dir}",
+            "corretto": "Failed to get download link.\n\nPlease follow these steps:\n1. Visit {url}\n2. Select Corretto {version}\n3. Download for your system\n4. Place the downloaded file in: {dir}",
+            "zulu": "Failed to get download link.\n\nPlease follow these steps:\n1. Visit {url}\n2. Select Zulu JDK {version}\n3. Download for your system\n4. Place the downloaded file in: {dir}",
+            "other": "Unable to get download link. Please visit {vendor} official website to manually download JDK {version}.",
+            "error": {
+                "title": "Manual Download Error",
+                "no_info": "Version information not available",
+                "no_url": "Download URL not available",
+                "failed": "Failed to open download page: {error}"
+            }
+        },
+        "vendor": {
+            "oracle": "Oracle JDK",
+            "openjdk": "OpenJDK",
+            "temurin": "Eclipse Temurin (Adoptium)",
+            "corretto": "Amazon Corretto",
+            "zulu": "Azul Zulu",
+            "microsoft": "Microsoft Build of OpenJDK",
+            "unknown": "Unknown"
+        },
+        "status": {
+            "download": {
+                "success": "Download Success",
+                "failed": "Download Failed",
+                "cancelled": "Download Cancelled"
+            },
+            "install": {
+                "success": "Installation Success",
+                "failed": "Installation Failed",
+                "cancelled": "Installation Cancelled"
+            }
+        }
+    },
+    "version": {
+        "badge": {
+            "lts": "Long-term Support",
+            "sts": "Short-term Support",
+            "ea": "Early Access",
+            "temurin": "Temurin"
+        },
+        "vendor": {
+            "unknown": "Unknown"
+        },
+        "format": "{vendor} JDK {version}",
+        "format_simple": "JDK {version}",
+        "format_error": "Failed to get formatted version text: {error}",
+        "not_set": "No JDK version set",
+        "warning": {
+            "ea": "⚠️ This is an early access version, for testing only, not recommended for production use.",
+            "sts": "⚠️ This is a short-term support version, recommended for development and testing environments only."
+        },
+        "info": {
+            "download_link": "➜ Click to visit official download page",
+            "not_available": "Version information not available",
+            "resources": "Resources",
+            "api_doc": "API Documentation (JDK {version})",
+            "language_spec": "Language Specification (JDK {version})",
+            "detail": {
+                "title": "Version Details",
+                "runtime": "Runtime Environment",
+                "get_failed": "Failed to get detailed version: {error}"
+            }
+        },
+        "feature": {
+            "23": {
+                "generics": "✦ Enhanced Type Inference for Generics",
+                "string_templates": "✦ String Template Enhancements",
+                "unnamed_patterns": "✦ Unnamed Patterns and Variables",
+                "foreign_memory": "✦ Foreign Memory Access API (Phase 3)",
+                "vector_api": "✦ Vector API (Phase 7)"
+            },
+            "22": {
+                "scoped_values": "Scoped Values",
+                "string_templates": "String Templates (Final)",
+                "unnamed_patterns": "Unnamed Patterns and Variables (Final)",
+                "foreign_memory": "Foreign Function & Memory API (Second Preview)",
+                "vector_api": "Vector API (Ninth Incubator)"
+            },
+            "21": {
+                "string_templates": "String Templates (Preview)",
+                "sequence_collections": "Sequenced Collections (Preview)",
+                "virtual_threads": "Virtual Threads (Final)",
+                "record_patterns": "Record Patterns (Final)",
+                "zgc": "Generational ZGC",
+                "foreign_memory": "Foreign Function & Memory API (Preview)"
+            },
+            "17": {
+                "sealed_classes": "Sealed Classes (Final)",
+                "switch_patterns": "Pattern Matching for switch (Preview)",
+                "random_generator": "Enhanced Pseudo-Random Number Generator",
+                "macos_aarch64": "macOS AArch64 Support",
+                "macos_rendering": "New macOS Rendering Pipeline"
+            },
+            "11": {
+                "http_client": "HTTP Client (Standard)",
+                "lambda_vars": "Local-Variable Syntax for Lambda Parameters",
+                "single_file": "Launch Single-File Source-Code Programs",
+                "unicode_10": "Unicode 10",
+                "dynamic_constants": "Dynamic Class-File Constants",
+                "epsilon_gc": "Epsilon GC"
+            },
+            "8": {
+                "lambda": "Lambda Expressions",
+                "method_ref": "Method References",
+                "default_methods": "Default Methods",
+                "stream_api": "Stream API",
+                "date_time": "New Date-Time API",
+                "optional": "Optional Class"
+            }
+        }
+    },
+    "vendor": {
+        "unknown": "Unknown",
+        "oracle": {
+            "feature": {
+                "commercial": "✓ Commercial Features",
+                "graalvm": "✓ GraalVM Enterprise Integration",
+                "monitoring": "✓ Advanced Monitoring & Diagnostics",
+                "jfr": "✓ Java Flight Recorder (JFR)",
+                "jmc": "✓ Java Mission Control (JMC)",
+                "cds": "✓ Application Class-Data Sharing",
+                "lts": "✓ Long Term Support (LTS)",
+                "sts": "⚠️ Short Term Support (non-LTS)",
+                "license": "⚠️ Oracle Subscription Required (Production Use)"
+            },
+            "support": {
+                "lts": "Commercial Support + Oracle LTS (8+ years)",
+                "sts": "Commercial Support (6 months)"
+            },
+            "notes": {
+                "lts": "Official JDK distribution with comprehensive commercial support and enterprise features, recommended for production use",
+                "sts": "Non-LTS version, recommended for testing and development environments only, or wait for LTS"
+            }
+        },
+        "openjdk": {
+            "feature": {
+                "reference": "✓ Open Source Reference Implementation",
+                "community": "✓ Community-Driven Development",
+                "standard": "✓ Standard Java Features",
+                "updates": "✓ Rapid Iteration Updates",
+                "transparent": "✓ Transparent Development Process",
+                "ea": "⚠️ Early Access Preview",
+                "temurin": "📦 Built by Eclipse Temurin",
+                "lts": "✓ Long Term Support (LTS)",
+                "sts": "⚠️ Short Term Support (non-LTS)"
+            },
+            "support": {
+                "ea": "Preview version, for testing only",
+                "temurin": "Community Support + Eclipse Foundation Support",
+                "lts": "Long-term Community Support (4+ years)",
+                "sts": "Short-term Community Support (6 months)"
+            },
+            "notes": {
+                "ea": "Early access version with potentially unstable features, not recommended for production use",
+                "temurin": "Stable build provided by Eclipse Temurin, suitable for production use",
+                "lts": "Java SE Platform reference implementation maintained by OpenJDK community, recommended for production use",
+                "sts": "Non-LTS version, recommended for testing and development environments only, or wait for LTS"
+            }
+        },
+        "corretto": {
+            "feature": {
+                "aws": "✓ AWS Cloud Platform Optimized",
+                "security": "✓ Long-term Security Patches",
+                "performance": "✓ Enterprise Performance Tuning",
+                "production": "✓ Amazon Production Verified",
+                "platform": "✓ Cross-Platform Support",
+                "lts": "✓ Long Term Support (LTS)",
+                "sts": "⚠️ Short Term Support (non-LTS)"
+            },
+            "support": {
+                "lts": "Amazon Free Long-term Support (4+ years)",
+                "sts": "Amazon Support (6 months)"
+            },
+            "notes": {
+                "lts": "OpenJDK distribution developed and maintained by Amazon, optimized for AWS, recommended for production use",
+                "sts": "Non-LTS version, recommended for testing and development environments only, or wait for LTS"
+            }
+        },
+        "zulu": {
+            "feature": {
+                "tck": "✓ Complete TCK Certified",
+                "performance": "✓ Performance Optimized",
+                "custom": "✓ Customizable Builds",
+                "cloud": "✓ Cloud Native Support",
+                "container": "✓ Container Optimized",
+                "lts": "✓ Long Term Support (LTS)",
+                "sts": "⚠️ Short Term Support (non-LTS)"
+            },
+            "support": {
+                "lts": "Community Free LTS + Commercial Paid Support (8+ years)",
+                "sts": "Community Support (6 months)"
+            },
+            "notes": {
+                "lts": "OpenJDK build provided by Azul Systems with enterprise support, recommended for production use",
+                "sts": "Non-LTS version, recommended for testing and development environments only, or wait for LTS"
+            }
+        }
+    },
+    "log": {
+        "debug": {
+            "release_content": "Release file full content:\n{content}",
+            "parsed_fields": "Parsed fields: {fields}",
+            "implementor_field": "IMPLEMENTOR field value: {implementor}",
+            "cleanup_success": "Successfully deleted file: {file}",
+            "adding_jdk": "Adding JDK info to configuration: {info}",
+            "config_saved": "Configuration saved",
+            "refreshing_local": "Refreshing local management tab",
+            "refresh_complete": "Local management tab refresh complete",
+            "auto_update_disabled": "Auto update check is disabled",
+            "check_interval_not_reached": "Less than {hours} hours since last check",
+            "refreshing_local": "Refreshing local management tab",
+            "refresh_complete": "Local management tab refresh complete"
+        },
+        "warning": {
+            "invalid_check_time": "Invalid last check time format, will check again"
+        },
+        "error": {
+            "get_system_version_failed": "Failed to get system Java version",
+            "update_version_failed": "Failed to update current version",
+            "map_jdk_failed": "Failed to map JDK",
+            "get_version_failed": "Failed to get JDK version information",
+            "check_version_failed": "Failed to check version",
+            "add_jdk_failed": "Failed to add JDK",
+            "get_vendor_failed": "Failed to get JDK vendor information: {error}",
+            "download_failed": "Download failed: {error}",
+            "rename_failed": "Failed to rename directory: {error}",
+            "get_jdk_info_failed": "Failed to get JDK info: {path}, {error}",
+            "cleanup_failed": "Failed to clean up resources: {error}",
+            "close_handle_failed": "Failed to close file handle: {error}",
+            "close_response_failed": "Failed to close response object: {error}",
+            "close_handles_failed": "Failed to close handles: {error}",
+            "install_failed": "Failed to start installation: {error}",
+            "install_complete_failed": "Failed to process installation completion: {error}",
+            "refresh_failed": "Failed to refresh: {error}",
+            "dialog_complete_failed": "Failed to process installation completion dialog: {error}",
+            "cancel_failed": "Failed to cancel operation: {error}",
+            "fetch_failed": "Failed to fetch version list: {error}",
+            "info_failed": "Failed to get version info: {error}",
+            "unsupported_vendor": "Unsupported vendor: {vendor}",
+            "no_version_info": "Unable to get version information",
+            "manual_required": "Manual download required: {error}",
+            "fetch_adoptium_failed": "Failed to fetch Adoptium version list: {error}",
+            "fetch_zulu_failed": "Failed to fetch Zulu version list: {error}",
+            "check_link_failed": "Failed to check OpenJDK {version} download link: {error}",
+            "async_update_failed": "Failed to update version list asynchronously: {error}",
+            "cleanup_thread_failed": "Failed to clean up thread: {error}",
+            "check_update_failed": "Error checking update status: {error}",
+            "create_update_dir_failed": "Failed to create update directory: {error}",
+            "download_update_failed": "Failed to download update: {error}",
+            "get_changes_failed": "Failed to get update changes: {error}",
+            "compare_version_failed": "Failed to compare versions: {error}",
+            "update_dir_permission": "No write permission for update directory: {error}",
+            "get_update_path_failed": "Failed to get update save path: {error}"
+        }
+    },
+    "local": {
+        "current_version": {
+            "prefix": "Current Version",
+            "not_set": "Current Version: Not Set"
+        },
+        "system_version": {
+            "title": "System Version",
+            "hint": "(Java version from system environment variables)",
+            "detecting": "Detecting...",
+            "not_installed": "System Version: Not Installed",
+            "unknown": "Unknown"
+        },
+        "jdk": {
+            "type": {
+                "mapped": "Mapped",
+                "downloaded": "Downloaded"
+            },
+            "vendor": {
+                "unknown": "Unknown"
+            },
+            "version": {
+                "unknown": "Unknown"
+            },
+            "status": {
+                "in_use": "In Use"
+            },
+            "import_time": {
+                "prefix": "Import Time",
+                "unknown": "Unknown"
+            }
+        },
+        "version": {
+            "type": {
+                "lts": "LTS",
+                "latest": "Latest",
+                "interim": "Interim",
+                "old": "Old Version",
+                "legacy": "Legacy",
+                "unknown": "Unknown Version"
+            }
+        },
+        "button": {
+            "add_local_jdk": "Add Local JDK",
+            "open_dir": "Open Directory",
+            "apply_version": "Apply This Version",
+            "delete": "Delete",
+            "remove_from_list": "Remove from List",
+            "delete_folder": "Delete Folder",
+            "cancel": "Cancel"
+        },
+        "dialog": {
+            "select_jdk_dir": "Select JDK Installation Directory",
+            "error": {
+                "title": "Error",
+                "refresh_failed": "Failed to refresh list",
+                "delete_failed": "Delete failed"
+            },
+            "warning": "Warning",
+            "success": "Success",
+            "invalid_jdk_dir": "Selected directory is not a valid JDK directory",
+            "jdk_already_added": "This JDK has already been added",
+            "cannot_get_version": "Cannot get JDK version information",
+            "cannot_parse_version": "Cannot parse JDK version number",
+            "jdk_added": "JDK {version} has been added",
+            "add_jdk_failed": "Failed to add JDK: {error}",
+            "select_version_first": "Please select a JDK version to switch to first",
+            "switch": {
+                "title": "Switch Success",
+                "success_title": "JDK Switch Success",
+                "success_message": "Successfully switched to new JDK version",
+                "success_message_windows": "Successfully switched to new JDK version\nEnvironment variables have been updated automatically",
+                "success_message_unix": "Successfully switched to new JDK version\nPlease run the following command to update environment variables:",
+                "error_title": "Switch Failed",
+                "error_message": "Failed to switch JDK version\nPlease check directory permissions and path"
+            },
+            "delete": {
+                "title": "Delete JDK",
+                "warning_title": "Delete Warning",
+                "warning_message": "⚠️ Warning: Deleting the folder will permanently remove all files and subfolders in this directory. This action cannot be undone! Please make sure you have backed up any files you need to keep.",
+                "version_title": "Version:",
+                "path_title": "Installation Path:",
+                "path_confirm": "Are you sure you want to delete the following JDK?\n\nVersion: {vendor} JDK {version}\nPath: {path}",
+                "success_message": "Successfully deleted {version} ({vendor}) and all its files",
+                "success_message_not_exist": "Removed {version} ({vendor}) from list, folder no longer exists",
+                "success_message_list_only": "Removed {version} ({vendor}) from list",
+                "warning": "Warning",
+                "error": "Error",
+                "success": "Success"
+            },
+            "button": {
+                "remove_from_list": "Remove from List",
+                "delete_folder": "Delete Folder",
+                "cancel": "Cancel",
+                "ok": "OK"
+            },
+            "jdk_not_found": "JDK information not found"
+        },
+        "error": {
+            "symlink_failed": "Failed to remove symbolic link: {error}",
+            "open_dir_failed": "Failed to open directory: {error}"
+        },
+        "vendor": {
+            "unknown": "Unknown"
+        },
+        "delete_title": "Delete JDK",
+        "delete_confirm": "Are you sure you want to delete {vendor} JDK {version}?",
+        "delete_path_confirm": "Are you sure you want to delete the following JDK?\n\nVersion: {vendor} JDK {version}\nPath: {path}\n\nThis action will delete all files in this directory and cannot be undone!",
+        "delete": {
+            "success_message": "JDK {version} ({vendor}) and its folder have been successfully deleted",
+            "success_message_not_exist": "JDK {version} ({vendor}) folder does not exist, removed from list",
+            "success_message_list_only": "JDK {version} ({vendor}) has been removed from list"
+        },
+        "list": {
+            "empty": "No JDK found. Please download or import a JDK first."
+        }
+    },
+    "help": {
+        "navigation": {
+            "title": "Navigation",
+            "quick_nav": "Q\nu\ni\nc\nk\n\nN\na\nv"
+        },
+        "sections": {
+            "jdk_vendors": "JDK Vendors",
+            "version_types": "Version Types",
+            "platform_support": "Platform Support",
+            "feature_usage": "Feature Usage",
+            "env_management": "Environment Variables",
+            "usage_tips": "Usage Tips",
+            "faq": "FAQ",
+            "ide": {
+                "title": "IDE Integration",
+                "overview": {
+                    "title": "Overview",
+                    "description": "The JDK Management Tool supports integration with mainstream IDEs, including IntelliJ IDEA, Eclipse, VS Code, etc. By configuring the JDK path in your IDE, you can use the JDK versions managed by our tool."
+                },
+                "benefits": {
+                    "title": "Integration Benefits",
+                    "description": "1. Unified Management: All IDEs use the same JDK version management tool\n2. Quick Switching: Switch JDK versions anytime, IDEs will automatically detect changes\n3. Multi-version Support: Configure different JDK versions for different projects\n4. Environment Consistency: Ensure development and build environments use the same JDK version"
+                },
+                "config": {
+                    "title": "IDE Configuration Guide",
+                    "description": "### IntelliJ IDEA Configuration\n1. Open Settings (Ctrl+Alt+S)\n2. Go to Build, Execution, Deployment > Build Tools\n3. Configure Gradle JVM or Maven JVM to use the symlink path\n\n### VS Code Configuration\nAdd to settings.json:\n```json\n{\n    \"java.jdt.ls.java.home\": \"C:\\Users\\YourUsername\\AppData\\Local\\Programs\\jvman\\current\",\n    \"java.configuration.runtimes\": [\n        {\n            \"name\": \"JavaSE-Current\",\n            \"path\": \"C:\\Users\\YourUsername\\AppData\\Local\\Programs\\jvman\\current\",\n            \"default\": true\n        }\n    ]\n}\n```\n\n### Eclipse Configuration\n1. Window > Preferences\n2. Java > Installed JREs\n3. Add JRE, select the symlink path\n\n### Build Tool Configuration\n\n#### Gradle Configuration\nIn build.gradle:\n```groovy\ncompileJava {\n    sourceCompatibility = '17'\n    targetCompatibility = '17'\n    options.encoding = 'UTF-8'\n}\n```\n\n#### Maven Configuration\nIn pom.xml:\n```xml\n<project>\n    <properties>\n        <maven.compiler.source>17</maven.compiler.source>\n        <maven.compiler.target>17</maven.compiler.target>\n    </properties>\n    \n    <build>\n        <plugins>\n            <plugin>\n                <groupId>org.apache.maven.plugins</groupId>\n                <artifactId>maven-compiler-plugin</artifactId>\n                <version>3.11.0</version>\n                <configuration>\n                    <release>17</release>\n                </configuration>\n            </plugin>\n        </plugins>\n    </build>\n</project>\n```"
+                },
+                "faq": {
+                    "title": "Common Issues",
+                    "description": "### IDE Cannot Recognize JDK\n1. Verify symlink path is correct\n2. Restart IDE\n3. Clear IDE cache\n\n### Project Build Fails\n1. Check project JDK version settings\n2. Verify build tool configuration\n3. Update project dependencies\n\n### Environment Variable Issues\n1. Verify JAVA_HOME is set correctly\n2. Check if Path includes JDK bin directory\n3. Restart terminal or IDE"
+                }
+            }
+        },
+        "subtitles": {
+            "lifecycle": "Version Lifecycle",
+            "version_number": "Version Number",
+            "update_frequency": "Update Frequency",
+            "selection_guide": "Selection Guide",
+            "online_download": "Online Download",
+            "local_management": "Local Management",
+            "version_switch": "Version Switch",
+            "auto_management": "Auto Management",
+            "manual_setting": "Manual Setting",
+            "platform_diff": "Platform Differences",
+            "tray_feature": "Tray Features",
+            "interface_operation": "Interface Operation",
+            "download_issues": "Download Issues",
+            "env_issues": "Environment Variable Issues",
+            "usage_issues": "Usage Issues",
+            "ide_issues": "IDE Related Issues"
+        }
+    },
+    "tabs": {
+        "local": "Local",
+        "download": "Download",
+        "settings": "Settings",
+        "help": "Help",
+        "docs": "Documents",
+        "ide": "IDE Integration"
+    },
+    "tray": {
+        "switch_version": "Switch Version",
+        "show_window": "Show Window",
+        "exit": "Exit",
+        "no_jdk": "No JDK Added",
+        "current_version": "Current: {version}",
+        "switch_success": "JDK switched successfully",
+        "switch_success_unix": "Switched to {version_text}\nPlease run command to apply environment variables: {reload_cmd}",
+        "switch_success_windows": "Switched to {version_text}",
+        "switch_failed": "Switch failed",
+        "tooltip": {
+            "current": "Current: {vendor} JDK {version}",
+            "no_version": "{app_name} v{version}\nNo JDK version set",
+            "version": "{vendor} JDK {version}",
+            "path": "\nInstallation Path: {path}",
+            "app_info": "{app_name} v{version}\n"
+        }
+    },
+    "dialog": {
+        "error": {
+            "title": "Error"
+        },
+        "close": {
+            "title": "Close Confirmation",
+            "message": "Are you sure you want to close? Current operation will be cancelled.",
+            "confirm": "Confirm",
+            "cancel": "Cancel"
+        }
+    },
+    "update": {
+        "error": {
+            "no_download_url": "No valid download URL found",
+            "no_file_size": "Unable to get file size",
+            "connection_failed": "Network connection error, please check your network",
+            "timeout": "Request timeout, please try again later",
+            "request_failed": "Request error: {error}",
+            "unknown": "An error occurred while checking for updates: {error}",
+            "json_decode_failed": "Failed to parse server response",
+            "download_failed": "Download failed: HTTP {status}",
+            "download_error": "Download error: {error}",
+            "no_permission": "No write permission for update directory",
+            "get_update_path_failed": "Failed to get update save path"
+        },
+        "changes": {
+            "no_details": "No update details available",
+            "parse_failed": "Failed to parse update details",
+            "list": "Update contents:\n{changes}"
+        },
+        "no_update": "Already the latest version",
+        "check_failed": "Update check failed: {error}",
+        "check": {
+            "title": "Check for Updates"
+        },
+        "new_version": {
+            "title": "New Version Available",
+            "found": "New version {version} is available",
+            "prompt": "Would you like to update now?",
+            "update_now": "Update Now",
+            "remind_later": "Remind Me Later"
+        }
+    },
+    "ide": {
+        "overview": {
+            "title": "Overview",
+            "description": "The JDK Version Manager seamlessly integrates with mainstream IDEs, enabling synchronization between development and runtime environments. By configuring IDEs to use the symlink path, your IDE's JDK environment will automatically sync when switching system JDK versions."
+        },
+        "usage": {
+            "title": "Usage Recommendations",
+            "description": "<h3>Project Configuration</h3>Use relative paths to reference JDK in build configuration files (e.g., <code>build.gradle</code> or <code>pom.xml</code>):<pre>// Gradle example<br>java {<br>    toolchain {<br>        languageVersion = JavaLanguageVersion.of(17) // Specify Java version<br>    }<br>}</pre><h3>Team Collaboration</h3><ul><li>Standardize JDK Version Manager usage across the team</li><li>Document symlink path configuration in project documentation</li><li>Include IDE JDK configuration files in version control (e.g., Git)</li></ul><h3>CI/CD Configuration</h3><ul><li>Use the same symlink path in CI/CD environments</li><li>Ensure JDK Version Manager is installed on build servers</li></ul>"
+        },
+        "faq": {
+            "title": "Common Issues",
+            "description": "<h3>Symlink Path Not Found</h3><ul><li>Verify JDK Version Manager installation</li><li>Check if a JDK version is selected and activated</li></ul><h3>IDE Cannot Recognize JDK</h3><ul><li>Verify symlink functionality</li><li>Try restarting the IDE</li><li>Clear IDE cache and reconfigure</li></ul><h3>IDE Not Updating After Version Switch</h3><ul><li>Some IDEs may require project reload or restart</li><li>Check IDE auto-refresh settings</li></ul>"
+        },
+        "config": {
+            "title": "IDE Configuration Guide",
+            "intellij": {
+                "title": "IntelliJ IDEA Configuration",
+                "steps": [
+                    "File → Project Structure → SDKs → Add JDK → Select symlink path"
+                ]
+            },
+            "eclipse": {
+                "title": "Eclipse Configuration",
+                "steps": [
+                    "Window → Preferences → Java → Installed JREs → Add → Select JDK → Select symlink path"
+                ]
+            },
+            "vscode": {
+                "title": "VS Code Configuration",
+                "intro": "Add to settings.json:"
+            }
+        },
+        "benefits": {
+            "title": "Benefits",
+            "env_title": "No Manual Environment Configuration",
+            "env_points": [
+                "Symlink path remains constant, IDE configuration only needed once",
+                "No IDE configuration changes needed when switching JDK versions",
+                "Avoid repeated JDK path modifications across projects"
+            ],
+            "project_title": "Efficient Multi-project Management",
+            "project_points": [
+                "Different projects can use different JDK versions",
+                "Project configuration files can use the same JDK path",
+                "Unified configuration among team members, avoiding version conflicts"
+            ],
+            "version_title": "Flexible Version Switching",
+            "version_points": [
+                "Switch JDK versions anytime, IDE automatically recognizes changes",
+                "Support for project-level and global version management",
+                "Easy testing of different JDK version compatibility"
+            ]
+        },
+        "practices": {
+            "title": "Best Practices",
+            "path_title": "Path Configuration Tips",
+            "path_points": [
+                "Use absolute paths for symlinks to avoid relative path issues",
+                "Avoid using non-ASCII characters in symlink paths",
+                "Recommend placing symlink path in a stable location outside system drive"
+            ],
+            "version_title": "Version Management Tips",
+            "version_points": [
+                "Exclude IDE-specific configuration files in .gitignore",
+                "Document required JDK versions in project documentation",
+                "Recommend team-wide use of this tool for JDK management"
+            ],
+            "performance_title": "Performance Optimization Tips",
+            "performance_points": [
+                "Regularly clear IDE cache, especially after version switches",
+                "Restart IDE to ensure new version configurations take effect",
+                "Disable unnecessary JDK-related plugins"
+            ]
+        }
+    },
+    "docs": {
+        "search": {
+            "placeholder": "Search documentation..."
+        },
+        "sections": {
+            "api": "JDK API Documentation",
+            "tutorials": "Java Tutorials & Guides",
+            "resources": "Developer Resources",
+            "others": "Additional Resources"
+        },
+        "api": {
+            "jdk23": "Java 23 API Documentation",
+            "jdk21": "Java 21 API Documentation",
+            "jdk17": "Java 17 API Documentation",
+            "jdk11": "Java 11 API Documentation",
+            "jdk8": "Java 8 API Documentation"
+        },
+        "tutorials": {
+            "spec": "Java Language Specification",
+            "tutorial": "Java Official Tutorial",
+            "jvm": "JVM Specification",
+            "security": "Java Security Coding Guidelines",
+            "troubleshoot": "Java Troubleshooting Guide"
+        },
+        "resources": {
+            "devcenter": "Java Developer Center",
+            "openjdk": "OpenJDK Developer Guide",
+            "relnotes": "JDK Release Notes",
+            "adoption": "OpenJDK Adoption Guide",
+            "performance": "Java Performance Guide",
+            "community": {
+                "openjdk": "OpenJDK Community",
+                "usergroup": "Java User Groups",
+                "spring": "Spring Community",
+                "jakarta": "Jakarta EE Community",
+                "reddit": "Java Reddit",
+                "stackoverflow": "Stack Overflow Java"
+            }
+        },
+        "others": {
+            "alibaba": "Alibaba Java Development Manual",
+            "jvm": "Understanding the JVM",
+            "effective": "Effective Java (Chinese-English)",
+            "interview": "Java Interview Guide",
+            "source": "JDK Source Analysis",
+            "guide": "Java Learning Guide",
+            "advanced": "Advanced Java",
+            "growth": "Java Engineer Growth Path",
+            "awesome": "Awesome Java Resources",
+            "tech": "Java Core Knowledge Base",
+            "concurrent": "Java Concurrency in Practice",
+            "jvmcore": "JVM Core Technology"
+        }
+    },
+    "docs.search.placeholder": "Search documentation...",
+    
+    "docs.sections.api": "JDK API Documentation",
+    "docs.sections.tutorials": "Java Tutorials & Guides",
+    "docs.sections.resources": "Developer Resources",
+    "docs.sections.others": "Additional Resources",
+    
+    "docs.api.jdk23": "JDK 23",
+    "docs.api.jdk21": "JDK 21 (LTS)",
+    "docs.api.jdk17": "JDK 17 (LTS)",
+    "docs.api.jdk11": "JDK 11 (LTS)",
+    "docs.api.jdk8": "JDK 8 (LTS)",
+    
+    "docs.tutorials.spec": "Java Language Specification",
+    "docs.tutorials.tutorial": "Java Tutorial (Oracle)",
+    "docs.tutorials.jvm": "JVM Specification",
+    "docs.tutorials.security": "Java Security Coding Guidelines",
+    "docs.tutorials.troubleshoot": "Java Troubleshooting Guide",
+    
+    "docs.resources.devcenter": "Java Developer Center",
+    "docs.resources.openjdk": "OpenJDK Documentation",
+    "docs.resources.relnotes": "Java Release Notes",
+    "docs.resources.adoption": "Java Compatibility Guide",
+    "docs.resources.performance": "Java Performance Guide",
+    "docs.resources.community.openjdk": "OpenJDK Community",
+    "docs.resources.community.usergroup": "Java User Group",
+    "docs.resources.community.spring": "Spring Community",
+    "docs.resources.community.jakarta": "Jakarta EE Community",
+    "docs.resources.community.reddit": "Java Reddit Community",
+    "docs.resources.community.stackoverflow": "Stack Overflow Java",
+    
+    "docs.others.alibaba": "Java Development Manual (Alibaba)",
+    "docs.others.jvm": "JVM Specification (Chinese)",
+    "docs.others.effective": "Effective Java (Chinese)",
+    "docs.others.interview": "Java Core Technology Interview Guide",
+    "docs.others.source": "Java Source Code Analysis",
+    "docs.others.guide": "JavaGuide (Interview + Learning Guide)",
+    "docs.others.advanced": "Advanced Java (Internet Engineer Guide)",
+    "docs.others.growth": "Java Engineer Growth Path",
+    "docs.others.awesome": "Awesome Java Projects Collection",
+    "docs.others.tech": "Java Technology Stack Articles",
+    "docs.others.concurrent": "Java Concurrency Summary",
+    "docs.others.jvmcore": "JVM Core Principles Analysis"
+}

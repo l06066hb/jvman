@@ -89,9 +89,11 @@ class ConfigManager:
             
     def _create_default_config(self):
         """创建默认配置"""
+        from .version_manager import version_manager
+        
         self.config = {
-            "version": "1.0.4",
-            "language": "zh_CN",
+            "version": version_manager.get_version(),
+            "language": version_manager.get_default_language(),
             "theme": "cyan",  # 默认使用青色主题
             "auto_set_java_home": True,
             "auto_set_path": True,
@@ -197,12 +199,26 @@ class ConfigManager:
             logger.error(f"添加下载的JDK失败: {str(e)}")
             raise Exception(f"添加下载的JDK失败: {str(e)}")
             
-    def remove_jdk(self, jdk_path, is_mapped=True):
-        """移除JDK记录"""
-        key = 'mapped_jdks' if is_mapped else 'downloaded_jdks'
-        jdks = self.get(key, [])
-        jdks = [jdk for jdk in jdks if jdk['path'] != jdk_path]
-        return self.set(key, jdks)
+    def remove_jdk(self, jdk_path, is_mapped=False):
+        """从配置中移除JDK"""
+        try:
+            if is_mapped:
+                mapped_jdks = self.get('mapped_jdks', [])
+                self.set('mapped_jdks', [jdk for jdk in mapped_jdks if jdk['path'] != jdk_path])
+            else:
+                downloaded_jdks = self.get('downloaded_jdks', [])
+                self.set('downloaded_jdks', [jdk for jdk in downloaded_jdks if jdk['path'] != jdk_path])
+                
+                # 同时也从 jdks 列表中移除
+                jdks = self.get('jdks', [])
+                self.set('jdks', [jdk for jdk in jdks if jdk['path'] != jdk_path])
+            
+            # 保存更改到配置文件
+            self.save()
+            return True
+        except Exception as e:
+            logger.error(f"从配置中移除JDK失败: {str(e)}")
+            raise Exception(f"从配置中移除JDK失败: {str(e)}")
 
     def get_all_jdks(self):
         """获取所有JDK列表"""
@@ -361,21 +377,4 @@ class ConfigManager:
             
         except Exception as e:
             logger.error(f"添加JDK到配置失败: {str(e)}")
-            raise Exception(f"添加JDK到配置失败: {str(e)}")
-
-    def remove_jdk(self, jdk_path, is_mapped=False):
-        """从配置中移除JDK"""
-        try:
-            if is_mapped:
-                mapped_jdks = self.get('mapped_jdks', [])
-                self.set('mapped_jdks', [jdk for jdk in mapped_jdks if jdk['path'] != jdk_path])
-            else:
-                downloaded_jdks = self.get('downloaded_jdks', [])
-                self.set('downloaded_jdks', [jdk for jdk in downloaded_jdks if jdk['path'] != jdk_path])
-                
-                # 同时也从 jdks 列表中移除
-                jdks = self.get('jdks', [])
-                self.set('jdks', [jdk for jdk in jdks if jdk['path'] != jdk_path])
-        except Exception as e:
-            logger.error(f"从配置中移除JDK失败: {str(e)}")
-            raise Exception(f"从配置中移除JDK失败: {str(e)}") 
+            raise Exception(f"添加JDK到配置失败: {str(e)}") 
