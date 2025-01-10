@@ -963,5 +963,14 @@
         "title": "关于 JDK 版本管理工具",
         "description": "一个简单易用的 JDK 版本管理工具，支持在线下载和本地管理。",
         "copyright": "© 2024 JDK Version Manager. 保留所有权利。"
+    },
+    "dialog": {
+        "close": {
+            "title": "关闭确认",
+            "message": "是否最小化到系统托盘继续运行？",
+            "minimize": "最小化",
+            "exit": "退出程序",
+            "remember": "记住我的选择"
+        }
     }
 } 

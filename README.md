@@ -125,13 +125,13 @@ python src/main.py
 - 需要管理员权限修改系统环境变量
 - 支持 Windows 10/11 的原生符号链接
 
-#### macOS
+#### macOS （测试中）
 - 支持 Homebrew 安装的 JDK
 - 使用符号链接进行版本切换
 - 自动更新 shell 配置文件（bash/zsh）
 - 需要管理员权限创建符号链接
 
-#### Linux
+#### Linux （测试中）
 - 支持 apt/yum 包管理器安装的 JDK
 - 使用符号链接进行版本切换
 - 自动更新 shell 配置文件（bash/zsh/fish）
