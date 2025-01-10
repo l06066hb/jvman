@@ -37,13 +37,25 @@ class VersionManager:
             # 获取配置文件路径
             if getattr(sys, 'frozen', False):
                 # 如果是打包后的环境
-                base_path = os.path.dirname(sys.executable)
+                base_path = os.path.dirname(os.path.dirname(sys._MEIPASS))
             else:
                 # 如果是开发环境
                 base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             
-            config_file = os.path.join(base_path, 'config', 'app.json')
-            if os.path.exists(config_file):
+            # 尝试多个可能的配置文件位置
+            config_paths = [
+                os.path.join(base_path, 'config', 'app.json'),  # 标准位置
+                os.path.join(base_path, 'app.json'),  # 根目录
+                os.path.join(sys._MEIPASS, 'config', 'app.json') if getattr(sys, 'frozen', False) else None,  # 打包后的位置
+            ]
+            
+            config_file = None
+            for path in config_paths:
+                if path and os.path.exists(path):
+                    config_file = path
+                    break
+            
+            if config_file:
                 with open(config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                     self.version = config.get('version', self.version)
@@ -61,6 +73,8 @@ class VersionManager:
                         self._app_info['copyright'] = config['copyright']
                     if 'build' in config:
                         self._app_info['build'].update(config['build'])
+            else:
+                logger.warning("No app.json configuration file found")
         except Exception as e:
             logger.error(f"Failed to load version info: {str(e)}")
     

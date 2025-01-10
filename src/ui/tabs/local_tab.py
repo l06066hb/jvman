@@ -176,29 +176,28 @@ class LocalTab(QWidget):
         """更新界面文本"""
         # 更新当前版本标签
         if hasattr(self, 'current_version_label'):
-            current_text = self.current_version_label.text()
-            # Check if contains "Not Set"
-            if _("local.current_version.not_set") in current_text:
+            has_version = self.current_version_label.property("has_version")
+            if not has_version:
                 self.current_version_label.setText(_("local.current_version.not_set"))
-            # Check if contains "Current Version"
-            elif _("local.current_version.prefix") in current_text:
-                # Extract version number part (after colon)
-                version = current_text.split(": ", 1)[1] if ": " in current_text else ""
-                self.current_version_label.setText(f"{_('local.current_version.prefix')}: {version}")
+            else:
+                current_text = self.current_version_label.text()
+                version_parts = current_text.split(": ", 1)
+                if len(version_parts) > 1:
+                    version = version_parts[1]
+                    self.current_version_label.setText(f"{_('local.current_version.prefix')}: {version}")
 
         # 更新环境变量版本标签
         if hasattr(self, 'system_version_label'):
-            text = self.system_version_label.text()
-            # Check if contains "Not Installed"
-            if _("local.system_version.not_installed") in text:
+            status = self.system_version_label.property("status")
+            if status == "not_installed":
                 self.system_version_label.setText(_("local.system_version.not_installed"))
-            # Check if contains "Detecting"
-            elif _("local.system_version.detecting") in text:
+            elif status == "detecting":
                 self.system_version_label.setText(_("local.system_version.detecting"))
-            # If system version info, keep version number but update prefix
-            elif _("local.system_version.title") in text:
-                version = text.split(": ", 1)[1] if ": " in text else ""
-                if version:
+            else:
+                text = self.system_version_label.text()
+                version_parts = text.split(": ", 1)
+                if len(version_parts) > 1:
+                    version = version_parts[1]
                     self.system_version_label.setText(f"{_('local.system_version.title')}: {version}")
 
         # 更新标题和提示文本
@@ -263,6 +262,7 @@ class LocalTab(QWidget):
         # 当前应用版本标签
         self.current_version_label = QLabel(_("local.current_version.not_set"))
         self.current_version_label.setObjectName('current_version_label')
+        self.current_version_label.setProperty("has_version", False)  # 添加状态属性
         self.current_version_label.setStyleSheet("""
             QLabel#current_version_label {
                 color: #1a73e8;
@@ -572,7 +572,20 @@ class LocalTab(QWidget):
             if not valid_jdks:
                 empty_label = QLabel(_("local.list.empty"))
                 empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                empty_label.setStyleSheet("color: #666; padding: 20px;")
+                empty_label.setStyleSheet("""
+                    QLabel {
+                        color: #666666;
+                        font-size: 14px;
+                        padding: 20px;
+                        min-height: 60px;
+                        qproperty-alignment: AlignCenter;
+                        background-color: #F8F9FA;
+                        border: 1px solid #E0E0E0;
+                        border-radius: 6px;
+                        margin: 10px;
+                    }
+                """)
+                empty_label.setWordWrap(True)  # 启用自动换行
                 self.jdk_list.addItem(QListWidgetItem())
                 self.jdk_list.item(0).setSizeHint(empty_label.sizeHint())
                 self.jdk_list.setItemWidget(self.jdk_list.item(0), empty_label)
@@ -880,15 +893,11 @@ class LocalTab(QWidget):
                     self.system_version_label.setProperty("status", "not_installed")
                     self.system_version_label.setText(_("local.system_version.not_installed"))
                 else:
-                    self.system_version_label.setProperty("status", "installed")
+                    self.system_version_label.setProperty("status", "has_version")
                     self.system_version_label.setText(f"{_('local.system_version.title')}: {system_version}")
-                self.system_version_label.style().unpolish(self.system_version_label)
-                self.system_version_label.style().polish(self.system_version_label)
             else:
                 self.system_version_label.setProperty("status", "not_installed")
                 self.system_version_label.setText(_("local.system_version.not_installed"))
-                self.system_version_label.style().unpolish(self.system_version_label)
-                self.system_version_label.style().polish(self.system_version_label)
 
             # 更新当前应用版本显示
             junction_path = self.config.get('junction_path')
@@ -898,10 +907,10 @@ class LocalTab(QWidget):
                     for jdk in self.config.get_all_jdks():
                         try:
                             if os.path.exists(jdk['path']) and os.path.samefile(jdk['path'], current_path):
-                                # 修正 Windows 路径
                                 java_path = os.path.normpath(os.path.join(current_path, 'bin', 'java.exe'))
                                 detailed_version = self.get_detailed_version(java_path)
                                 display_version = detailed_version if detailed_version else jdk['version']
+                                self.current_version_label.setProperty("has_version", True)
                                 self.current_version_label.setText(f"{_('local.current_version.prefix')}: JDK {display_version}")
                                 return
                         except Exception as e:
@@ -909,10 +918,12 @@ class LocalTab(QWidget):
                             continue
             
             # 如果没有找到有效的当前版本
+            self.current_version_label.setProperty("has_version", False)
             self.current_version_label.setText(_("local.current_version.not_set"))
             
         except Exception as e:
             logger.error(f"{_('log.error.update_version_failed')}: {str(e)}")
+            self.current_version_label.setProperty("has_version", False)
             self.current_version_label.setText(_("local.current_version.not_set"))
 
     def add_local_jdk(self):
