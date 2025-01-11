@@ -438,7 +438,8 @@ class LocalTab(QWidget):
     def get_vendor_name(self, path):
         """获取JDK发行版名称"""
         try:
-            java_path = os.path.join(path, 'bin', 'java.exe')
+            java_executable = platform_manager.get_java_executable()
+            java_path = os.path.join(path, 'bin', java_executable)
             if not os.path.exists(java_path):
                 return _("local.vendor.unknown")
                 
@@ -542,7 +543,9 @@ class LocalTab(QWidget):
                     invalid_paths.append(jdk_path)
                     continue
                     
-                java_path = os.path.join(jdk_path, 'bin', 'java.exe')
+                # 检查是否是有效的JDK路径
+                java_executable = platform_manager.get_java_executable()
+                java_path = os.path.join(jdk_path, 'bin', java_executable)
                 if not os.path.exists(java_path):
                     invalid_paths.append(jdk_path)
                     continue
@@ -906,8 +909,10 @@ class LocalTab(QWidget):
                 if os.path.exists(current_path):
                     for jdk in self.config.get_all_jdks():
                         try:
-                            if os.path.exists(jdk['path']) and os.path.samefile(jdk['path'], current_path):
-                                java_path = os.path.normpath(os.path.join(current_path, 'bin', 'java.exe'))
+                            # 检查是否是有效的JDK路径
+                            java_executable = platform_manager.get_java_executable()
+                            java_path = os.path.normpath(os.path.join(current_path, 'bin', java_executable))
+                            if os.path.exists(java_path) and os.path.samefile(jdk['path'], current_path):
                                 detailed_version = self.get_detailed_version(java_path)
                                 display_version = detailed_version if detailed_version else jdk['version']
                                 self.current_version_label.setProperty("has_version", True)
@@ -940,7 +945,8 @@ class LocalTab(QWidget):
             return
             
         # 验证是否是有效的JDK目录
-        java_path = os.path.join(jdk_path, 'bin', 'java.exe')
+        java_executable = platform_manager.get_java_executable()
+        java_path = os.path.join(jdk_path, 'bin', java_executable)
         if not os.path.exists(java_path):
             QMessageBox.warning(self, _("local.dialog.error"), _("local.dialog.invalid_jdk_dir"))
             return
@@ -2078,7 +2084,8 @@ class LocalTab(QWidget):
     def _get_jdk_version(self, jdk_path):
         """获取JDK版本信息"""
         try:
-            java_path = os.path.join(jdk_path, 'bin', 'java.exe')
+            java_executable = platform_manager.get_java_executable()
+            java_path = os.path.join(jdk_path, 'bin', java_executable)
             if not os.path.exists(java_path):
                 return None
                 
