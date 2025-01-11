@@ -302,7 +302,7 @@ class MainWindow(QMainWindow):
                         version = None
                 
                 # 获取架构信息
-                arch_match = re.search(r'(64-Bit|32-Bit)', output)
+                arch_match = re.search(r'(64-Bit|32-Bit)', output, re.IGNORECASE)
                 arch = arch_match.group(1) if arch_match else None
                 
                 return {
@@ -321,7 +321,8 @@ class MainWindow(QMainWindow):
         if current_jdk:
             try:
                 # 获取完整的版本信息
-                java_path = os.path.join(current_jdk['path'], 'bin', 'java.exe')
+                java_executable = platform_manager.get_java_executable()
+                java_path = os.path.join(current_jdk['path'], 'bin', java_executable)
                 if os.path.exists(java_path):
                     version_info = self.get_detailed_version(java_path)
                     if version_info:
@@ -364,7 +365,8 @@ class MainWindow(QMainWindow):
             # 设置详细的工具提示
             current_jdk = self.config.get_current_jdk()
             if current_jdk:
-                java_path = os.path.join(current_jdk['path'], 'bin', 'java.exe')
+                java_executable = platform_manager.get_java_executable()
+                java_path = os.path.join(current_jdk['path'], 'bin', java_executable)
                 if os.path.exists(java_path):
                     version_info = self.get_detailed_version(java_path)
                     if version_info:
@@ -391,7 +393,8 @@ class MainWindow(QMainWindow):
             # 托盘图标的工具提示显示详细信息
             current_jdk = self.config.get_current_jdk()
             if current_jdk:
-                java_path = os.path.join(current_jdk['path'], 'bin', 'java.exe')
+                java_executable = platform_manager.get_java_executable()
+                java_path = os.path.join(current_jdk['path'], 'bin', java_executable)
                 if os.path.exists(java_path):
                     version_info = self.get_detailed_version(java_path)
                     if version_info:
@@ -444,7 +447,8 @@ class MainWindow(QMainWindow):
             if not os.path.exists(jdk_path):
                 continue
             
-            java_path = os.path.join(jdk_path, 'bin', 'java.exe')
+            java_executable = platform_manager.get_java_executable()
+            java_path = os.path.join(jdk_path, 'bin', java_executable)
             if not os.path.exists(java_path):
                 continue
             
@@ -453,7 +457,8 @@ class MainWindow(QMainWindow):
         # 添加有效的JDK到菜单
         for jdk in valid_jdks:
             # 获取详细版本信息
-            java_path = os.path.join(jdk['path'], 'bin', 'java.exe')
+            java_executable = platform_manager.get_java_executable()
+            java_path = os.path.join(jdk['path'], 'bin', java_executable)
             if os.path.exists(java_path):
                 version_info = self.get_detailed_version(java_path)
                 if version_info:
@@ -527,7 +532,8 @@ class MainWindow(QMainWindow):
 
                 try:
                     # 尝试获取详细版本信息
-                    java_path = os.path.join(jdk['path'], 'bin', 'java.exe')
+                    java_executable = platform_manager.get_java_executable()
+                    java_path = os.path.join(jdk['path'], 'bin', java_executable)
                     if os.path.exists(java_path):
                         version_info = self.get_detailed_version(java_path)
                         if version_info:
