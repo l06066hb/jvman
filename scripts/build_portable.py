@@ -63,7 +63,8 @@ def build_portable(platform='windows', timestamp=None):
         f'--distpath={output_dir}',  # 指定输出目录
         '--workpath=build/lib',  # 指定工作目录
         '--specpath=build',  # spec文件路径
-        '--contents-directory=bin' #指定包含应用程序内容的目录
+        '--contents-directory=bin', #指定包含应用程序内容的目录
+        '--uac-admin',  # 请求管理员权限
     ]
     
     # 平台特定配置
@@ -81,17 +82,17 @@ def build_portable(platform='windows', timestamp=None):
     else:
         print(f"Warning: Icon file not found at: {icon_file}")
     
-    # 添加Python路径
+    # 添加Python路径和运行时钩子
     build_args.extend([
         f'--paths={os.path.join(root_dir, "src")}',
         f'--runtime-hook={os.path.join(root_dir, "src", "runtime", "runtime_hook.py")}',
     ])
     
-    # 只添加必要的资源文件
+    # 添加必要的资源文件
     build_args.extend([
         f'--add-data={os.path.join(root_dir, "resources", "icons")};resources/icons',
         f'--add-data={os.path.join(root_dir, "config", "app.json")};config',
-        f'--add-data={os.path.join(root_dir, "src", "i18n")};i18n',  # 添加国际化文件
+        f'--add-data={os.path.join(root_dir, "src", "i18n")};i18n',
         f'--add-data={os.path.join(root_dir, "LICENSE")};.',
     ])
     
@@ -104,6 +105,16 @@ def build_portable(platform='windows', timestamp=None):
         'PyQt6.QtWidgets',
         'PyQt6.sip',
         'requests',
+        'win32api',
+        'win32con',
+        'win32gui',
+        'win32process',
+        'win32security',
+        'win32pipe',
+        'win32file',
+        'win32event',
+        'msvcrt',
+        'winreg',
         'ui',
         'ui.main_window',
         'ui.tabs',
@@ -122,6 +133,10 @@ def build_portable(platform='windows', timestamp=None):
         'loguru._file_sink',
         'loguru._recattrs',
         'loguru._datetime',
+        'subprocess',
+        'ctypes',
+        'platform',
+        'logging',
     ]
     
     for imp in hidden_imports:
