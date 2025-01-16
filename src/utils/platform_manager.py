@@ -182,10 +182,78 @@ class PlatformManager:
         
     def format_path(self, path):
         """格式化路径为平台特定的格式"""
-        if self.is_windows:
-            return path.replace('/', '\\')
-        return path.replace('\\', '/')
-        
+        try:
+            # 规范化路径分隔符
+            normalized_path = os.path.normpath(path)
+            
+            # 根据平台转换分隔符
+            if self.is_windows:
+                return normalized_path.replace('/', '\\')
+            return normalized_path.replace('\\', '/')
+        except Exception as e:
+            logger.error(f"路径格式化失败: {str(e)}")
+            return path
+
+    def normalize_path(self, path):
+        """规范化路径（解析相对路径、环境变量等）"""
+        try:
+            # 展开环境变量
+            expanded_path = os.path.expandvars(path)
+            # 展开用户目录
+            expanded_path = os.path.expanduser(expanded_path)
+            # 转换为绝对路径
+            abs_path = os.path.abspath(expanded_path)
+            # 规范化路径分隔符
+            return self.format_path(abs_path)
+        except Exception as e:
+            logger.error(f"路径规范化失败: {str(e)}")
+            return path
+
+    def is_same_path(self, path1, path2):
+        """检查两个路径是否指向相同位置"""
+        try:
+            # 规范化两个路径
+            norm_path1 = self.normalize_path(path1)
+            norm_path2 = self.normalize_path(path2)
+            
+            # Windows下不区分大小写
+            if self.is_windows:
+                return os.path.normcase(norm_path1) == os.path.normcase(norm_path2)
+            return norm_path1 == norm_path2
+        except Exception as e:
+            logger.error(f"路径比较失败: {str(e)}")
+            return False
+
+    def is_subpath(self, parent_path, child_path):
+        """检查一个路径是否是另一个路径的子路径"""
+        try:
+            # 规范化路径
+            parent = self.normalize_path(parent_path)
+            child = self.normalize_path(child_path)
+            
+            # Windows下不区分大小写
+            if self.is_windows:
+                parent = os.path.normcase(parent)
+                child = os.path.normcase(child)
+            
+            # 使用相对路径检查
+            rel_path = os.path.relpath(child, parent)
+            return not rel_path.startswith('..')
+        except Exception as e:
+            logger.error(f"子路径检查失败: {str(e)}")
+            return False
+
+    def ensure_dir_exists(self, path):
+        """确保目录存在，如果不存在则创建"""
+        try:
+            normalized_path = self.normalize_path(path)
+            if not os.path.exists(normalized_path):
+                os.makedirs(normalized_path, exist_ok=True)
+            return True
+        except Exception as e:
+            logger.error(f"创建目录失败: {str(e)}")
+            return False
+
     def get_java_executable(self):
         """获取Java可执行文件名"""
         return 'java.exe' if self.is_windows else 'java'

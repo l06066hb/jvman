@@ -13,6 +13,7 @@ from PyQt6.QtGui import QIcon, QFont, QPixmap, QColor, QPainter
 from src.utils.system_utils import create_symlink, set_environment_variable, update_path_variable
 from src.utils.platform_manager import platform_manager
 from src.utils.i18n_manager import i18n_manager
+from src.utils.version_utils import version_utils
 
 # 初始化i18n管理器
 _ = i18n_manager.get_text
@@ -29,59 +30,12 @@ class JDKLoaderThread(QThread):
 
     def run(self):
         try:
-            # 设置进程启动信息
-            startupinfo = None
-            if platform_manager.is_windows:
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = subprocess.SW_HIDE
-            else:
-                # 在 Unix 系统上，使用 DEVNULL 重定向输出
-                process_args = {
-                    'stdout': subprocess.DEVNULL,
-                    'stderr': subprocess.PIPE,
-                    'stdin': subprocess.DEVNULL
-                }
-
-            result = subprocess.run(
-                [self.java_path, '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=2,
-                startupinfo=startupinfo,
-                **({} if platform_manager.is_windows else process_args)
-            )
-            if result.stderr:
-                version_info = result.stderr
-                version_match = re.search(r'version "([^"]+)"', version_info)
-                detailed_version = version_match.group(1) if version_match else None
-                
-                version_info_lower = version_info.lower()
-                if 'openjdk' in version_info_lower:
-                    if 'corretto' in version_info_lower:
-                        vendor = "Corretto"
-                    elif 'temurin' in version_info_lower or 'adoptium' in version_info_lower:
-                        vendor = "Temurin"
-                    elif 'zulu' in version_info_lower:
-                        vendor = "Zulu"
-                    elif 'microsoft' in version_info_lower:
-                        vendor = "Microsoft"
-                    else:
-                        vendor = "OpenJDK"
-                elif 'java(tm)' in version_info_lower or 'oracle' in version_info_lower:
-                    vendor = "Oracle"
-                elif 'graalvm' in version_info_lower:
-                    vendor = "GraalVM"
-                elif 'semeru' in version_info_lower:
-                    vendor = "Semeru"
-                else:
-                    vendor = _("local.vendor.unknown")
-                
+            vendor_info = version_utils.get_vendor_info(self.jdk_path)
+            if vendor_info:
                 self.finished.emit({
                     'path': self.jdk_path,
-                    'detailed_version': detailed_version,
-                    'vendor': vendor
+                    'detailed_version': vendor_info['version'],
+                    'vendor': vendor_info['vendor']
                 })
             else:
                 # 如果没有版本信息，发送基本信息
@@ -106,35 +60,8 @@ class SystemVersionThread(QThread):
 
     def run(self):
         try:
-            # 设置进程启动信息
-            startupinfo = None
-            if platform_manager.is_windows:
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = subprocess.SW_HIDE
-            else:
-                # 在 Unix 系统上，使用 DEVNULL 重定向输出
-                process_args = {
-                    'stdout': subprocess.DEVNULL,
-                    'stderr': subprocess.PIPE,
-                    'stdin': subprocess.DEVNULL
-                }
-
-            result = subprocess.run(
-                ['java', '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=2,
-                startupinfo=startupinfo,
-                **({} if platform_manager.is_windows else process_args)
-            )
-            if result.stderr:
-                self.finished.emit(result.stderr.strip())  # 发送完整的版本信息
-            else:
-                self.finished.emit(None)
-        except FileNotFoundError:
-            self.finished.emit(_("local.system_version.not_installed"))
+            version = version_utils.get_system_java_version()
+            self.finished.emit(version)
         except Exception as e:
             logger.error(f"{_('log.error.get_system_version_failed')}: {str(e)}")
             self.finished.emit(_("local.system_version.unknown"))
@@ -189,9 +116,9 @@ class LocalTab(QWidget):
         # 更新环境变量版本标签
         if hasattr(self, 'system_version_label'):
             status = self.system_version_label.property("status")
-            if status == "not_installed":
+            if status == _("local.system_version.not_installed"):
                 self.system_version_label.setText(_("local.system_version.not_installed"))
-            elif status == "detecting":
+            elif status == _("local.system_version.detecting"):
                 self.system_version_label.setText(_("local.system_version.detecting"))
             else:
                 text = self.system_version_label.text()
@@ -437,69 +364,23 @@ class LocalTab(QWidget):
 
     def get_vendor_name(self, path):
         """获取JDK发行版名称"""
-        try:
-            java_executable = platform_manager.get_java_executable()
-            java_path = os.path.join(path, 'bin', java_executable)
-            if not os.path.exists(java_path):
-                return _("local.vendor.unknown")
-                
-            result = subprocess.run(
-                [java_path, '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=2  # 减少超时时间
-            )
-            
-            # 版本信息在stderr中
-            if result.stderr:
-                version_info = result.stderr.lower()
-                if 'openjdk' in version_info:
-                    if 'corretto' in version_info:
-                        return "Corretto"
-                    elif 'temurin' in version_info or 'adoptium' in version_info:
-                        return "Temurin"
-                    elif 'zulu' in version_info:
-                        return "Zulu"
-                    elif 'microsoft' in version_info:
-                        return "Microsoft"
-                    else:
-                        return "OpenJDK"
-                elif 'java(tm)' in version_info or 'oracle' in version_info:
-                    return "Oracle"
-                elif 'graalvm' in version_info:
-                    return "GraalVM"
-                elif 'semeru' in version_info:
-                    return "Semeru"
-                
-            return _("local.vendor.unknown")
-        except Exception as e:
-            logger.error(f"获取JDK发行版失败: {str(e)}")
-            return _("local.vendor.unknown")
+        vendor_info = version_utils.get_vendor_info(path)
+        return vendor_info['vendor'] if vendor_info else _("local.vendor.unknown")
 
     def get_detailed_version(self, java_path):
         """获取JDK详细版本信息"""
         try:
             if not os.path.exists(java_path):
                 return None
-                
-            # 修正 Windows 路径分隔符
-            java_path = os.path.normpath(java_path)
-                
-            result = subprocess.run(
-                [java_path, '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=2  # 减少超时时间
-            )
             
-            if result.stderr:
-                # 正则匹配版本号
-                import re
-                match = re.search(r'version "([^"]+)"', result.stderr)
-                if match:
-                    return match.group(1)
+            # 修正 Windows 路径分隔符
+            java_path = platform_manager.format_path(java_path)
+            
+            # 获取版本信息
+            result = version_utils._run_java_version_cmd(java_path)
+            if result and result.stderr:
+                version = version_utils._extract_version(result.stderr)
+                return version
             return None
         except Exception as e:
             logger.error(_("version.info.detail.get_failed").format(error=str(e)))
@@ -945,10 +826,9 @@ class LocalTab(QWidget):
             return
             
         # 验证是否是有效的JDK目录
-        java_executable = platform_manager.get_java_executable()
-        java_path = os.path.join(jdk_path, 'bin', java_executable)
-        if not os.path.exists(java_path):
-            QMessageBox.warning(self, _("local.dialog.error"), _("local.dialog.invalid_jdk_dir"))
+        is_valid, error_msg = version_utils.check_jdk_validity(jdk_path)
+        if not is_valid:
+            QMessageBox.warning(self, _("local.dialog.error"), error_msg)
             return
             
         # 检查是否已经添加过
@@ -962,19 +842,14 @@ class LocalTab(QWidget):
             
         # 获取版本信息
         try:
-            detailed_version = self.get_detailed_version(java_path)
-            if not detailed_version:
+            vendor_info = version_utils.get_vendor_info(jdk_path)
+            if not vendor_info or not vendor_info['version']:
                 QMessageBox.warning(self, _("local.dialog.error"), _("local.dialog.cannot_get_version"))
                 return
                 
-            # 提取主版本号
-            import re
-            match = re.search(r'(\d+)', detailed_version)
-            if not match:
-                QMessageBox.warning(self, _("local.dialog.error"), _("local.dialog.cannot_parse_version"))
-                return
-                
-            version = match.group(1)
+            # 使用完整版本号
+            version = vendor_info['version']
+            vendor = vendor_info['vendor']
             
             # 添加到配置
             import datetime
@@ -996,7 +871,12 @@ class LocalTab(QWidget):
             # 发送信号并刷新列表
             self.jdk_mapped.emit(version, jdk_path)
             self.refresh_jdk_list()
-            QMessageBox.information(self, _("local.dialog.success"), _("local.dialog.jdk_added").format(version=version))
+            
+            # 显示成功消息，包含供应商信息
+            success_message = _("local.dialog.jdk_added").format(
+                version=f"{vendor} {version}"
+            )
+            QMessageBox.information(self, _("local.dialog.success"), success_message)
             
         except Exception as e:
             logger.error(f"{_('log.error.add_jdk_failed')}: {str(e)}")
@@ -1976,18 +1856,15 @@ class LocalTab(QWidget):
                     if os.path.exists(jdk_path):
                         shutil.rmtree(jdk_path)
                         message = _("local.dialog.delete.success_message").format(
-                            version=version_text,
-                            vendor=vendor_text
+                            version=version_text
                         )
                     else:
                         message = _("local.dialog.delete.success_message_not_exist").format(
-                            version=version_text,
-                            vendor=vendor_text
+                            version=version_text
                         )
                 else:  # 仅从列表移除
                     message = _("local.dialog.delete.success_message_list_only").format(
-                        version=version_text,
-                        vendor=vendor_text
+                        version=version_text
                     )
                 
                 # 刷新列表
@@ -2006,50 +1883,15 @@ class LocalTab(QWidget):
 
     def _get_version_type(self, version):
         """获取版本类型"""
-        try:
-            major_version = int(version.split('.')[0])
-            if major_version in [8, 11, 17, 21]:
-                return _("local.version.type.lts")
-            elif major_version >= 21:
-                return _("local.version.type.latest")
-            elif major_version >= 17:
-                return _("local.version.type.interim")
-            elif major_version >= 11:
-                return _("local.version.type.old")
-            else:
-                return _("local.version.type.legacy")
-        except:
-            return _("local.version.type.unknown")
+        return version_utils.get_version_type(version)
 
     def _get_version_type_color(self, version_type):
         """获取版本类型对应的颜色"""
-        colors = {
-            _("local.version.type.lts"): "#17a2b8",       # 蓝绿色
-            _("local.version.type.old"): "#6c757d",    # 灰色
-            _("local.version.type.legacy"): "#dc3545",    # 红色
-            _("local.version.type.unknown"): "#6c757d"   # 灰色
-        }
-        return colors.get(version_type, "#6c757d") 
+        return version_utils.get_version_color(version_type)
 
     def get_system_java_version(self):
         """获取系统Java版本"""
-        try:
-            result = subprocess.run(
-                ['java', '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=5
-            )
-            
-            if result.stderr:
-                return result.stderr.split('\n')[0]  # 通常版本信息在第一行
-            return None
-        except FileNotFoundError:
-            return _("local.system_version.not_installed")
-        except Exception as e:
-            logger.error(f"{_('log.error.get_system_version_failed')}: {str(e)}")
-            return _("local.system_version.unknown")
+        return version_utils.get_system_java_version()
 
     def map_jdk(self, jdk_path):
         """映射JDK"""
@@ -2083,29 +1925,7 @@ class LocalTab(QWidget):
 
     def _get_jdk_version(self, jdk_path):
         """获取JDK版本信息"""
-        try:
-            java_executable = platform_manager.get_java_executable()
-            java_path = os.path.join(jdk_path, 'bin', java_executable)
-            if not os.path.exists(java_path):
-                return None
-                
-            result = subprocess.run(
-                [java_path, '-version'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                timeout=5
-            )
-            
-            if result.stderr:
-                version_line = result.stderr.split('\n')[0]
-                match = re.search(r'version "([^"]+)"', version_line)
-                if match:
-                    return match.group(1)
-            return None
-        except Exception as e:
-            logger.error(f"{_('log.error.get_version_failed')}: {str(e)}")
-            return None 
+        return version_utils.get_jdk_version(jdk_path)
 
     def delete_jdk(self, jdk_info):
         """删除JDK"""
@@ -2149,13 +1969,11 @@ class LocalTab(QWidget):
                         import shutil
                         shutil.rmtree(path)
                         message = _("local.dialog.delete.success_message").format(
-                            version=version,
-                            vendor=vendor
+                            version=version
                         )
                     else:
                         message = _("local.dialog.delete.success_message_not_exist").format(
-                            version=version,
-                            vendor=vendor
+                            version=version
                         )
                     
                     # 从配置中移除
