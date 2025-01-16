@@ -514,9 +514,9 @@
                 "version_title": "版本:",
                 "path_title": "安装路径:",
                 "path_confirm": "您确定要删除以下 JDK 吗？\n\n版本: {vendor} JDK {version}\n路径: {path}",
-                "success_message": "已成功删除 {version} ({vendor}) 及其所有文件",
-                "success_message_not_exist": "已从列表中移除 {version} ({vendor})，文件夹已不存在",
-                "success_message_list_only": "已从列表中移除 {version} ({vendor})",
+                "success_message": "已成功删除 {version} 及其所有文件",
+                "success_message_not_exist": "已从列表中移除 {version}，文件夹已不存在",
+                "success_message_list_only": "已从列表中移除 {version}",
                 "warning": "警告",
                 "error": "错误",
                 "success": "成功"

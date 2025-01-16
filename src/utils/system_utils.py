@@ -50,18 +50,49 @@ class WindowsManager(SystemManager):
     def create_symlink(self, source_path, target_path):
         """创建符号链接"""
         try:
-            if os.path.exists(target_path):
-                os.remove(target_path)
+            # 规范化路径
+            source_path = platform_manager.format_path(source_path)
+            target_path = platform_manager.format_path(target_path)
             
-            # Windows 上使用 junction
-            if platform.system() == 'Windows':
-                # 使用 mklink /J 创建目录联接
-                result = os.system(f'mklink /J "{target_path}" "{source_path}"')
-                return result == 0
+            # 检查源路径是否存在
+            if not os.path.exists(source_path):
+                logger.error(f"源路径不存在: {source_path}")
+                return False
+            
+            # 如果目标路径存在，先删除
+            if os.path.exists(target_path):
+                try:
+                    if os.path.islink(target_path) or os.path.isdir(target_path):
+                        os.unlink(target_path)
+                    else:
+                        os.remove(target_path)
+                except Exception as e:
+                    logger.error(f"删除已存在的目标路径失败: {str(e)}")
+                    return False
+            
+            # 确保目标路径的父目录存在
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            
+            if platform_manager.is_windows:
+                # 使用subprocess执行mklink命令
+                try:
+                    from src.utils.version_utils import version_utils
+                    result = version_utils.run_process(
+                        ['cmd', '/c', 'mklink', '/J', target_path, source_path],
+                        timeout=10
+                    )
+                    return result and result.returncode == 0
+                except Exception as e:
+                    logger.error(f"创建Windows符号链接失败: {str(e)}")
+                    return False
             else:
-                # 其他系统使用 symlink
-                os.symlink(source_path, target_path, target_is_directory=True)
-                return True
+                # Unix系统使用os.symlink
+                try:
+                    os.symlink(source_path, target_path, target_is_directory=True)
+                    return True
+                except Exception as e:
+                    logger.error(f"创建Unix符号链接失败: {str(e)}")
+                    return False
         except Exception as e:
             logger.error(f"创建符号链接失败: {str(e)}")
             return False
