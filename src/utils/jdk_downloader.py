@@ -148,7 +148,7 @@ class JDKDownloader(QObject):
         try:
             logger.debug(_("downloader.log.debug.fetching_versions").format(vendor=vendor))
             if vendor not in self.api_config:
-                logger.error(_("downloader.error.unsupported_vendor").format(vendor=vendor))
+                logger.warning(_("downloader.error.unsupported_vendor").format(vendor=vendor))
                 return self.base_versions.get(vendor, [])
                 
             if 'versions' not in self.api_config[vendor]:

@@ -11,11 +11,13 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QIcon, QFont
 from loguru import logger
-from src.utils.system_utils import set_environment_variable, update_path_variable
+from src.utils.system_utils import set_environment_variable, update_path_variable, system_manager
 from src.utils.platform_manager import platform_manager
 from src.utils.i18n_manager import i18n_manager
 from src.utils.theme_manager import ThemeManager
 from src.utils.update_manager import UpdateManager
+import win32gui
+import win32con
 
 # 初始化翻译函数
 _ = i18n_manager.get_text
@@ -1125,59 +1127,101 @@ class SettingsTab(QWidget):
 
     def apply_env_settings(self):
         """应用环境变量设置"""
-        junction_path = self.junction_path_edit.text()
-        
         try:
-            # 获取当前最新的环境变量值
-            current_path = self.get_original_env_value('PATH')
-            current_classpath = self.get_original_env_value('CLASSPATH')
-            
+            # 检查管理员权限
+            if not platform_manager.check_admin_rights():
+                QMessageBox.warning(
+                    self,
+                    _("settings.error.title"),
+                    platform_manager.get_error_message('admin_rights')
+                )
+                return
+
+            # 获取当前路径和新路径
+            junction_path = self.junction_path_edit.text()
+            junction_path = platform_manager.normalize_path(junction_path)
+
+            success = True
+            error_messages = []
+
+            # 设置 JAVA_HOME
             if self.env_java_home.isChecked():
-                set_environment_variable('JAVA_HOME', junction_path)
-            
+                if not system_manager.set_environment_variable('JAVA_HOME', junction_path):
+                    success = False
+                    error_messages.append(_("settings.messages.java_home_failed"))
+
+            # 设置 PATH
             if self.env_path.isChecked():
-                # 检查是否已存在 JAVA_HOME 路径
                 if platform_manager.is_windows:
-                    java_home_path = '%JAVA_HOME%\\bin'
-                    if java_home_path not in current_path:
-                        update_path_variable(java_home_path)
+                    # Windows 使用 %JAVA_HOME%\bin
+                    java_path = '%JAVA_HOME%\\bin'
                 else:
-                    java_home_path = '$JAVA_HOME/bin'
-                    if java_home_path not in current_path:
-                        system_manager.update_path_variable(os.path.join(junction_path, 'bin'))
-            
+                    # Unix 使用 $JAVA_HOME/bin
+                    java_path = '$JAVA_HOME/bin'
+
+                if not system_manager.update_path_variable(java_path):
+                    success = False
+                    error_messages.append(_("settings.messages.path_failed"))
+
+            # 设置 CLASSPATH
             if self.env_classpath.isChecked():
-                # 检查是否已存在相同的 CLASSPATH 设置
                 if platform_manager.is_windows:
-                    new_classpath = ".;%JAVA_HOME%\\lib\\dt.jar;%JAVA_HOME%\\lib\\tools.jar"
+                    classpath = ".;%JAVA_HOME%\\lib\\dt.jar;%JAVA_HOME%\\lib\\tools.jar"
                 else:
-                    new_classpath = ".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
-                if current_classpath != new_classpath:
-                    set_environment_variable('CLASSPATH', new_classpath)
-            
-            # 保存当前设置到配置
+                    classpath = ".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+
+                if not system_manager.set_environment_variable('CLASSPATH', classpath):
+                    success = False
+                    error_messages.append(_("settings.messages.classpath_failed"))
+
+            # 保存设置到配置文件
             self.config.set('jdk_store_path', self.store_path_edit.text())
-            self.config.set('junction_path', self.junction_path_edit.text())
+            self.config.set('junction_path', junction_path)
             self.config.save()
-            
-            # 更新预览显示
+
+            # 更新环境变量预览
             self.update_env_preview()
-            
-            # 如果是 Unix 系统，提供重新加载命令
-            if not platform_manager.is_windows:
-                reload_cmd = platform_manager.get_shell_reload_command()
-                if reload_cmd:
-                    QMessageBox.information(
-                        self, 
-                        _("settings.messages.env_update_success"), 
-                        _("settings.messages.env_update_unix") + f"\n{reload_cmd}"
+
+            # 显示结果消息
+            if success:
+                if platform_manager.is_windows:
+                    # Windows 下发送系统广播通知环境变量更改
+                    win32gui.SendMessageTimeout(
+                        win32con.HWND_BROADCAST,
+                        win32con.WM_SETTINGCHANGE,
+                        0,
+                        'Environment',
+                        win32con.SMTO_ABORTIFHUNG,
+                        5000
                     )
-            
+                    QMessageBox.information(
+                        self,
+                        _("settings.messages.env_update_success"),
+                        _("settings.messages.env_update_windows")
+                    )
+                else:
+                    # Unix 系统提供重新加载命令
+                    reload_cmd = platform_manager.get_shell_reload_command()
+                    if reload_cmd:
+                        QMessageBox.information(
+                            self,
+                            _("settings.messages.env_update_success"),
+                            _("settings.messages.env_update_unix").format(cmd=reload_cmd)
+                        )
+            else:
+                error_message = "\n".join(error_messages)
+                QMessageBox.warning(
+                    self,
+                    _("settings.error.title"),
+                    _("settings.messages.env_update_partial_failed").format(errors=error_message)
+                )
+
         except Exception as e:
-            QMessageBox.warning(
-                self, 
-                "Error",
-                _("settings.messages.env_update_error").format(str(e))
+            logger.error(f"应用环境变量设置失败: {str(e)}")
+            QMessageBox.critical(
+                self,
+                _("settings.error.title"),
+                _("settings.messages.env_update_error").format(error=str(e))
             )
 
     def update_env_description(self):
@@ -1294,6 +1338,28 @@ class SettingsTab(QWidget):
             logger.error(f"获取环境变量 {name} 失败: {str(e)}")
             return os.environ.get(name, _("settings.env.not_set"))
 
+    def compare_java_home_paths(self):
+        """比较JAVA_HOME和软链接路径"""
+        try:
+            current_java_home = self.get_original_env_value('JAVA_HOME')
+            junction_path = self.junction_path_edit.text()
+            
+            # 如果JAVA_HOME未设置，直接返回False
+            if current_java_home == _("settings.env.not_set"):
+                return False
+                
+            # 规范化路径以进行比较
+            try:
+                java_home_real = os.path.realpath(current_java_home)
+                junction_real = os.path.realpath(junction_path)
+                return os.path.samefile(java_home_real, junction_real)
+            except Exception:
+                # 如果路径不存在或无法比较，返回字符串比较结果
+                return os.path.normpath(current_java_home) == os.path.normpath(junction_path)
+        except Exception as e:
+            logger.error(f"比较JAVA_HOME路径失败: {str(e)}")
+            return False
+
     def update_env_preview(self):
         """更新环境变量预览"""
         # 获取当前环境变量值，保持原始格式
@@ -1303,6 +1369,9 @@ class SettingsTab(QWidget):
         
         # 获取新的环境变量值
         new_java_home = self.junction_path_edit.text()
+        
+        # 检查JAVA_HOME和软链接路径是否一致
+        paths_match = self.compare_java_home_paths()
         
         # 根据平台设置不同的格式
         if platform_manager.is_windows:
@@ -1373,13 +1442,13 @@ class SettingsTab(QWidget):
         )
         
         # 检查环境变量是否有实际差异
-        has_java_home_diff = current_java_home != new_java_home
+        has_java_home_diff = not paths_match
         has_path_diff = new_path_entry not in current_path
         has_classpath_diff = current_classpath != new_classpath
         
         # JAVA_HOME 显示
         if self.env_java_home.isChecked():
-            if basic_settings_changed and has_java_home_diff:
+            if has_java_home_diff:
                 self.java_home_new.setText(new_java_home)
                 self.java_home_new.setProperty('type', 'env_value_diff')
                 self.java_home_new.setVisible(True)
@@ -1395,7 +1464,7 @@ class SettingsTab(QWidget):
         
         # PATH 显示
         if self.env_path.isChecked():
-            if basic_settings_changed and has_path_diff:
+            if has_path_diff:
                 self.path_new.setText(new_path_entry)
                 self.path_new.setProperty('type', 'env_value_diff')
                 self.path_new.setVisible(True)
@@ -1411,7 +1480,7 @@ class SettingsTab(QWidget):
         
         # CLASSPATH 显示
         if self.env_classpath.isChecked():
-            if basic_settings_changed and has_classpath_diff:
+            if has_classpath_diff:
                 self.classpath_new.setText(new_classpath)
                 self.classpath_new.setProperty('type', 'env_value_diff')
                 self.classpath_new.setVisible(True)
@@ -1432,7 +1501,7 @@ class SettingsTab(QWidget):
             (self.env_classpath.isChecked() and has_classpath_diff)
         )
         
-        if basic_settings_changed and has_any_diff:
+        if has_any_diff:
             self.env_warning.setText(_("settings.env.change_warning"))
             self.env_warning.setVisible(True)
             self.apply_env_button.setEnabled(True)

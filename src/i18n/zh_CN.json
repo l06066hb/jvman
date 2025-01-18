@@ -56,7 +56,8 @@
             "not_set": "未设置",
             "no_java_path": "未找到 Java 相关路径",
             "synced": "环境变量已同步",
-            "change_warning": "⚠️ 检测到基本设置有变更，请点击'应用环境变量设置'使变更生效"
+            "change_warning": "⚠️ 检测到基本设置有变更，请点击'应用环境变量设置'使变更生效",
+            "all_paths": "所有环境变量路径"
         },
         "messages": {
             "restart_required": "重启提示",
@@ -66,7 +67,12 @@
             "select_config_file": "选择 Shell 配置文件",
             "env_update_success": "环境变量设置已更新",
             "env_update_unix": "环境变量设置已更新\n请运行以下命令使环境变量生效：",
-            "env_update_error": "设置环境变量失败: {0}",
+            "env_update_error": "设置环境变量失败：{error}",
+            "env_update_windows": "环境变量设置已更新成功。新打开的命令提示符中将生效。",
+            "env_update_partial_failed": "部分环境变量更新失败：\n{errors}",
+            "java_home_failed": "设置 JAVA_HOME 失败",
+            "path_failed": "更新 PATH 失败",
+            "classpath_failed": "设置 CLASSPATH 失败",
             "reset_close_action": "关闭行为已重置，下次关闭窗口时将重新询问。"
         },
         "error": {
@@ -803,7 +809,7 @@
     },
     "downloader": {
         "error": {
-            "unsupported_vendor": "不支持的JDK发行版: {vendor}",
+            "unsupported_vendor": "不支持的 JDK 发行商: {vendor}",
             "no_version": "未指定版本",
             "no_url": "无法获取下载链接",
             "parse_failed": "解析版本信息失败: {error}",

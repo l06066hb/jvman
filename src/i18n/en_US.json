@@ -62,7 +62,8 @@
             "not_set": "Not Set",
             "no_java_path": "No Java related path found",
             "synced": "Environment variables synced",
-            "change_warning": "⚠️ Basic settings have changed, please click 'Apply Environment Variables' to take effect"
+            "change_warning": "⚠️ Basic settings have changed, please click 'Apply Environment Variables' to take effect",
+            "all_paths": "All environment variable paths"
         },
         "messages": {
             "restart_required": "Restart Required",
@@ -72,7 +73,12 @@
             "select_config_file": "Select Shell Config File",
             "env_update_success": "Environment variables have been updated",
             "env_update_unix": "Environment variables have been updated\nPlease run the following command to take effect:",
-            "env_update_error": "Failed to set environment variables: {0}",
+            "env_update_error": "Failed to set environment variables: {error}",
+            "env_update_windows": "Environment variables have been updated successfully. The changes will take effect in new command prompts.",
+            "env_update_partial_failed": "Some environment variables failed to update:\n{errors}",
+            "java_home_failed": "Failed to set JAVA_HOME",
+            "path_failed": "Failed to update PATH",
+            "classpath_failed": "Failed to set CLASSPATH",
             "reset_close_action": "Close action has been reset, you will be asked again next time."
         }
     },
