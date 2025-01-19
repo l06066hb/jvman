@@ -34,6 +34,17 @@ def get_version():
     print("Error: Could not find valid app.json with version information")
     sys.exit(1)
 
+def get_default_paths():
+    """获取默认路径配置"""
+    # 使用相对于应用程序目录的路径
+    app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return {
+        'jdk_path': os.path.join(app_dir, 'jdk'),  # JDK 存储目录
+        'symlink_path': os.path.join(app_dir, 'current'),  # 当前使用的 JDK 软链接
+        'config_file': os.path.join(app_dir, 'config', 'jvman.json'),  # 配置文件路径
+        'log_file': os.path.join(app_dir, 'logs', 'jvman.log')  # 日志文件路径
+    }
+
 def build_portable(platform='windows', timestamp=None):
     """构建免安装版"""
     print("Building portable version...")
@@ -41,7 +52,7 @@ def build_portable(platform='windows', timestamp=None):
     version = get_version()
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
+        
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
     os.makedirs(release_dir, exist_ok=True)
@@ -128,6 +139,10 @@ def build_portable(platform='windows', timestamp=None):
         'utils.platform_manager',
         'utils.system_utils',
         'utils.jdk_downloader',
+        'utils.version_utils',
+        'utils.theme_manager',
+        'utils.i18n_manager',
+        'utils.update_manager',
         'loguru.handlers',
         'loguru._logger',
         'loguru._file_sink',
@@ -137,6 +152,11 @@ def build_portable(platform='windows', timestamp=None):
         'ctypes',
         'platform',
         'logging',
+        'json',
+        'os',
+        'sys',
+        'shutil',
+        'datetime',
     ]
     
     for imp in hidden_imports:
@@ -174,24 +194,18 @@ def build_portable(platform='windows', timestamp=None):
     
     # 创建必要的目录和文件
     dist_dir = os.path.join(output_dir, 'jvman')
-    os.makedirs(os.path.join(dist_dir, 'logs'), exist_ok=True)
-    os.makedirs(os.path.join(dist_dir, 'downloads'), exist_ok=True)
-    
-    # 获取用户目录下的Java路径
-    user_home = os.path.expanduser('~')
-    default_java_path = os.path.join(user_home, 'Java')
     
     # 创建配置目录
     config_dir = os.path.join(dist_dir, 'config')
     os.makedirs(config_dir, exist_ok=True)
     
-    # 创建用户配置文件
+    # 创建用户配置文件，使用相对路径
     default_config = {
         "version": version,
         "language": "zh_CN",
         "theme": "cyan",
-        "jdk_store_path": default_java_path,
-        "junction_path": os.path.join(default_java_path, "jdk_default"),
+        "jdk_store_path": "jdk",  # 使用相对路径，不需要./前缀
+        "junction_path": "current",  # 使用相对路径，不需要./前缀
         "downloaded_jdks": [],
         "jdks": [],
         "auto_start": False,
@@ -209,8 +223,23 @@ def build_portable(platform='windows', timestamp=None):
     with open(settings_file, 'w', encoding='utf-8') as f:
         json.dump(default_config, f, indent=4, ensure_ascii=False)
     
-    # 创建Java目录
-    os.makedirs(default_java_path, exist_ok=True)
+    # 创建必要的目录结构
+    dirs_to_create = [
+        os.path.join(dist_dir, 'jdk'),
+        os.path.join(dist_dir, 'logs'),
+        os.path.join(dist_dir, 'current'),  # 添加 current 目录
+    ]
+    
+    # 创建所有必要的目录
+    for dir_path in dirs_to_create:
+        try:
+            if os.path.exists(dir_path):
+                shutil.rmtree(dir_path)
+            os.makedirs(dir_path)
+            print(f"Created directory: {dir_path}")
+        except Exception as e:
+            print(f"Error creating directory {dir_path}: {str(e)}")
+            sys.exit(1)
     
     # 清理构建文件
     build_dir = os.path.join(root_dir, 'build')

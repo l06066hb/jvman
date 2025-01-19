@@ -10,10 +10,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QSize, QThread
 from PyQt6.QtGui import QIcon, QFont, QPixmap, QColor, QPainter
-from src.utils.system_utils import create_symlink, set_environment_variable, update_path_variable
-from src.utils.platform_manager import platform_manager
-from src.utils.i18n_manager import i18n_manager
-from src.utils.version_utils import version_utils
+from utils.system_utils import create_symlink, set_environment_variable, update_path_variable
+from utils.platform_manager import platform_manager
+from utils.i18n_manager import i18n_manager
+from utils.version_utils import version_utils
 
 # 初始化i18n管理器
 _ = i18n_manager.get_text

@@ -9,18 +9,18 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize, QPoint
 from PyQt6.QtGui import QIcon, QAction, QFont, QCursor
 
-from src.ui.tabs.download_tab import DownloadTab
-from src.ui.tabs.local_tab import LocalTab
-from src.ui.tabs.settings_tab import SettingsTab
-from src.ui.tabs.help_tab import HelpTab
-from src.ui.tabs.docs_tab import DocsTab
-from src.utils.system_utils import create_symlink, set_environment_variable, update_path_variable
-from src.utils.theme_manager import ThemeManager
-from src.utils.platform_manager import platform_manager
+from ui.tabs.download_tab import DownloadTab
+from ui.tabs.local_tab import LocalTab
+from ui.tabs.settings_tab import SettingsTab
+from ui.tabs.help_tab import HelpTab
+from ui.tabs.docs_tab import DocsTab
+from utils.system_utils import create_symlink, set_environment_variable, update_path_variable
+from utils.theme_manager import ThemeManager
+from utils.platform_manager import platform_manager
 from utils.version_manager import version_manager
 from utils.config_manager import ConfigManager
 from utils.update_manager import UpdateManager
-from src.utils.i18n_manager import i18n_manager
+from utils.i18n_manager import i18n_manager
 
 import sys
 

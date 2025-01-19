@@ -244,6 +244,24 @@ Description: JDK Version Manager
     target_dir = os.path.join(deb_root, "usr", "local", "bin", "jvman")
     if os.path.exists(dist_dir):
         shutil.copytree(dist_dir, target_dir, dirs_exist_ok=True)
+        
+        # 确保目标目录中存在必要的子目录（确保为空）
+        dirs_to_create = [
+            os.path.join(target_dir, 'jdk'),
+            os.path.join(target_dir, 'logs'),
+            os.path.join(target_dir, 'current'),  # 添加 current 目录
+        ]
+        
+        # 创建所有必要的目录
+        for dir_path in dirs_to_create:
+            try:
+                if os.path.exists(dir_path):
+                    shutil.rmtree(dir_path)
+                os.makedirs(dir_path)
+                print(f"Created directory: {dir_path}")
+            except Exception as e:
+                print(f"Error creating directory {dir_path}: {str(e)}")
+                sys.exit(1)
     
     # 复制图标
     icon_src = os.path.join(root_dir, "resources", "icons", "app.png")
