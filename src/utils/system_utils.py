@@ -131,9 +131,10 @@ class WindowsManager(SystemManager):
             
             # 确保目标路径的父目录存在
             parent_dir = os.path.dirname(target_path)
-            if not os.path.exists(parent_dir):
+            if parent_dir and not os.path.exists(parent_dir):
                 try:
                     os.makedirs(parent_dir, exist_ok=True)
+                    logger.info(f"创建目标父目录: {parent_dir}")
                 except PermissionError as pe:
                     logger.error(f"创建目标目录需要管理员权限: {str(pe)}")
                     return False

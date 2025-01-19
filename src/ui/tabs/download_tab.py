@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal, Qt, QThread, QSize, QDateTime, QTimer
 from PyQt6.QtGui import QIcon
 from utils.jdk_downloader import JDKDownloader
-from src.utils.i18n_manager import i18n_manager
+from utils.i18n_manager import i18n_manager
 import shutil
 import logging
 from datetime import datetime

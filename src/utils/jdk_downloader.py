@@ -5,7 +5,7 @@ from loguru import logger
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from datetime import datetime
 import time
-from src.utils.i18n_manager import i18n_manager
+from utils.i18n_manager import i18n_manager
 
 # 确保国际化管理器被正确初始化
 _ = i18n_manager.get_text

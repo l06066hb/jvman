@@ -4,7 +4,8 @@ import subprocess
 from datetime import datetime, timedelta
 from loguru import logger
 from .platform_manager import platform_manager
-from src.utils.i18n_manager import i18n_manager
+from utils.i18n_manager import i18n_manager
+import sys
 
 # 初始化i18n管理器
 _ = i18n_manager.get_text
@@ -104,11 +105,24 @@ class VersionUtils:
     def get_system_java_version(self):
         """获取系统Java版本"""
         try:
+            # 首先检查 JAVA_HOME
+            java_home = os.environ.get('JAVA_HOME')
+            if java_home:
+                logger.debug(f"Checking JAVA_HOME: {java_home}")
+                java_executable = platform_manager.get_java_executable()
+                java_path = os.path.join(java_home, 'bin', java_executable)
+                if os.path.exists(java_path):
+                    result = self._run_java_version_cmd(java_path)
+                    if result and result.stderr:
+                        return result.stderr.strip()
+
+            # 如果 JAVA_HOME 无效或未设置，直接尝试 java -version
+            logger.debug("JAVA_HOME not found or invalid, trying system java")
             result = self._run_java_version_cmd('java')
             if result and result.stderr:
                 return result.stderr.strip()
-            return None
-        except FileNotFoundError:
+
+            logger.debug("No Java installation found")
             return _("local.system_version.not_installed")
         except Exception as e:
             logger.error(f"{_('log.error.get_system_version_failed')}: {str(e)}")
@@ -184,6 +198,27 @@ class VersionUtils:
     def _run_java_version_cmd(self, java_cmd):
         """运行java -version命令"""
         try:
+            # 如果是 'java' 命令，尝试在 PATH 中查找完整路径
+            if java_cmd == 'java':
+                if platform_manager.is_windows:
+                    # Windows 下查找 java.exe
+                    paths = os.environ.get('PATH', '').split(os.pathsep)
+                    for path in paths:
+                        java_exe = os.path.join(path, 'java.exe')
+                        if os.path.exists(java_exe):
+                            java_cmd = java_exe
+                            break
+                else:
+                    # Unix 系统下查找 java
+                    try:
+                        java_cmd = subprocess.check_output(['which', 'java'], text=True).strip()
+                    except:
+                        pass
+
+            # 如果找不到 java 命令，返回特定错误
+            if java_cmd == 'java' and not os.path.exists(java_cmd):
+                return None
+
             # 格式化命令路径
             if not java_cmd == 'java':
                 java_cmd = platform_manager.format_path(java_cmd)

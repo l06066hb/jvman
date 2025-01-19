@@ -11,13 +11,14 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QIcon, QFont
 from loguru import logger
-from src.utils.system_utils import set_environment_variable, update_path_variable, system_manager
-from src.utils.platform_manager import platform_manager
-from src.utils.i18n_manager import i18n_manager
-from src.utils.theme_manager import ThemeManager
-from src.utils.update_manager import UpdateManager
+from utils.system_utils import set_environment_variable, update_path_variable, system_manager
+from utils.platform_manager import platform_manager
+from utils.i18n_manager import i18n_manager
+from utils.theme_manager import ThemeManager
+from utils.update_manager import UpdateManager
 import win32gui
 import win32con
+import sys
 
 # 初始化翻译函数
 _ = i18n_manager.get_text
@@ -35,6 +36,25 @@ class SettingsTab(QWidget):
         
         # 获取图标路径
         self.icons_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'resources', 'icons')
+        
+        # 获取应用程序根目录
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的环境，使用程序所在目录作为根目录
+            self.root_dir = os.path.dirname(sys.executable)
+        else:
+            # 如果是开发环境，使用当前工作目录作为根目录
+            self.root_dir = os.getcwd()
+            
+        logger.debug(f"Settings root path: {self.root_dir}")
+        
+        # 设置默认路径（如果配置中没有）
+        if not self.config.get('jdk_store_path'):
+            self.config.set('jdk_store_path', 'jdk')
+        if not self.config.get('junction_path'):
+            self.config.set('junction_path', 'current')
+            
+        # 确保必要的目录存在
+        self._ensure_directories()
         
         # 初始化语言设置
         saved_language = self.config.get('language', 'zh_CN')
@@ -66,6 +86,27 @@ class SettingsTab(QWidget):
         # 连接更新设置信号
         self.auto_update_checkbox.stateChanged.connect(self.on_auto_update_changed)
         self.check_update_button.clicked.connect(self.check_for_updates)
+
+    def _ensure_directories(self):
+        """确保必要的目录结构存在"""
+        try:
+            # 获取绝对路径
+            jdk_store_path = self._to_absolute_path(self.config.get('jdk_store_path'))
+            junction_path = self._to_absolute_path(self.config.get('junction_path'))
+            
+            # 创建 JDK 存储目录
+            if not os.path.exists(jdk_store_path):
+                os.makedirs(jdk_store_path, exist_ok=True)
+                logger.info(f"创建 JDK 存储目录: {jdk_store_path}")
+            
+            # 创建软链接目标目录
+            junction_dir = os.path.dirname(junction_path)
+            if not os.path.exists(junction_dir):
+                os.makedirs(junction_dir, exist_ok=True)
+                logger.info(f"创建软链接目标目录: {junction_dir}")
+                    
+        except Exception as e:
+            logger.error(f"创建目录结构失败: {str(e)}")
 
     def _update_texts(self):
         """更新所有界面文本"""
@@ -147,6 +188,51 @@ class SettingsTab(QWidget):
         super().hideEvent(event)
         if hasattr(self, 'refresh_timer'):
             self.refresh_timer.stop()
+
+    def _to_absolute_path(self, relative_path):
+        """将相对路径转换为绝对路径"""
+        if not relative_path:
+            return ""
+        try:
+            # 如果已经是绝对路径，直接返回规范化后的路径
+            if os.path.isabs(relative_path):
+                return os.path.normpath(relative_path)
+                
+            # 使用应用程序根目录作为基准进行转换
+            abs_path = os.path.abspath(os.path.join(self.root_dir, relative_path))
+            logger.debug(f"Converting relative path '{relative_path}' to absolute path '{abs_path}'")
+            return os.path.normpath(abs_path)
+        except Exception as e:
+            logger.error(f"转换绝对路径失败: {str(e)}")
+            return relative_path
+
+    def _to_relative_path(self, absolute_path):
+        """将绝对路径转换为相对路径"""
+        if not absolute_path:
+            return ""
+        try:
+            # 规范化路径
+            abs_path = os.path.normpath(absolute_path)
+            root_dir = os.path.normpath(self.root_dir)
+            
+            # 如果在不同驱动器上，保持绝对路径
+            if os.path.splitdrive(abs_path)[0] != os.path.splitdrive(root_dir)[0]:
+                return abs_path
+                
+            # 尝试转换为相对路径
+            try:
+                rel_path = os.path.relpath(abs_path, root_dir)
+                logger.debug(f"Converting absolute path '{abs_path}' to relative path '{rel_path}'")
+                # 检查相对路径是否会超出根目录
+                if rel_path.startswith('..'):
+                    return abs_path
+                return rel_path
+            except ValueError:
+                # 如果转换失败（例如不同驱动器），返回绝对路径
+                return abs_path
+        except Exception as e:
+            logger.error(f"转换相对路径失败: {str(e)}")
+            return absolute_path
 
     def setup_ui(self):
         """初始化界面"""
@@ -333,7 +419,7 @@ class SettingsTab(QWidget):
         store_label.setMinimumWidth(100)
         self.store_path_edit = QLineEdit()
         self.store_path_edit.setStyleSheet(input_style)
-        self.store_path_edit.setText(self.config.get('jdk_store_path'))
+        self.store_path_edit.setText(self._to_absolute_path(self.config.get('jdk_store_path')))
         self.store_path_button = QPushButton(_("settings.buttons.browse"))
         self.store_path_button.setProperty("i18n_key", "settings.buttons.browse")
         self.store_path_button.setProperty('browse', True)
@@ -351,7 +437,7 @@ class SettingsTab(QWidget):
         junction_label.setMinimumWidth(100)
         self.junction_path_edit = QLineEdit()
         self.junction_path_edit.setStyleSheet(input_style)
-        self.junction_path_edit.setText(self.config.get('junction_path'))
+        self.junction_path_edit.setText(self._to_absolute_path(self.config.get('junction_path')))
         self.junction_path_button = QPushButton(_("settings.buttons.browse"))
         self.junction_path_button.setProperty("i18n_key", "settings.buttons.browse")
         self.junction_path_button.setProperty('browse', True)
@@ -1105,25 +1191,55 @@ class SettingsTab(QWidget):
 
     def select_store_path(self):
         """选择JDK存储路径"""
-        path = QFileDialog.getExistingDirectory(
-            self,
-            _("settings.messages.select_jdk_path"),
-            self.store_path_edit.text(),
-            QFileDialog.Option.ShowDirsOnly
-        )
-        if path:
-            self.store_path_edit.setText(path)
+        try:
+            current_path = self._to_absolute_path(self.store_path_edit.text())
+            # 确保路径存在，如果不存在则使用工作目录
+            if not os.path.exists(current_path):
+                current_path = self.root_dir
+                
+            path = QFileDialog.getExistingDirectory(
+                self,
+                _("settings.messages.select_jdk_path"),
+                current_path,
+                QFileDialog.Option.ShowDirsOnly
+            )
+            if path:
+                # 规范化路径
+                path = os.path.normpath(path)
+                self.store_path_edit.setText(path)
+        except Exception as e:
+            logger.error(f"选择存储路径失败: {str(e)}")
+            QMessageBox.warning(
+                self,
+                _("settings.error.title"),
+                _("settings.messages.path_select_failed")
+            )
 
     def select_junction_path(self):
         """选择软链接路径"""
-        path = QFileDialog.getExistingDirectory(
-            self,
-            _("settings.messages.select_symlink_path"),
-            self.junction_path_edit.text(),
-            QFileDialog.Option.ShowDirsOnly
-        )
-        if path:
-            self.junction_path_edit.setText(path)
+        try:
+            current_path = self._to_absolute_path(self.junction_path_edit.text())
+            # 确保路径存在，如果不存在则使用工作目录
+            if not os.path.exists(current_path):
+                current_path = self.root_dir
+                
+            path = QFileDialog.getExistingDirectory(
+                self,
+                _("settings.messages.select_symlink_path"),
+                current_path,
+                QFileDialog.Option.ShowDirsOnly
+            )
+            if path:
+                # 规范化路径
+                path = os.path.normpath(path)
+                self.junction_path_edit.setText(path)
+        except Exception as e:
+            logger.error(f"选择软链接路径失败: {str(e)}")
+            QMessageBox.warning(
+                self,
+                _("settings.error.title"),
+                _("settings.messages.path_select_failed")
+            )
 
     def apply_env_settings(self):
         """应用环境变量设置"""
@@ -1137,8 +1253,8 @@ class SettingsTab(QWidget):
                 )
                 return
 
-            # 获取当前路径和新路径
-            junction_path = self.junction_path_edit.text()
+            # 获取当前路径和新路径（使用绝对路径）
+            junction_path = self._to_absolute_path(self.junction_path_edit.text())
             junction_path = platform_manager.normalize_path(junction_path)
 
             success = True
@@ -1174,9 +1290,9 @@ class SettingsTab(QWidget):
                     success = False
                     error_messages.append(_("settings.messages.classpath_failed"))
 
-            # 保存设置到配置文件
-            self.config.set('jdk_store_path', self.store_path_edit.text())
-            self.config.set('junction_path', junction_path)
+            # 保存设置到配置文件（使用相对路径）
+            self.config.set('jdk_store_path', self._to_relative_path(self.store_path_edit.text()))
+            self.config.set('junction_path', self._to_relative_path(junction_path))
             self.config.save()
 
             # 更新环境变量预览
@@ -1342,7 +1458,7 @@ class SettingsTab(QWidget):
         """比较JAVA_HOME和软链接路径"""
         try:
             current_java_home = self.get_original_env_value('JAVA_HOME')
-            junction_path = self.junction_path_edit.text()
+            junction_path = self._to_absolute_path(self.junction_path_edit.text())
             
             # 如果JAVA_HOME未设置，直接返回False
             if current_java_home == _("settings.env.not_set"):
@@ -1368,7 +1484,7 @@ class SettingsTab(QWidget):
         current_classpath = self.get_original_env_value('CLASSPATH')
         
         # 获取新的环境变量值
-        new_java_home = self.junction_path_edit.text()
+        new_java_home = self._to_absolute_path(self.junction_path_edit.text())
         
         # 检查JAVA_HOME和软链接路径是否一致
         paths_match = self.compare_java_home_paths()

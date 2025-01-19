@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize, QPropertyAnimation, QPoint, QEasingCurve, QRect, QTimer
 from PyQt6.QtGui import QIcon, QColor, QPainter, QPainterPath
 from loguru import logger
-from src.utils.i18n_manager import i18n_manager
+from utils.i18n_manager import i18n_manager
 
 # 初始化翻译函数
 _ = i18n_manager.get_text
