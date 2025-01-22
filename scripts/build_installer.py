@@ -68,6 +68,10 @@ def build_windows_installer(platform='windows', timestamp=None):
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
+    # 首先构建便携版
+    from build_portable import build_portable
+    build_portable(platform=platform, timestamp=timestamp)
+    
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
     os.makedirs(release_dir, exist_ok=True)
@@ -91,7 +95,22 @@ def build_windows_installer(platform='windows', timestamp=None):
     # 准备路径，使用正斜杠
     license_file = os.path.join(root_dir, "LICENSE").replace("\\", "/")
     icon_file = os.path.join(root_dir, "resources", "icons", "app.ico").replace("\\", "/")
-    dist_dir = os.path.join(root_dir, "dist", "jvman", "*").replace("\\", "/")
+    # 使用新构建的便携版目录
+    dist_dir = os.path.join(output_dir, "jvman").replace("\\", "/")
+    
+    # 确保资源目录存在
+    resources_dir = os.path.join(dist_dir, "resources")
+    icons_dir = os.path.join(resources_dir, "icons")
+    os.makedirs(icons_dir, exist_ok=True)
+    
+    # 复制所有图标文件
+    src_icons_dir = os.path.join(root_dir, "resources", "icons")
+    if os.path.exists(src_icons_dir):
+        for icon_name in os.listdir(src_icons_dir):
+            src_icon = os.path.join(src_icons_dir, icon_name)
+            dst_icon = os.path.join(icons_dir, icon_name)
+            if os.path.isfile(src_icon):
+                shutil.copy2(src_icon, dst_icon)
     
     with open(installer_script, "w", encoding="utf-8") as f:
         f.write(f"""#define MyAppName "JVMan"
@@ -111,13 +130,15 @@ AppUpdatesURL={{#MyAppURL}}
 DefaultDirName={{autopf}}/{{#MyAppName}}
 DefaultGroupName={{#MyAppName}}
 AllowNoIcons=yes
-LicenseFile={license_file}
-OutputDir={output_dir}
+LicenseFile="{license_file}"
+OutputDir="{output_dir}"
 OutputBaseFilename=JVMan_Setup
-SetupIconFile={icon_file}
+SetupIconFile="{icon_file}"
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+; 添加管理员权限要求
+PrivilegesRequired=admin
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -127,14 +148,14 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{{cm:CreateDesktopIcon}}"; GroupDescription: "{{cm:AdditionalIcons}}"; Flags: unchecked
 
 [Files]
-Source: "{dist_dir}"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{dist_dir}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{{group}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"
-Name: "{{commondesktop}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"; Tasks: desktopicon
+Name: "{{group}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"; Parameters: "--admin"
+Name: "{{commondesktop}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"; Tasks: desktopicon; Parameters: "--admin"
 
 [Run]
-Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: nowait postinstall skipifsilent
+Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 """)
     
     if not has_chinese:
