@@ -14,20 +14,39 @@ class ConfigManager:
         
     def _get_config_file(self):
         """获取配置文件路径"""
-        if getattr(sys, 'frozen', False):
-            # 如果是打包后的环境
-            base_path = os.path.dirname(sys.executable)
+        # 获取用户目录
+        user_home = os.path.expanduser('~')
+        # Windows: %APPDATA%/jvman, Unix: ~/.config/jvman
+        if sys.platform == 'win32':
+            config_dir = os.path.join(os.getenv('APPDATA', user_home), 'jvman')
         else:
-            # 如果是开发环境
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        
-        # 首先尝试加载用户配置
-        user_config = os.path.join(base_path, 'config', 'settings.json')
-        if os.path.exists(user_config):
-            return user_config
+            config_dir = os.path.join(user_home, '.config', 'jvman')
             
-        # 如果没有用户配置，使用默认配置
-        return os.path.join(base_path, 'config', 'app.json')
+        # 确保配置目录存在
+        os.makedirs(config_dir, exist_ok=True)
+        
+        # 用户配置文件路径
+        user_config = os.path.join(config_dir, 'settings.json')
+        
+        # 如果用户配置不存在，尝试从程序目录迁移
+        if not os.path.exists(user_config):
+            try:
+                # 获取程序目录中的配置文件路径
+                if getattr(sys, 'frozen', False):
+                    base_path = os.path.dirname(sys.executable)
+                else:
+                    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                old_config = os.path.join(base_path, 'config', 'settings.json')
+                
+                # 如果旧配置存在，复制到新位置
+                if os.path.exists(old_config):
+                    import shutil
+                    shutil.copy2(old_config, user_config)
+                    logger.info(f"配置文件已从 {old_config} 迁移到 {user_config}")
+            except Exception as e:
+                logger.warning(f"迁移配置文件失败: {str(e)}")
+        
+        return user_config
         
     def load(self):
         """加载配置"""
@@ -92,9 +111,16 @@ class ConfigManager:
         from .version_manager import version_manager
         
         self.config = {
-            "version": version_manager.get_version(),
+
             "language": version_manager.get_default_language(),
             "theme": "cyan",  # 默认使用青色主题
+            "jdk_store_path": "jdk",  # 使用相对路径
+            "junction_path": "current",  # 使用相对路径
+            "mapped_jdks": [],
+            "downloaded_jdks": [],
+            "jdks": [],
+            "auto_start": False,
+            "close_action": None,
             "auto_set_java_home": True,
             "auto_set_path": True,
             "auto_set_classpath": True,
@@ -104,13 +130,6 @@ class ConfigManager:
                 "changelog_url": "https://gitee.com/l06066hb/jvman/blob/main/CHANGELOG.md",
                 "auto_check": True,
                 "check_interval": 24  # 小时
-            },
-            "proxy": {
-                "enabled": False,
-                "host": "",
-                "port": "",
-                "username": "",
-                "password": ""
             }
         }
         self.save()
