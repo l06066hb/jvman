@@ -1464,14 +1464,31 @@ class SettingsTab(QWidget):
             if current_java_home == _("settings.env.not_set"):
                 return False
                 
-            # 规范化路径以进行比较
+            # 规范化路径
+            current_java_home = os.path.normpath(current_java_home)
+            junction_path = os.path.normpath(junction_path)
+            
             try:
-                java_home_real = os.path.realpath(current_java_home)
-                junction_real = os.path.realpath(junction_path)
-                return os.path.samefile(java_home_real, junction_real)
-            except Exception:
-                # 如果路径不存在或无法比较，返回字符串比较结果
-                return os.path.normpath(current_java_home) == os.path.normpath(junction_path)
+                # 获取实际路径（解析软链接）
+                real_java_home = os.path.realpath(current_java_home)
+                real_junction = os.path.realpath(junction_path)
+                
+                # 规范化实际路径
+                real_java_home = os.path.normpath(real_java_home)
+                real_junction = os.path.normpath(real_junction)
+                
+                # 尝试使用samefile比较（处理大小写和路径格式差异）
+                if os.path.exists(real_java_home) and os.path.exists(real_junction):
+                    return os.path.samefile(real_java_home, real_junction)
+                    
+                # 如果路径不存在，进行字符串比较
+                return real_java_home.lower() == real_junction.lower()
+                
+            except Exception as e:
+                logger.debug(f"路径比较时出现异常: {str(e)}")
+                # 如果无法解析实际路径，回退到基本的字符串比较
+                return current_java_home.lower() == junction_path.lower()
+                
         except Exception as e:
             logger.error(f"比较JAVA_HOME路径失败: {str(e)}")
             return False
