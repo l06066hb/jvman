@@ -195,34 +195,6 @@ def build_portable(platform='windows', timestamp=None):
     # 创建必要的目录和文件
     dist_dir = os.path.join(output_dir, 'jvman')
     
-    # 创建配置目录
-    config_dir = os.path.join(dist_dir, 'config')
-    os.makedirs(config_dir, exist_ok=True)
-    
-    # 创建用户配置文件，使用相对路径
-    default_config = {
-        "version": version,
-        "language": "zh_CN",
-        "theme": "cyan",
-        "jdk_store_path": "jdk",  # 使用相对路径，不需要./前缀
-        "junction_path": "current",  # 使用相对路径，不需要./前缀
-        "downloaded_jdks": [],
-        "jdks": [],
-        "auto_start": False,
-        "close_action": None,
-        "proxy": {
-            "enabled": False,
-            "host": "",
-            "port": "",
-            "username": "",
-            "password": ""
-        }
-    }
-    
-    settings_file = os.path.join(config_dir, 'settings.json')
-    with open(settings_file, 'w', encoding='utf-8') as f:
-        json.dump(default_config, f, indent=4, ensure_ascii=False)
-    
     # 创建必要的目录结构
     dirs_to_create = [
         os.path.join(dist_dir, 'jdk'),
