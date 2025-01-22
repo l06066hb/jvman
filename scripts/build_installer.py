@@ -112,6 +112,12 @@ def build_windows_installer(platform='windows', timestamp=None):
             if os.path.isfile(src_icon):
                 shutil.copy2(src_icon, dst_icon)
     
+    # 删除bin目录下的resources目录，避免重复
+    bin_resources = os.path.join(dist_dir, "bin", "resources")
+    if os.path.exists(bin_resources):
+        shutil.rmtree(bin_resources)
+        print(f"Removed duplicate resources directory: {bin_resources}")
+    
     with open(installer_script, "w", encoding="utf-8") as f:
         f.write(f"""#define MyAppName "JVMan"
 #define MyAppVersion "{version}"
