@@ -231,10 +231,19 @@ class VersionUtils:
     def get_version_type(self, version):
         """获取版本类型（LTS、Current等）"""
         try:
-            major_version = int(re.findall(r'\d+', version)[0])
-            if major_version in [8, 11, 17, 21]:
+            version_info = self.parse_version(version)
+            if not version_info:
+                return _("local.version.type.unknown")
+            
+            major_version = version_info[0]
+            
+            # LTS 版本规律：从 JDK 8 开始，每隔 4 个大版本
+            LTS_VERSIONS = [v for v in range(8, 100, 4)]  # 生成 LTS 版本列表
+            LATEST_VERSION = max(LTS_VERSIONS)  # 最新的 LTS 版本
+            
+            if major_version in LTS_VERSIONS:
                 return _("local.version.type.lts")
-            elif major_version >= 21:
+            elif major_version > LATEST_VERSION:
                 return _("local.version.type.latest")
             elif major_version >= 17:
                 return _("local.version.type.interim")
@@ -242,7 +251,8 @@ class VersionUtils:
                 return _("local.version.type.old")
             else:
                 return _("local.version.type.legacy")
-        except:
+        except Exception as e:
+            logger.error(f"获取版本类型失败: {str(e)}")
             return _("local.version.type.unknown")
 
     def get_version_color(self, version_type):
@@ -291,22 +301,15 @@ class VersionUtils:
     def compare_versions(self, version1, version2):
         """比较两个版本号的大小"""
         try:
-            v1_parts = [int(x) for x in re.findall(r'\d+', version1)]
-            v2_parts = [int(x) for x in re.findall(r'\d+', version2)]
+            v1 = self.parse_version(version1)
+            v2 = self.parse_version(version2)
             
-            # 补齐位数
-            while len(v1_parts) < len(v2_parts):
-                v1_parts.append(0)
-            while len(v2_parts) < len(v1_parts):
-                v2_parts.append(0)
-                
-            for i in range(len(v1_parts)):
-                if v1_parts[i] > v2_parts[i]:
-                    return 1
-                elif v1_parts[i] < v2_parts[i]:
-                    return -1
-            return 0
-        except Exception:
+            if not v1 or not v2:
+                return 0
+            
+            return (v1 > v2) - (v1 < v2)
+        except Exception as e:
+            logger.error(f"比较版本号失败: {str(e)}")
             return 0
 
     def check_jdk_validity(self, jdk_path):
@@ -326,6 +329,128 @@ class VersionUtils:
         except Exception as e:
             logger.error(f"{_('log.error.check_jdk_failed')}: {str(e)}")
             return False, str(e)
+
+    def parse_version(self, version_str):
+        """解析版本号
+        支持的格式：
+        - 1.8.0_392 或 8u392
+        - 11.0.21
+        - 17.0.9
+        - 21.0.1
+        返回: (major_version, minor_version, patch_version, update_version)
+        """
+        try:
+            if not version_str:
+                return None
+                
+            version_str = version_str.lower().strip()
+            
+            # 处理 1.8.0_392 格式
+            if '_' in version_str:
+                base_ver, update = version_str.split('_')
+                parts = base_ver.split('.')
+                if parts[0] == '1' and len(parts) > 1:  # 处理 1.8.0 这种旧格式
+                    major = int(parts[1])  # 取第二个数字作为主版本号
+                else:
+                    major = int(parts[0])
+                return (major, 0, 0, int(update))
+                
+            # 处理 8u392 格式
+            if 'u' in version_str:
+                major, update = version_str.split('u')
+                return (int(major), 0, 0, int(update))
+            
+            # 处理 11.0.21 格式
+            parts = version_str.split('.')
+            major = int(parts[0])
+            minor = int(parts[1]) if len(parts) > 1 else 0
+            patch = int(parts[2]) if len(parts) > 2 else 0
+            
+            return (major, minor, patch, 0)
+            
+        except Exception as e:
+            logger.warning(f"解析版本号失败: {version_str}, {str(e)}")
+            return None
+            
+    def format_version(self, version_str, include_update=True):
+        """格式化版本号显示"""
+        try:
+            version_info = self.parse_version(version_str)
+            if not version_info:
+                return version_str
+                
+            major, minor, patch, update = version_info
+            
+            if update > 0 and include_update:
+                if major <= 8:
+                    return f"{major}u{update}"
+                else:
+                    return f"{major}.{minor}.{patch}"
+            elif patch > 0:
+                return f"{major}.{minor}.{patch}"
+            elif minor > 0:
+                return f"{major}.{minor}"
+            else:
+                return str(major)
+                
+        except Exception as e:
+            logger.error(f"格式化版本号失败: {str(e)}")
+            return version_str
+            
+    def get_version_release_type(self, version_str):
+        """获取版本发布类型
+        - GA: General Availability (正式发布版)
+        - EA: Early Access (早期访问版)
+        - Beta: 测试版
+        """
+        try:
+            version_info = self.parse_version(version_str)
+            if not version_info:
+                return None
+                
+            major, minor, patch, update = version_info
+            
+            # EA 版本通常包含 ea 标记
+            if 'ea' in version_str.lower():
+                return 'EA'
+            # Beta 版本通常包含 beta 标记
+            elif 'beta' in version_str.lower():
+                return 'Beta'
+            # 其他情况视为 GA 版本
+            else:
+                return 'GA'
+                
+        except Exception as e:
+            logger.error(f"获取版本发布类型失败: {str(e)}")
+            return None
+            
+    def is_version_compatible(self, required_version, current_version):
+        """检查版本兼容性
+        - required_version: 要求的最低版本
+        - current_version: 当前版本
+        返回: bool 是否兼容
+        """
+        try:
+            req_ver = self.parse_version(required_version)
+            cur_ver = self.parse_version(current_version)
+            
+            if not req_ver or not cur_ver:
+                return False
+                
+            # 只比较主版本号和次版本号
+            req_major, req_minor = req_ver[0], req_ver[1]
+            cur_major, cur_minor = cur_ver[0], cur_ver[1]
+            
+            if cur_major > req_major:
+                return True
+            elif cur_major == req_major:
+                return cur_minor >= req_minor
+            else:
+                return False
+                
+        except Exception as e:
+            logger.error(f"检查版本兼容性失败: {str(e)}")
+            return False
 
 # 创建全局版本工具实例
 version_utils = VersionUtils() 

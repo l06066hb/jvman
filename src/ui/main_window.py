@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QMenu, QMessageBox, QFileDialog, QProgressBar,
     QApplication, QCheckBox
 )
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtCore import Qt, QSize, QPoint, QTimer
 from PyQt6.QtGui import QIcon, QAction, QFont, QCursor
 
 from ui.tabs.download_tab import DownloadTab
@@ -21,23 +21,37 @@ from utils.version_manager import version_manager
 from utils.config_manager import ConfigManager
 from utils.update_manager import UpdateManager
 from utils.i18n_manager import i18n_manager
+from ui.dialogs.update_dialog import UpdateNotificationDialog
 
 import sys
 
 def get_icon_path(icon_name):
     """获取图标路径"""
-    if getattr(sys, 'frozen', False):
-        # 如果是打包后的环境
-        base_path = sys._MEIPASS
-    else:
-        # 如果是开发环境
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
-    icon_path = os.path.join(base_path, 'resources', 'icons', icon_name)
-    if not os.path.exists(icon_path):
+    try:
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的环境，图标在根目录的resources/icons下
+            base_path = os.path.dirname(sys._MEIPASS)
+        else:
+            # 如果是开发环境
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # 尝试在根目录的resources/icons下查找
+        icon_path = os.path.join(base_path, 'resources', 'icons', icon_name)
+        if os.path.exists(icon_path):
+            return icon_path
+            
+        # 如果找不到，尝试在开发环境的目录结构中查找
+        if not getattr(sys, 'frozen', False):
+            icon_path = os.path.join(base_path, 'resources', 'icons', icon_name)
+            if os.path.exists(icon_path):
+                return icon_path
+        
         logger.warning(f"Icon not found at: {icon_path}")
         return None
-    return icon_path
+        
+    except Exception as e:
+        logger.error(f"Failed to get icon path: {str(e)}")
+        return None
 
 # 初始化翻译函数
 _ = i18n_manager.get_text
@@ -67,12 +81,11 @@ class MainWindow(QMainWindow):
         # 设置托盘图标
         self.setup_tray()
         
-        # 检查更新
-        if self.update_manager.should_check_updates():
-            self.update_manager.check_for_updates()
-            
         # 连接语言变更信号
         i18n_manager.language_changed.connect(self.on_language_changed)
+        
+        # 延迟检查更新
+        QTimer.singleShot(1000, self.delayed_update_check)
         
     def setup_ui(self):
         """初始化界面"""
@@ -708,40 +721,14 @@ class MainWindow(QMainWindow):
 
     def show_update_notification(self, update_info):
         """显示更新通知"""
-        version = update_info['version']
-        description = update_info['description']
-        is_manual = update_info.get('is_manual_check', False)
+        dialog = UpdateNotificationDialog(update_info, self)
+        dialog.exec()
         
-        # 创建通知消息框
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(_("update.new_version.title"))
-        msg_box.setIcon(QMessageBox.Icon.Information)
-        
-        # 设置详细信息
-        msg_box.setText(_("update.new_version.found").format(version=version))
-        msg_box.setInformativeText(_("update.new_version.prompt"))
-        msg_box.setDetailedText(description)
-        
-        # 添加按钮
-        msg_box.setStandardButtons(
-            QMessageBox.StandardButton.Yes | 
-            QMessageBox.StandardButton.No
-        )
-        msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
-        
-        # 自定义按钮文本
-        msg_box.button(QMessageBox.StandardButton.Yes).setText(_("update.new_version.update_now"))
-        msg_box.button(QMessageBox.StandardButton.No).setText(_("update.new_version.remind_later"))
-        
-        # 显示消息框
-        if msg_box.exec() == QMessageBox.StandardButton.Yes:
-            self.start_update(update_info)
-            
     def show_check_result(self, success, message):
         """显示检查结果"""
-        if success:
+        if success and not message.startswith(_("update.new_version.found")):
             QMessageBox.information(self, _("update.check.title"), message)
-        else:
+        elif not success:
             QMessageBox.warning(self, _("update.check.title"), message)
             
     def manual_check_update(self):
@@ -804,3 +791,8 @@ class MainWindow(QMainWindow):
         """更新托盘菜单文本"""
         show_action.setText(_("tray.show_window"))
         quit_action.setText(_("tray.exit")) 
+
+    def delayed_update_check(self):
+        """延迟检查更新"""
+        if self.update_manager.should_check_updates():
+            self.update_manager.check_for_updates() 

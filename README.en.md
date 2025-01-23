@@ -1,6 +1,6 @@
 # JDK Version Manager
 
-![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -147,10 +147,10 @@ python src/main.py
 This tool seamlessly integrates with mainstream IDEs (such as IntelliJ IDEA, VS Code, Eclipse). By configuring your IDE to use the symlink path, you can achieve automatic synchronization between IDE environment and system JDK version.
 
 #### Quick Setup
-1. Use symlink path (default location):
-   - Windows: `%LOCALAPPDATA%\Programs\jvman\current`
-   - macOS: `/usr/local/opt/jvman/current`
-   - Linux: `/usr/local/jvman/current`
+1. Default symlink paths:
+   - Windows: `%APPDATA%\jvman\current`
+   - macOS: `~/.config/jvman/current`
+   - Linux: `~/.config/jvman/current`
 
 2. Common IDE configuration examples:
    - IntelliJ IDEA: Configure JDK path in Settings > Build Tools > Gradle/Maven
@@ -180,7 +180,18 @@ python scripts/build.py --platform windows --type all
 
 ## Changelog
 
-### v1.0.6
+### v1.0.7 (2024-01-22)
+- Added hash verification for update packages
+- Added release.json file containing version information and file hashes
+- Optimized resource file directory structure, moving icons to resources under root directory
+- Enhanced build scripts to support generating hash files and release.json
+- Improved configuration file and icon loading logic to adapt to new directory structure
+- Optimized update manager to recommend update packages based on installation type
+- Fixed issues with icons and tray icons not displaying after packaging
+- Fixed configuration file loading path issues
+- Fixed security issues in the update process
+
+### v1.0.6 (2024-01-22)
 - Enhanced help documentation and internationalization support
 - Improved IDE configuration guide content
 - Enhanced Chinese and English translation quality
@@ -190,14 +201,14 @@ python scripts/build.py --platform windows --type all
 - Optimized document content formatting
 - Unified Chinese and English text styles
 
-### v1.0.5
+### v1.0.5 (2024-01-05)
 - Added version switching in tray menu for quick JDK version changes
 - Real-time display of current JDK version in tray icon
 - Enhanced environment variable settings interface with sync status
 - Improved UI styling with unified scrollbar appearance and interaction
 - Fixed multiple interface synchronization and status update issues
 
-### v1.0.4 (2024-01-05)
+### v1.0.4 (2024-12-31)
 - Added installer support
 - Added multi-platform support (Windows/macOS/Linux)
 - Optimized version switching mechanism with cross-platform symbolic links

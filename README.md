@@ -1,6 +1,6 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -148,9 +148,9 @@ python src/main.py
 
 #### 快速配置
 1. 使用软链接路径（默认位置）：
-   - Windows: `%LOCALAPPDATA%\Programs\jvman\current`
-   - macOS: `/usr/local/opt/jvman/current`
-   - Linux: `/usr/local/jvman/current`
+   - Windows: `%APPDATA%\jvman\current`
+   - macOS: `~/.config/jvman/current`
+   - Linux: `~/.config/jvman/current`
 
 2. 主流 IDE 配置示例：
    - IntelliJ IDEA: 在 Settings > Build Tools > Gradle/Maven 中配置 JDK 路径
@@ -180,7 +180,18 @@ python scripts/build.py --platform windows --type all
 
 ## 更新日志
 
-### v1.0.6
+### v1.0.7 (2024-01-22)
+- 增加了更新包的哈希值验证功能
+- 增加了 release.json 文件，包含版本信息和文件哈希值
+- 优化了资源文件的目录结构，将 icons 移至根目录的 resources 下
+- 优化了打包脚本，支持生成哈希值文件和 release.json
+- 改进了配置文件和图标的加载逻辑，适配新的目录结构
+- 优化了更新管理器，支持根据安装类型推荐更新包
+- 修复了打包后图标和托盘图标不显示的问题
+- 修复了配置文件加载路径的问题
+- 修复了更新过程中的安全性问题
+
+### v1.0.6 (2024-01-22)
 - 优化帮助文档和国际化支持
 - 改进 IDE 配置指南内容
 - 完善中英文翻译质量
@@ -190,14 +201,14 @@ python scripts/build.py --platform windows --type all
 - 优化文档内容格式化
 - 统一中英文文案风格
 
-### v1.0.5
+### v1.0.5 (2024-01-05)
 - 新增托盘菜单版本切换功能，支持快速切换 JDK 版本
 - 托盘图标实时显示当前使用的 JDK 版本
 - 优化环境变量设置界面，添加同步状态显示
 - 改进界面样式，统一滚动条外观和交互体验
 - 修复多个界面同步和状态更新问题
 
-### v1.0.4 (2024-01-05)
+### v1.0.4 (2024-12-31)
 - 添加安装包支持
 - 添加多平台支持（Windows/macOS/Linux）
 - 优化版本切换机制，支持不同平台的符号链接
