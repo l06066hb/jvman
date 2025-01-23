@@ -3,7 +3,10 @@ import os
 import sys
 import json
 import shutil
+import hashlib
 import subprocess
+from pathlib import Path
+from loguru import logger
 from datetime import datetime
 
 def get_project_root():
@@ -52,7 +55,7 @@ def build_portable(platform='windows', timestamp=None):
     version = get_version()
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
+
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
     os.makedirs(release_dir, exist_ok=True)
@@ -67,7 +70,6 @@ def build_portable(platform='windows', timestamp=None):
         '-m',
         'PyInstaller',
         '--clean',
-        '--name=jvman',
         '--noconfirm',
         '--onedir',  # 生成文件夹模式
         '--noconsole',  # 不显示控制台窗口
@@ -76,6 +78,7 @@ def build_portable(platform='windows', timestamp=None):
         '--specpath=build',  # spec文件路径
         '--contents-directory=bin', #指定包含应用程序内容的目录
         '--uac-admin',  # 请求管理员权限
+        '--name=jvman',
     ]
     
     # 平台特定配置
@@ -92,7 +95,7 @@ def build_portable(platform='windows', timestamp=None):
         build_args.append(f'--icon={icon_file}')
     else:
         print(f"Warning: Icon file not found at: {icon_file}")
-    
+        
     # 添加Python路径和运行时钩子
     build_args.extend([
         f'--paths={os.path.join(root_dir, "src")}',
@@ -167,7 +170,7 @@ def build_portable(platform='windows', timestamp=None):
     if not os.path.exists(main_script):
         print("Error: src/main.py not found!")
         sys.exit(1)
-    
+        
     build_args.append(main_script)
     
     print("Building with arguments:", ' '.join(build_args))
@@ -213,6 +216,12 @@ def build_portable(platform='windows', timestamp=None):
             print(f"Error creating directory {dir_path}: {str(e)}")
             sys.exit(1)
     
+    # 创建ZIP文件
+    zip_file = os.path.join(output_dir, 'jvman.zip')
+    if os.path.exists(zip_file):
+        os.remove(zip_file)
+    shutil.make_archive(os.path.join(output_dir, 'jvman'), 'zip', dist_dir)
+    
     # 清理构建文件
     build_dir = os.path.join(root_dir, 'build')
     if os.path.exists(build_dir):
@@ -223,5 +232,37 @@ def build_portable(platform='windows', timestamp=None):
     print(f"Version: {version}")
     print(f"Timestamp: {timestamp}")
 
+def calculate_file_hash(file_path, algorithm='sha256'):
+    """计算文件哈希值"""
+    try:
+        hash_func = getattr(hashlib, algorithm)()
+        with open(file_path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                hash_func.update(chunk)
+        return hash_func.hexdigest()
+    except Exception as e:
+        logger.error(f"计算文件哈希值失败: {str(e)}")
+        return None
+
+def generate_hash_file(file_path, hash_value):
+    """生成哈希值文件"""
+    try:
+        hash_file = f"{file_path}.sha256"
+        with open(hash_file, 'w') as f:
+            f.write(hash_value)
+        logger.info(f"生成哈希值文件: {hash_file}")
+        return True
+    except Exception as e:
+        logger.error(f"生成哈希值文件失败: {str(e)}")
+        return False
+
 if __name__ == '__main__':
-    build_portable() 
+    if len(sys.argv) != 3:
+        print("Usage: python build_portable.py <platform> <timestamp>")
+        sys.exit(1)
+        
+    platform = sys.argv[1]
+    timestamp = sys.argv[2]
+    
+    build_portable(platform, timestamp)
+    sys.exit(0) 

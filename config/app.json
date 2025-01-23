@@ -1,6 +1,6 @@
 {
     "name": "JDK Version Manager",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "JDK版本管理工具，支持在线下载和本地映射，提供中英文国际化支持",
     "author": "l6066hb",
     "homepage": "https://gitee.com/l06066hb/jvman",
@@ -13,10 +13,42 @@
         "framework": "PyQt6"
     },
     "update": {
-        "check_url": "https://gitee.com/l06066hb/jvman/raw/master/config/app.json",
-        "download_url": "https://gitee.com/l06066hb/jvman/releases/download/v{version}/jvman-{version}-windows.zip",
-        "auto_check": true,
-        "check_interval": 24
+        "gitee": {
+            "api_url": "https://gitee.com/api/v5/repos/l06066hb/jvman/releases/latest",
+            "raw_url": "https://gitee.com/l06066hb/jvman/raw/master",
+            "download_url": "https://gitee.com/l06066hb/jvman/releases/download",
+            "releases_url": "https://gitee.com/l06066hb/jvman/releases"
+        },
+        "github": {
+            "api_url": "https://api.github.com/repos/l06066hb/jvman/releases/latest",
+            "raw_url": "https://raw.githubusercontent.com/l06066hb/jvman/master",
+            "download_url": "https://github.com/l06066hb/jvman/releases/download",
+            "releases_url": "https://github.com/l06066hb/jvman/releases"
+        },
+        "platform": "gitee",
+        "check_interval": 86400,
+        "changelog_path": "CHANGELOG.md",
+        "allowed_domains": [
+            "gitee.com",
+            "github.com",
+            "raw.githubusercontent.com"
+        ],
+        "hash_algorithms": ["sha256"],
+        "retry": {
+            "max_attempts": 3,
+            "delay": 1000
+        }
+    },
+    "security": {
+        "verify_ssl": true,
+        "verify_hash": true,
+        "max_download_size": 104857600,
+        "allowed_file_types": [".exe", ".zip", ".dmg", ".deb", ".rpm", ".AppImage"],
+        "url_validation": {
+            "allowed_domains": ["gitee.com", "github.com", "githubusercontent.com"],
+            "require_https": true,
+            "timeout": 30
+        }
     },
     "features": {
         "online_download": true,
@@ -25,7 +57,21 @@
         "env_management": true,
         "tray_support": true,
         "settings": true,
-        "i18n": ["zh_CN", "en_US"]
+        "i18n": ["zh_CN", "en_US"],
+        "auto_update": {
+            "enabled": true,
+            "check_interval": 86400,
+            "notify_only": false,
+            "download_timeout": 300
+        }
+    },
+    "paths": {
+        "icons": "resources/icons",
+        "config": "bin/config",
+        "i18n": "bin/i18n",
+        "logs": "logs",
+        "downloads": "downloads",
+        "temp": "temp"
     },
     "changelog": [
         {

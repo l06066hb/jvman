@@ -2,8 +2,11 @@
 import os
 import sys
 import json
-import subprocess
 import shutil
+import hashlib
+import subprocess
+from pathlib import Path
+from loguru import logger
 from datetime import datetime
 
 def get_project_root():
@@ -333,14 +336,38 @@ def build_installer(platform='windows', timestamp=None):
         print(f"Error: Unsupported platform: {platform}")
         sys.exit(1)
 
+def calculate_file_hash(file_path, algorithm='sha256'):
+    """计算文件哈希值"""
+    try:
+        hash_func = getattr(hashlib, algorithm)()
+        with open(file_path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                hash_func.update(chunk)
+        return hash_func.hexdigest()
+    except Exception as e:
+        logger.error(f"计算文件哈希值失败: {str(e)}")
+        return None
+
+def generate_hash_file(file_path, hash_value):
+    """生成哈希值文件"""
+    try:
+        hash_file = f"{file_path}.sha256"
+        with open(hash_file, 'w') as f:
+            f.write(hash_value)
+        logger.info(f"生成哈希值文件: {hash_file}")
+        return True
+    except Exception as e:
+        logger.error(f"生成哈希值文件失败: {str(e)}")
+        return False
+
 if __name__ == '__main__':
     # 构建当前平台的安装包
-    if sys.platform.startswith('win'):
-        build_installer('windows')
-    elif sys.platform.startswith('darwin'):
-        build_installer('macos')
-    elif sys.platform.startswith('linux'):
-        build_installer('linux')
-    else:
-        print(f"Error: Unsupported platform: {sys.platform}")
-        sys.exit(1) 
+    if len(sys.argv) != 3:
+        print("Usage: python build_installer.py <platform> <timestamp>")
+        sys.exit(1)
+        
+    platform = sys.argv[1]
+    timestamp = sys.argv[2]
+    
+    build_installer(platform, timestamp)
+    sys.exit(0) 
