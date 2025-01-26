@@ -4,9 +4,13 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
+![Build](https://github.com/l06066hb/jvman/workflows/Build%20and%20Test/badge.svg)
 
 一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
+
+## 代码仓库
+- GitHub: https://github.com/l06066hb/jvman
+- Gitee: https://gitee.com/l06066hb/jvman
 
 [English Document](README.en.md)
 
@@ -52,12 +56,12 @@
    - 解压到任意目录
    - 运行 jvman.exe
 
-### macOS
+### macOS (测试中)
 1. 下载最新版本的 DMG 文件
 2. 打开 DMG 文件并将应用拖到应用程序文件夹
 3. 首次运行时需要输入管理员密码
 
-### Linux
+### Linux (测试中)
 1. 下载最新版本的 AppImage 或 deb/rpm 包
 2. 安装对应的包或直接运行 AppImage
 3. 首次运行时需要 sudo 权限
@@ -81,26 +85,31 @@ python src/main.py
 
 ## 使用说明
 
-### 在线下载 JDK
+### 基础功能
+
+#### 本地 JDK 管理
+1. 添加本地 JDK
+   - 点击"添加本地 JDK"
+   - 选择 JDK 安装目录
+   - 确认添加
+2. 版本切换
+   - 在列表中选择目标 JDK
+   - 点击"切换版本"或使用托盘菜单快速切换
+   - 等待切换完成
+
+#### 在线下载 JDK
 1. 选择 JDK 发行版和版本
 2. 选择下载目录
 3. 点击下载并等待完成
 
-### JDK 下载源
-- Oracle JDK: https://www.oracle.com/java/technologies/downloads/
-- OpenJDK: https://jdk.java.net/
-- Eclipse Temurin (Adoptium): https://adoptium.net/temurin/releases/
-- Amazon Corretto: https://aws.amazon.com/corretto/
-- Zulu OpenJDK: https://www.azul.com/downloads/
-
-### 下载源说明
+##### JDK 发行版说明
 - Oracle JDK: 官方发行版，需要 Oracle 账号下载
-- OpenJDK: 官方开源版本，仅提供最新的三个 LTS 版本和最新开发版
-- Eclipse Temurin: 由 Eclipse 基金会维护，提供长期稳定支持
+- OpenJDK: 官方开源版本，提供最新的三个 LTS 版本
+- Eclipse Temurin: Eclipse 基金会维护，提供长期稳定支持
 - Amazon Corretto: 亚马逊发行版，针对云环境优化
 - Zulu OpenJDK: Azul 发行版，提供全面的版本支持
 
-### 下载建议
+##### 下载建议
 - 建议选择 LTS（长期支持）版本用于生产环境
 - 如遇下载失败，可尝试：
   1. 使用代理或 VPN
@@ -108,15 +117,22 @@ python src/main.py
   3. 直接从官方网站下载后手动导入
 - 部分版本可能因官方停止支持而无法下载，建议查看各发行版的生命周期说明
 
-### 本地 JDK 管理
-1. 点击"添加本地 JDK"
-2. 选择 JDK 安装目录
-3. 确认添加
+### 高级功能
 
-### 切换 JDK 版本
-1. 在列表中选择目标 JDK
-2. 点击"切换版本"
-3. 等待切换完成
+#### 环境变量管理
+- 自动配置 JAVA_HOME、PATH 和 CLASSPATH
+- 支持自动和手动两种配置模式
+- 实时显示环境变量同步状态
+
+#### IDE 集成
+- 支持主流 IDE（IntelliJ IDEA、VS Code、Eclipse）
+- 使用软链接路径实现自动版本同步
+- 详细配置说明见 [IDE 集成指南](resources/docs/zh_CN/ide_integration.md)
+
+#### 系统托盘
+- 实时显示当前 JDK 版本
+- 快速切换版本
+- 最小化到托盘继续运行
 
 ### 平台特定说明
 
@@ -125,13 +141,13 @@ python src/main.py
 - 需要管理员权限修改系统环境变量
 - 支持 Windows 10/11 的原生符号链接
 
-#### macOS （测试中）
+#### macOS
 - 支持 Homebrew 安装的 JDK
 - 使用符号链接进行版本切换
 - 自动更新 shell 配置文件（bash/zsh）
 - 需要管理员权限创建符号链接
 
-#### Linux （测试中）
+#### Linux
 - 支持 apt/yum 包管理器安装的 JDK
 - 使用符号链接进行版本切换
 - 自动更新 shell 配置文件（bash/zsh/fish）
@@ -143,23 +159,12 @@ python src/main.py
 - 如遇下载失败，可尝试使用手动下载功能
 - Unix 系统（macOS/Linux）需要重新加载 shell 配置文件使环境变量生效
 
-### IDE 集成
-本工具支持与主流 IDE（如 IntelliJ IDEA、VS Code、Eclipse）无缝集成。通过配置 IDE 使用软链接路径，可以实现 IDE 环境与系统 JDK 版本的自动同步。
-
-#### 快速配置
-1. 使用软链接路径（默认位置）：
-   - Windows: `%APPDATA%\jvman\current`
-   - macOS: `~/.config/jvman/current`
-   - Linux: `~/.config/jvman/current`
-
-2. 主流 IDE 配置示例：
-   - IntelliJ IDEA: 在 Settings > Build Tools > Gradle/Maven 中配置 JDK 路径
-   - VS Code: 在 settings.json 中配置 java.home
-   - Eclipse: 在 Installed JREs 中添加 JDK 路径
-
-详细配置指南请参考：
-- [IDE 集成指南（中文）](resources/docs/zh_CN/ide_integration.md)
-- [IDE Integration Guide (English)](resources/docs/en_US/ide_integration.md)
+### 下载源
+- Oracle JDK: https://www.oracle.com/java/technologies/downloads/
+- OpenJDK: https://jdk.java.net/
+- Eclipse Temurin (Adoptium): https://adoptium.net/temurin/releases/
+- Amazon Corretto: https://aws.amazon.com/corretto/
+- Zulu OpenJDK: https://www.azul.com/downloads/
 
 ## 构建说明
 
@@ -178,78 +183,20 @@ python scripts/build.py --platform windows --type installer
 python scripts/build.py --platform windows --type all
 ```
 
-## 更新日志
+## 最新版本
 
-### v1.0.7 (2024-01-22)
-- 增加了更新包的哈希值验证功能
-- 增加了 release.json 文件，包含版本信息和文件哈希值
-- 优化了资源文件的目录结构，将 icons 移至根目录的 resources 下
-- 优化了打包脚本，支持生成哈希值文件和 release.json
-- 改进了配置文件和图标的加载逻辑，适配新的目录结构
-- 优化了更新管理器，支持根据安装类型推荐更新包
-- 修复了打包后图标和托盘图标不显示的问题
-- 修复了配置文件加载路径的问题
-- 修复了更新过程中的安全性问题
+v1.0.7 的主要更新：
+- ✨ 增加更新包的哈希值验证功能，提升安全性
+- 📦 新增 release.json 文件，包含版本信息和文件哈希值
+- 🎨 优化资源文件结构和打包流程
 
-### v1.0.6 (2024-01-22)
-- 优化帮助文档和国际化支持
-- 改进 IDE 配置指南内容
-- 完善中英文翻译质量
-- 优化文档搜索功能
-- 改进文档显示样式
-- 修复国际化切换问题
-- 优化文档内容格式化
-- 统一中英文文案风格
-
-### v1.0.5 (2024-01-05)
-- 新增托盘菜单版本切换功能，支持快速切换 JDK 版本
-- 托盘图标实时显示当前使用的 JDK 版本
-- 优化环境变量设置界面，添加同步状态显示
-- 改进界面样式，统一滚动条外观和交互体验
-- 修复多个界面同步和状态更新问题
-
-### v1.0.4 (2024-12-31)
-- 添加安装包支持
-- 添加多平台支持（Windows/macOS/Linux）
-- 优化版本切换机制，支持不同平台的符号链接
-- 添加包管理器支持（Homebrew/apt/yum）
-- 改进 shell 配置文件管理
-- 优化环境变量设置方式
-- 提升程序稳定性
-- 优化构建系统，支持便携版和安装版
-- 统一版本管理，使用 app.json 集中配置
-- 改进图标显示和资源管理
-- 优化日志系统，支持文件记录
-
-### v1.0.3 (2024-12-28)
-- 修复主题切换保存问题
-- 修复程序退出时配置保存问题
-- 优化配置管理功能
-- 提升程序稳定性
-
-### v1.0.2 (2024-12-26)
-- 优化界面布局和样式
-- 改进环境变量设置面板
-- 修复主题切换相关问题
-- 优化版本信息显示
-- 添加使用建议说明
-
-### v1.0.1 (2024-12-25)
-- 优化界面样式和用户体验
-- 修复本地 JDK 重复添加问题
-- 改进版本切换功能
-- 优化下载进度显示
-- 增加详细版本信息显示
-
-### v1.0.0 (2024-01-01)
-- 首次发布
-- 基本功能实现
+完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
 
 ## 贡献指南
 
 欢迎提交 Issue 和 Pull Request 来帮助改进这个项目。
 
-### 开发环境设置
+#### 开发环境设置
 1. 确保安装了 Python 3.8 或更高版本
 2. 安装虚拟环境（推荐）：
 ```bash
@@ -261,18 +208,52 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements-dev.txt
 ```
 
-### 代码规范
-- 遵循 PEP 8 编码规范
-- 使用 Black 进行代码格式化
-- 提交前运行单元测试
-- 编写清晰的提交信息
+4. 安全注意事项：
+- 不要在代码中硬编码任何密钥或敏感信息
+- 使用 .env 文件存储本地配置（已在 .gitignore 中排除）
+- 确保敏感信息不会被提交到代码库
 
-### 提交 Pull Request
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+#### 代码提交
+1. Fork 项目到自己的仓库
+2. 创建功能分支：
+```bash
+git checkout -b feature/your-feature-name
+```
+3. 提交更改：
+```bash
+git commit -am '添加新功能：功能描述'
+```
+4. 推送到你的仓库：
+```bash
+git push origin feature/your-feature-name
+```
+5. 创建 Pull Request
+
+#### 代码规范
+- 代码风格
+  - 遵循 [PEP 8](https://peps.python.org/pep-0008/) 编码规范
+  - 使用 [Black](https://black.readthedocs.io/) 进行代码格式化（行长度限制：88）
+  - 使用 [isort](https://pycqa.github.io/isort/) 对导入进行排序
+  - 使用 [flake8](https://flake8.pycqa.org/) 进行代码质量检查
+  - 使用 [mypy](https://mypy.readthedocs.io/) 进行类型检查
+
+- 提交规范
+  - 提交前运行单元测试：`pytest tests/`
+  - 提交信息格式：
+    ```
+    <类型>: <描述>
+
+    <可选的详细描述>
+    ```
+  - 类型说明：
+    - feat: 新功能（比如添加深色主题）
+    - fix: 修复问题（比如修复环境变量设置）
+    - docs: 文档变更（比如更新 README）
+    - style: 代码格式修改（比如调整缩进）
+    - refactor: 代码重构（比如重构配置管理）
+    - test: 测试用例相关（比如添加单元测试）
+    - chore: 其他修改（比如更新依赖）
+
 
 ## 项目结构
 ```
@@ -304,9 +285,11 @@ A: 程序配置文件存储在 `%APPDATA%/jvman` 目录下，可直接复制该�
 ### Q: 如何处理版本切换失败？
 A: 检查是否有足够的权限，确保目标 JDK 目录存在且完整。
 
-## 安全说明
-如发现任何安全漏洞，请发送邮件至 [security@example.com](mailto:security@example.com)。
-
 ## 许可证
 
-本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。 
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
+
+## 更新源设置
+你可以在设置中选择更新源：
+- GitHub（国际）
+- Gitee（中国大陆） 

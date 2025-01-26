@@ -648,17 +648,20 @@
     },
     "update": {
         "error": {
-            "no_download_url": "未找到有效的下载URL",
-            "no_file_size": "无法获取文件大小",
-            "connection_failed": "网络连接错误，请检查网络连接",
-            "timeout": "请求超时，请稍后重试",
-            "request_failed": "请求错误：{error}",
-            "unknown": "检查更新时发生错误：{error}",
+            "connection_failed": "连接服务器失败",
+            "timeout": "连接超时",
+            "request_failed": "请求失败：{error}",
             "json_decode_failed": "解析服务器响应失败",
             "download_failed": "下载失败：HTTP {status}",
             "download_error": "下载错误：{error}",
             "no_permission": "更新目录没有写入权限",
-            "get_update_path_failed": "获取更新保存路径失败"
+            "get_update_path_failed": "获取更新保存路径失败",
+            "all_sources_failed": "所有更新源均不可用：\n{details}",
+            "no_available_source": "没有可用的更新源",
+            "invalid_urls": "无效的更新地址",
+            "invalid_api_url": "无效的 API 地址",
+            "no_release": "未找到发布版本",
+            "request_failed": "请求失败（HTTP {status}）"
         },
         "changes": {
             "no_details": "暂无更新说明",
