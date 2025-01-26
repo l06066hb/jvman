@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
-![Build](https://github.com/l06066hb/jvman/workflows/Build%20and%20Test/badge.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
 A user-friendly JDK version management tool supporting Windows, macOS, and Linux platforms.
 
@@ -46,10 +46,14 @@ A user-friendly JDK version management tool supporting Windows, macOS, and Linux
 
 ## Installation
 
+### Download
+- [GitHub Releases](https://github.com/l06066hb/jvman/releases) (International)
+- [Gitee Releases](https://gitee.com/l06066hb/jvman/releases) (Mainland China)
+
 ### Windows
-1. Download the latest installer (recommended)
-   - Get the latest installer from [Releases](https://gitee.com/l06066hb/jvman.git/releases)
-   - Run the installer and follow the wizard
+1. Installer Version
+   - Download and run the latest installer (jvman-setup-x.x.x.exe)
+   - Follow the installation wizard
    - Launch from Start menu or desktop shortcut
 2. Portable Version
    - Download the latest ZIP file
@@ -245,14 +249,16 @@ git push origin feature/your-feature-name
 
     <optional detailed description>
     ```
-  - Type definitions:
-    - feat: New feature (e.g., add dark theme)
-    - fix: Bug fix (e.g., fix environment variable setup)
-    - docs: Documentation changes (e.g., update README)
-    - style: Code style changes (e.g., adjust indentation)
-    - refactor: Code refactoring (e.g., refactor config management)
-    - test: Test case related (e.g., add unit tests)
-    - chore: Other changes (e.g., update dependencies)
+  - Type descriptions:
+    - feat: New feature (e.g., adding dark theme)
+    - fix: Bug fix (e.g., fixing environment variable setup)
+    - docs: Documentation changes (e.g., updating README)
+    - style: Code formatting (e.g., adjusting indentation)
+    - refactor: Code refactoring (e.g., restructuring configuration)
+    - perf: Performance optimization (e.g., improving download speed)
+    - test: Test cases (e.g., adding unit tests)
+    - ci: Continuous integration (e.g., modifying GitHub Actions)
+    - chore: Other changes (e.g., updating dependencies)
 
 ## Project Structure
 ```
@@ -287,8 +293,3 @@ A: Check for sufficient privileges and ensure target JDK directory exists and is
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Update Sources
-You can select update source in settings:
-- GitHub (International)
-- Gitee (Mainland China)
