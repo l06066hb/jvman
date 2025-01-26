@@ -328,7 +328,7 @@ class UpdateNotificationDialog(QDialog):
             download_url = self.update_info.get('download_url')
             if not download_url:
                 raise ValueError(_("update.error.no_download_url"))
-            
+                
             # 创建下载目录
             save_path = self.parent.update_manager.get_update_save_path()
             os.makedirs(save_path, exist_ok=True)
@@ -440,7 +440,7 @@ class UpdateNotificationDialog(QDialog):
         except Exception as e:
             logger.error(f"准备安装失败: {str(e)}")
             self.download_error(str(e))
-            
+        
     def download_error(self, error_msg):
         """下载错误处理"""
         # 停止动画和速度计算

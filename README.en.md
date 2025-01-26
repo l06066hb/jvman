@@ -4,34 +4,38 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
+![Build](https://github.com/l06066hb/jvman/workflows/Build%20and%20Test/badge.svg)
 
-A user-friendly JDK version management tool that supports Windows, macOS, and Linux platforms.
+A user-friendly JDK version management tool supporting Windows, macOS, and Linux platforms.
+
+## Repository
+- GitHub: https://github.com/l06066hb/jvman
+- Gitee: https://gitee.com/l06066hb/jvman
 
 [中文文档](README.md)
 
 ## Features
 
-- 🚀 Online JDK Downloads: Support multiple JDK distributions (Oracle JDK, OpenJDK, Adoptium, Amazon Corretto, Zulu OpenJDK)
+- 🚀 Online JDK Download: Support multiple JDK distributions (Oracle JDK, OpenJDK, Adoptium, Amazon Corretto, Zulu OpenJDK)
 - 📂 Local JDK Management: Easily import and manage installed JDKs
-- 🔄 Smart Version Switching: Quick switching between different JDK versions with multi-platform support and tray menu quick switch
-- 🛠 Environment Variable Management: Automatic configuration of JAVA_HOME, PATH, and CLASSPATH with real-time sync status
-- 💡 System Tray: Real-time display and quick switch of current JDK version
+- 🔄 Smart Version Switching: Quick switching between JDK versions, with system tray menu support
+- 🛠 Environment Variable Management: Auto-configure JAVA_HOME, PATH, and CLASSPATH with real-time sync status
+- 💡 System Tray: Real-time display and quick switching of current JDK version
 - 🎨 Theme Switching: Support light, dark, and cyan themes
-- 🌐 Internationalization: Support for Chinese and English interfaces
-- 🖥 Documentation Center: Built-in help documentation and API documentation with search functionality
+- 🌐 Internationalization: Support Chinese and English interfaces
+- 📚 Documentation Center: Built-in help and API documentation with search functionality
 - 🖥 Multi-platform Support:
   - Windows: Version switching using symbolic links
-  - macOS: Support for Homebrew-installed JDKs, symbolic link switching
-  - Linux: Support for apt/yum package managers, symbolic link switching
-- 📝 Logging: Detailed operation logs with file recording support
-- 🔧 Portable Support: No installation required, just extract and use
+  - macOS: Support Homebrew-installed JDKs, switching via symbolic links
+  - Linux: Support apt/yum package manager, switching via symbolic links
+- 📝 Logging: Detailed operation logs with file recording
+- 🔧 Portable Version: No installation required, just unzip and use
 - 🔄 Auto Update: Support checking and downloading new versions
 
 ## Screenshots
 
 ### Main Interface
-![Main Interface](resources/screenshots/main_window_en.png) 
+![Main Interface](resources/screenshots/main_window_en.png)
 
 ## System Requirements
 
@@ -43,27 +47,27 @@ A user-friendly JDK version management tool that supports Windows, macOS, and Li
 ## Installation
 
 ### Windows
-1. Download the latest installer (Recommended)
-   - Download the latest installer from [Releases](https://gitee.com/l06066hb/jvman/releases)
+1. Download the latest installer (recommended)
+   - Get the latest installer from [Releases](https://gitee.com/l06066hb/jvman.git/releases)
    - Run the installer and follow the wizard
-   - Launch the program from Start Menu or desktop shortcut
+   - Launch from Start menu or desktop shortcut
 2. Portable Version
-   - Download the latest portable ZIP file
+   - Download the latest ZIP file
    - Extract to any directory
    - Run jvman.exe
 
-### macOS (testing)
+### macOS（testing）
 1. Download the latest DMG file
-2. Open the DMG and drag the app to Applications
+2. Open DMG and drag the app to Applications folder
 3. Admin password required for first run
 
-### Linux (testing)
+### Linux（testing）
 1. Download the latest AppImage or deb/rpm package
-2. Install the package or run the AppImage directly
+2. Install the package or run AppImage directly
 3. Sudo privileges required for first run
 
 ### From Source
-1. Clone the repository:
+1. Clone repository:
 ```bash
 git clone https://gitee.com/l06066hb/jvman.git
 cd jvman
@@ -74,92 +78,93 @@ cd jvman
 pip install -r requirements.txt
 ```
 
-3. Run the application:
+3. Run the program:
 ```bash
 python src/main.py
 ```
 
 ## Usage Guide
 
-### Download JDK Online
+### Basic Features
+
+#### Local JDK Management
+1. Add Local JDK
+   - Click "Add Local JDK"
+   - Select JDK installation directory
+   - Confirm addition
+2. Version Switching
+   - Select target JDK from list
+   - Click "Switch Version" or use tray menu for quick switching
+   - Wait for completion
+
+#### Online JDK Download
 1. Select JDK distribution and version
 2. Choose download directory
 3. Click download and wait for completion
 
-### JDK Download Sources
+##### JDK Distribution Notes
+- Oracle JDK: Official distribution, Oracle account required
+- OpenJDK: Official open-source version, latest three LTS versions
+- Eclipse Temurin: Maintained by Eclipse Foundation, long-term stable support
+- Amazon Corretto: Amazon distribution, optimized for cloud environments
+- Zulu OpenJDK: Azul distribution, comprehensive version support
+
+##### Download Tips
+- Recommend LTS (Long Term Support) versions for production
+- If download fails, try:
+  1. Use proxy or VPN
+  2. Switch to another distribution
+  3. Download manually from official website and import
+- Some versions may be unavailable due to end of support
+
+### Advanced Features
+
+#### Environment Variable Management
+- Auto-configure JAVA_HOME, PATH, and CLASSPATH
+- Support both automatic and manual configuration modes
+- Real-time environment variable sync status display
+
+#### IDE Integration
+- Support major IDEs (IntelliJ IDEA, VS Code, Eclipse)
+- Automatic version sync using symlink path
+- See [IDE Integration Guide](resources/docs/en_US/ide_integration.md) for details
+
+#### System Tray
+- Real-time display of current JDK version
+- Quick version switching
+- Minimize to tray for background operation
+
+### Platform-Specific Notes
+
+#### Windows
+- Uses symbolic links for version switching
+- Admin privileges required for system environment variables
+- Supports Windows 10/11 native symbolic links
+
+#### macOS
+- Supports Homebrew-installed JDKs
+- Uses symbolic links for version switching
+- Auto-updates shell config files (bash/zsh)
+- Admin privileges required for symbolic links
+
+#### Linux
+- Supports apt/yum package manager installed JDKs
+- Uses symbolic links for version switching
+- Auto-updates shell config files (bash/zsh/fish)
+- Sudo privileges required for symbolic links
+
+### Important Notes
+- Recommend using ZIP version JDKs to avoid conflicts
+- Admin/sudo privileges required for first use
+- Try manual download if automatic download fails
+- Unix systems need shell config reload for environment variables
+
+### Download Sources
 - Oracle JDK: https://www.oracle.com/java/technologies/downloads/
 - OpenJDK: https://jdk.java.net/
 - Eclipse Temurin (Adoptium): https://adoptium.net/temurin/releases/
 - Amazon Corretto: https://aws.amazon.com/corretto/
 - Zulu OpenJDK: https://www.azul.com/downloads/
-
-### Download Source Information
-- Oracle JDK: Official distribution, requires Oracle account for download
-- OpenJDK: Official open-source version, only provides latest three LTS versions and current development version
-- Eclipse Temurin: Maintained by Eclipse Foundation, provides long-term stable support
-- Amazon Corretto: Amazon's distribution, optimized for cloud environments
-- Zulu OpenJDK: Azul's distribution, provides comprehensive version support
-
-### Download Recommendations
-- Recommend using LTS (Long Term Support) versions for production environments
-- If download fails, try:
-  1. Using proxy or VPN
-  2. Switching to another distribution
-  3. Downloading directly from official website and importing manually
-- Some versions might be unavailable due to end of support, check each distribution's lifecycle policy
-
-### Local JDK Management
-1. Click "Add Local JDK"
-2. Select JDK installation directory
-3. Confirm addition
-
-### Switch JDK Version
-1. Select target JDK from the list
-2. Click "Switch Version"
-3. Wait for the switch to complete
-
-### Platform-Specific Notes
-
-#### Windows
-- Version switching using symbolic links
-- Administrator privileges required for system environment variables
-- Native symbolic link support for Windows 10/11
-
-#### macOS
-- Support for Homebrew-installed JDKs
-- Version switching using symbolic links
-- Automatic shell config file updates (bash/zsh)
-- Admin privileges required for symbolic links
-
-#### Linux
-- Support for apt/yum package manager installed JDKs
-- Version switching using symbolic links
-- Automatic shell config file updates (bash/zsh/fish)
-- Sudo privileges required for symbolic links
-
-### Notes
-- Recommended to use ZIP version of JDK to avoid conflicts with installed versions
-- First-time use requires administrator/sudo privileges for environment variable configuration
-- If download fails, try manual download option
-- Unix systems (macOS/Linux) need to reload shell config file for environment variables to take effect
-
-### IDE Integration
-This tool seamlessly integrates with mainstream IDEs (such as IntelliJ IDEA, VS Code, Eclipse). By configuring your IDE to use the symlink path, you can achieve automatic synchronization between IDE environment and system JDK version.
-
-#### Quick Setup
-1. Default symlink paths:
-   - Windows: `%APPDATA%\jvman\current`
-   - macOS: `~/.config/jvman/current`
-   - Linux: `~/.config/jvman/current`
-
-2. Common IDE configuration examples:
-   - IntelliJ IDEA: Configure JDK path in Settings > Build Tools > Gradle/Maven
-   - VS Code: Configure java.home in settings.json
-   - Eclipse: Add JDK path in Installed JREs
-
-For detailed configuration guide, please refer to:
-- [IDE Integration Guide (English)](resources/docs/en_US/ide_integration.md)
-- [IDE 集成指南（中文）](resources/docs/zh_CN/ide_integration.md)
 
 ## Build Instructions
 
@@ -168,7 +173,7 @@ For detailed configuration guide, please refer to:
 python scripts/build.py --platform windows --type portable
 ```
 
-### Build Installer Version
+### Build Installer
 ```bash
 python scripts/build.py --platform windows --type installer
 ```
@@ -178,78 +183,20 @@ python scripts/build.py --platform windows --type installer
 python scripts/build.py --platform windows --type all
 ```
 
-## Changelog
+## Latest Version
 
-### v1.0.7 (2024-01-22)
-- Added hash verification for update packages
-- Added release.json file containing version information and file hashes
-- Optimized resource file directory structure, moving icons to resources under root directory
-- Enhanced build scripts to support generating hash files and release.json
-- Improved configuration file and icon loading logic to adapt to new directory structure
-- Optimized update manager to recommend update packages based on installation type
-- Fixed issues with icons and tray icons not displaying after packaging
-- Fixed configuration file loading path issues
-- Fixed security issues in the update process
+v1.0.7 Major Updates:
+- ✨ Add hash verification for update packages, enhancing security
+- 📦 Add release.json file with version info and file hashes
+- 🎨 Optimize resource file structure and build process
 
-### v1.0.6 (2024-01-22)
-- Enhanced help documentation and internationalization support
-- Improved IDE configuration guide content
-- Enhanced Chinese and English translation quality
-- Optimized documentation search functionality
-- Improved document display styles
-- Fixed language switching issues
-- Optimized document content formatting
-- Unified Chinese and English text styles
-
-### v1.0.5 (2024-01-05)
-- Added version switching in tray menu for quick JDK version changes
-- Real-time display of current JDK version in tray icon
-- Enhanced environment variable settings interface with sync status
-- Improved UI styling with unified scrollbar appearance and interaction
-- Fixed multiple interface synchronization and status update issues
-
-### v1.0.4 (2024-12-31)
-- Added installer support
-- Added multi-platform support (Windows/macOS/Linux)
-- Optimized version switching mechanism with cross-platform symbolic links
-- Added package manager support (Homebrew/apt/yum)
-- Improved shell configuration file management
-- Enhanced environment variable setup
-- Improved application stability
-- Optimized build system, supporting portable and installer versions
-- Unified version management using app.json for centralized configuration
-- Improved icon display and resource management
-- Enhanced logging system with file recording support
-
-### v1.0.3 (2024-12-28)
-- Fixed theme switching configuration saving
-- Fixed configuration saving on program exit
-- Optimized configuration management
-- Improved program stability
-
-### v1.0.2 (2024-12-26)
-- Optimized interface layout and styles
-- Improved environment variables settings panel
-- Fixed theme switching issues
-- Enhanced version information display
-- Added usage recommendations
-
-### v1.0.1 (2024-12-25)
-- Optimized UI style and user experience
-- Fixed local JDK duplicate addition issue
-- Improved version switching functionality
-- Enhanced download progress display
-- Added detailed version information display
-
-### v1.0.0 (2024-01-01)
-- Initial release
-- Basic functionality implementation
+For complete release notes, please check [CHANGELOG.md](CHANGELOG.md)
 
 ## Contributing
 
-Issues and Pull Requests are welcome to help improve this project.
+We welcome Issues and Pull Requests to help improve this project.
 
-### Development Setup
+#### Development Environment Setup
 1. Ensure Python 3.8 or higher is installed
 2. Install virtual environment (recommended):
 ```bash
@@ -261,24 +208,57 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements-dev.txt
 ```
 
-### Coding Standards
-- Follow PEP 8 coding conventions
-- Use Black for code formatting
-- Run unit tests before submitting
-- Write clear commit messages
+4. Security Notes:
+- Don't hardcode any keys or sensitive information
+- Use .env file for local config (excluded in .gitignore)
+- Ensure sensitive information isn't committed
 
-### Submitting Pull Requests
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+#### Code Submission
+1. Fork the project to your repository
+2. Create a feature branch:
+```bash
+git checkout -b feature/your-feature-name
+```
+3. Commit changes:
+```bash
+git commit -am 'Add new feature: feature description'
+```
+4. Push to your repository:
+```bash
+git push origin feature/your-feature-name
+```
+5. Create Pull Request
+
+#### Code Standards
+- Code Style
+  - Follow [PEP 8](https://peps.python.org/pep-0008/) coding standards
+  - Use [Black](https://black.readthedocs.io/) for code formatting (line length: 88)
+  - Use [isort](https://pycqa.github.io/isort/) for import sorting
+  - Use [flake8](https://flake8.pycqa.org/) for code quality checks
+  - Use [mypy](https://mypy.readthedocs.io/) for type checking
+
+- Commit Standards
+  - Run unit tests before submission: `pytest tests/`
+  - Commit message format:
+    ```
+    <type>: <description>
+
+    <optional detailed description>
+    ```
+  - Type definitions:
+    - feat: New feature (e.g., add dark theme)
+    - fix: Bug fix (e.g., fix environment variable setup)
+    - docs: Documentation changes (e.g., update README)
+    - style: Code style changes (e.g., adjust indentation)
+    - refactor: Code refactoring (e.g., refactor config management)
+    - test: Test case related (e.g., add unit tests)
+    - chore: Other changes (e.g., update dependencies)
 
 ## Project Structure
 ```
 jvman/
 ├── src/                # Source code directory
-│   ├── ui/            # User interface related code
+│   ├── ui/            # User interface code
 │   ├── utils/         # Utility classes and helper functions
 │   └── i18n/          # Internationalization resources
 ├── tests/             # Test cases
@@ -292,21 +272,23 @@ jvman/
 
 ## FAQ
 
-### Q: How to resolve environment variable setup failure?
-A: Ensure running the program with administrator/sudo privileges or manually copy and set environment variable values.
+### Q: How to fix environment variable setup failure?
+A: Ensure running with admin privileges or manually copy environment variable values.
 
-### Q: What to do if download speed is slow?
+### Q: What to do if download is slow?
 A: Configure proxy server in settings or use manual download feature.
 
 ### Q: How to backup current configuration?
-A: Program configuration files are stored in user directory, you can directly copy this directory for backup.
+A: Program config files are stored in `%APPDATA%/jvman`, simply copy this directory.
 
-### Q: How to handle version switching failure?
-A: Check if you have sufficient permissions and ensure the target JDK directory exists and is complete.
-
-## Security
-Please report security vulnerabilities to [security@example.com](mailto:security@example.com).
+### Q: How to handle version switch failure?
+A: Check for sufficient privileges and ensure target JDK directory exists and is complete.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Update Sources
+You can select update source in settings:
+- GitHub (International)
+- Gitee (Mainland China)

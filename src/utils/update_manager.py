@@ -5,6 +5,7 @@ import requests
 from datetime import datetime, timedelta
 from loguru import logger
 from PyQt6.QtCore import QObject, pyqtSignal
+import time
 
 from .config_manager import ConfigManager
 from .i18n_manager import i18n_manager
@@ -63,47 +64,139 @@ class UpdateManager(QObject):
             logger.warning(f"无法确定安装类型，默认使用便携版: {str(e)}")
             return "portable"
 
+    def _test_source_availability(self, source):
+        """测试更新源的可用性"""
+        try:
+            urls = self.config_manager.get(f'update.{source}', {})
+            if not urls or not urls.get('api_url'):
+                return False, float('inf'), None
+                
+            start_time = time.time()
+            response = requests.head(  # 使用 HEAD 请求替代 GET，更轻量
+                urls['api_url'],
+                timeout=self.config_manager.get('update.source_timeout', 5000) / 1000,
+                verify=True
+            )
+            response_time = time.time() - start_time
+            
+            if response.status_code != 200:
+                return False, float('inf'), None  # 不返回具体错误，避免重复提示
+                
+            return True, response_time, None
+        except requests.exceptions.Timeout:
+            return False, float('inf'), None
+        except requests.exceptions.ConnectionError:
+            return False, float('inf'), None
+        except Exception as e:
+            return False, float('inf'), None
+            
+    def _select_best_source(self):
+        """选择最佳更新源"""
+        # 获取配置的平台设置
+        platform = self.config_manager.get('update.platform', 'auto')
+        if platform != 'auto':
+            return platform, None
+            
+        # 获取最后成功的源
+        last_success = self.config_manager.get('update.last_success_source')
+        if last_success:
+            # 先尝试最后成功的源
+            success, _, error = self._test_source_availability(last_success)
+            if success:
+                return last_success, None
+                
+        # 测试所有源的可用性
+        sources = ['github', 'gitee']
+        max_retries = self.config_manager.get('update.source_retry', 2)
+        best_source = None
+        best_time = float('inf')
+        errors = []
+        
+        for source in sources:
+            source_error = None
+            for _ in range(max_retries):
+                success, response_time, error = self._test_source_availability(source)
+                if success:
+                    if response_time < best_time:
+                        best_source = source
+                        best_time = response_time
+                    break
+                source_error = error
+            if source_error:
+                errors.append(f"{source.title()}: {source_error}")
+                    
+        if best_source:
+            # 更新最后成功的源
+            self.config_manager.set('update.last_success_source', best_source)
+            self.config_manager.save()
+            return best_source, None
+            
+        # 所有源都失败时，返回错误信息
+        error_msg = _("update.error.all_sources_failed").format(
+            details="\n".join(errors)
+        )
+        return None, error_msg
+        
     def _get_update_urls(self):
         """获取更新相关的URL"""
         try:
-            platform = self.config_manager.get('update.platform', 'gitee')
-            urls = self.config_manager.get(f'update.{platform}', {})
-            
-            if not urls:
-                raise ValueError(f"未找到平台 {platform} 的配置")
+            # 选择最佳源
+            platform, error = self._select_best_source()
+            if error:
+                return None, error
                 
-            return {
+            if not platform:
+                return None, _("update.error.no_available_source")
+                
+            urls = self.config_manager.get(f'update.{platform}', {})
+            if not urls:
+                return None, f"未找到平台 {platform} 的配置"
+                
+            result = {
                 'api_url': urls.get('api_url', ''),
                 'raw_url': urls.get('raw_url', ''),
                 'download_url': urls.get('download_url', ''),
                 'releases_url': urls.get('releases_url', ''),
                 'changelog_url': f"{urls.get('raw_url', '')}/{self.config_manager.get('update.changelog_path', '')}"
             }
+            return result, None
         except Exception as e:
             logger.error(f"获取更新URL失败: {str(e)}")
-            return None
+            return None, str(e)
 
     def check_update(self):
         """检查更新"""
         try:
-            urls = self._get_update_urls()
-            if not urls:
-                self.check_update_complete.emit(False, "获取更新URL失败")
+            urls, error = self._get_update_urls()
+            if error:
+                self.check_update_complete.emit(False, error)
+                return
+
+            if not urls or not urls.get('api_url'):
+                self.check_update_complete.emit(False, _("update.error.invalid_urls"))
                 return
 
             # 验证 API URL
             if not self.security.validate_url(urls['api_url']):
-                self.check_update_complete.emit(False, "无效的 API URL")
+                self.check_update_complete.emit(False, _("update.error.invalid_api_url"))
                 return
 
-            # 获取远程版本信息
-            response = requests.get(
-                f"{urls['api_url']}/releases/latest",
-                headers={'Accept': 'application/json'},
-                verify=True
-            )
+            try:
+                # 获取远程版本信息
+                response = requests.get(
+                    f"{urls['api_url']}/releases/latest",
+                    headers={'Accept': 'application/json'},
+                    timeout=self.config_manager.get('update.source_timeout', 5000) / 1000,
+                    verify=True
+                )
+                
+                if response.status_code != 200:
+                    if response.status_code == 404:
+                        self.check_update_complete.emit(False, _("update.error.no_release"))
+                    else:
+                        self.check_update_complete.emit(False, _("update.error.request_failed").format(status=response.status_code))
+                    return
 
-            if response.status_code == 200:
                 latest = response.json()
                 latest_version = latest['tag_name'].lstrip('v')
                 current_version = self.config_manager.get('version')
@@ -162,8 +255,9 @@ class UpdateManager(QObject):
                     self.update_not_available.emit()
                     if self.is_manual_check:
                         self.check_update_complete.emit(True, "当前已是最新版本")
-            else:
-                self.check_update_complete.emit(False, f"获取版本信息失败: {response.status_code}")
+            except Exception as e:
+                logger.error(f"获取版本信息失败: {str(e)}")
+                self.check_update_complete.emit(False, f"获取版本信息失败: {str(e)}")
 
         except Exception as e:
             logger.error(f"检查更新失败: {str(e)}")
@@ -249,9 +343,9 @@ class UpdateManager(QObject):
         """检查更新"""
         try:
             # 获取更新 URL
-            urls = self._get_update_urls()
-            if not urls:
-                logger.error(_("log.error.update_url_not_found"))
+            urls, error = self._get_update_urls()
+            if error:
+                logger.error(error)
                 return False
 
             # 更新上次检查时间

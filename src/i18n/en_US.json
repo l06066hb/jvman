@@ -779,15 +779,21 @@
         "error": {
             "no_download_url": "No valid download URL found",
             "no_file_size": "Unable to get file size",
-            "connection_failed": "Network connection error, please check your network",
-            "timeout": "Request timeout, please try again later",
-            "request_failed": "Request error: {error}",
+            "connection_failed": "Failed to connect to server",
+            "timeout": "Connection timeout",
+            "request_failed": "Request failed: {error}",
             "unknown": "An error occurred while checking for updates: {error}",
             "json_decode_failed": "Failed to parse server response",
             "download_failed": "Download failed: HTTP {status}",
             "download_error": "Download error: {error}",
             "no_permission": "No write permission for update directory",
-            "get_update_path_failed": "Failed to get update save path"
+            "get_update_path_failed": "Failed to get update save path",
+            "all_sources_failed": "All update sources are unavailable:\n{details}",
+            "no_available_source": "No available update source",
+            "invalid_urls": "Invalid update URLs",
+            "invalid_api_url": "Invalid API URL",
+            "no_release": "No release version found",
+            "request_failed": "Request failed (HTTP {status})"
         },
         "changes": {
             "no_details": "No update details available",
