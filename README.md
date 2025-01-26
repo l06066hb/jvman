@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
-![Build](https://github.com/l06066hb/jvman/workflows/Build%20and%20Test/badge.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
 一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
 
@@ -46,10 +46,14 @@
 
 ## 安装使用
 
+### 下载
+- [GitHub Releases](https://github.com/l06066hb/jvman/releases) (国际)
+- [Gitee 发行版](https://gitee.com/l06066hb/jvman/releases) (中国大陆)
+
 ### Windows
-1. 下载最新版本的安装包（推荐）
-   - 从 [Releases](https://gitee.com/l06066hb/jvman.git/releases) 页面下载最新的安装包
-   - 运行安装程序，按照向导完成安装
+1. 安装版
+   - 下载并运行最新的安装程序 (jvman-setup-x.x.x.exe)
+   - 按照安装向导完成安装
    - 从开始菜单或桌面快捷方式启动程序
 2. 便携版
    - 下载最新的便携版 ZIP 文件
@@ -251,7 +255,9 @@ git push origin feature/your-feature-name
     - docs: 文档变更（比如更新 README）
     - style: 代码格式修改（比如调整缩进）
     - refactor: 代码重构（比如重构配置管理）
+    - perf: 性能优化（比如优化下载速度）
     - test: 测试用例相关（比如添加单元测试）
+    - ci: 持续集成相关（比如修改 GitHub Actions）
     - chore: 其他修改（比如更新依赖）
 
 
@@ -288,8 +294,3 @@ A: 检查是否有足够的权限，确保目标 JDK 目录存在且完整。
 ## 许可证
 
 本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
-
-## 更新源设置
-你可以在设置中选择更新源：
-- GitHub（国际）
-- Gitee（中国大陆） 
