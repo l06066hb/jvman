@@ -49,6 +49,16 @@ def get_default_paths():
         'log_file': os.path.join(app_dir, 'logs', 'jvman.log')  # 日志文件路径
     }
 
+def quote_path(path, platform='windows'):
+    """根据平台对路径进行引用处理"""
+    if platform == 'windows':
+        # Windows 上使用双引号，并确保使用反斜杠
+        path = path.replace('/', '\\')
+        return f'"{path}"'
+    else:
+        # Linux/macOS 上使用 shlex.quote
+        return shlex.quote(path)
+
 def build_portable(platform='windows', timestamp=None):
     """构建免安装版"""
     print("Building portable version...")
@@ -74,7 +84,7 @@ def build_portable(platform='windows', timestamp=None):
         '--noconfirm',
         '--onedir',  # 生成文件夹模式
         '--noconsole',  # 不显示控制台窗口
-        f'--distpath={shlex.quote(output_dir)}',  # 指定输出目录
+        f'--distpath={quote_path(output_dir, platform)}',  # 指定输出目录
         '--workpath=build/lib',  # 指定工作目录
         '--specpath=build',  # spec文件路径
         '--contents-directory=bin', #指定包含应用程序内容的目录
@@ -93,14 +103,14 @@ def build_portable(platform='windows', timestamp=None):
     
     # 添加图标
     if os.path.exists(icon_file):
-        build_args.append(f'--icon={shlex.quote(icon_file)}')
+        build_args.append(f'--icon={quote_path(icon_file, platform)}')
     else:
         print(f"Warning: Icon file not found at: {icon_file}")
         
     # 添加Python路径和运行时钩子
     build_args.extend([
-        f'--paths={shlex.quote(os.path.join(root_dir, "src"))}',
-        f'--runtime-hook={shlex.quote(os.path.join(root_dir, "src", "runtime", "runtime_hook.py"))}',
+        f'--paths={quote_path(os.path.join(root_dir, "src"), platform)}',
+        f'--runtime-hook={quote_path(os.path.join(root_dir, "src", "runtime", "runtime_hook.py"), platform)}',
     ])
     
     # 添加必要的资源文件
@@ -123,9 +133,9 @@ def build_portable(platform='windows', timestamp=None):
     
     for src, dst in resources:
         if add_data_format.endswith('='):  # Linux/macOS 格式
-            resource_args.append(f'{add_data_format}{shlex.quote(src)}{sep}{dst}')
+            resource_args.append(f'{add_data_format}{quote_path(src, platform)}{sep}{dst}')
         else:  # Windows 格式，确保有空格
-            resource_args.append(f'{add_data_format} {shlex.quote(src)}{sep}{dst}')
+            resource_args.append(f'{add_data_format} {quote_path(src, platform)}{sep}{dst}')
     
     build_args.extend(resource_args)
     
@@ -190,7 +200,7 @@ def build_portable(platform='windows', timestamp=None):
         print("Error: src/main.py not found!")
         sys.exit(1)
         
-    build_args.append(shlex.quote(main_script))
+    build_args.append(quote_path(main_script, platform))
     
     print("Building with arguments:", ' '.join(build_args))
     
