@@ -2,9 +2,13 @@ name: Build and Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   build:
@@ -13,14 +17,18 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python-version: ['3.8']
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -46,7 +54,7 @@ jobs:
         python scripts/build.py ${{ runner.os }} ${{ env.timestamp }}
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: jvman-${{ runner.os }}-${{ env.timestamp }}
         path: |
