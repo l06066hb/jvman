@@ -51,7 +51,8 @@ jobs:
     
     - name: Build
       run: |
-        python scripts/build.py --platform ${{ runner.os }} --type all
+        platform=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
+        python scripts/build.py --platform $platform --type all
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
