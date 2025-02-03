@@ -186,6 +186,10 @@ def build_macos_installer(platform='macos', timestamp=None):
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
+    # 首先构建便携版
+    from build_portable import build_portable
+    build_portable(platform=platform, timestamp=timestamp)
+    
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
     os.makedirs(release_dir, exist_ok=True)
@@ -213,26 +217,63 @@ def build_macos_installer(platform='macos', timestamp=None):
         print("\nAfter installation, please try building again.")
         sys.exit(1)
     
-    app_path = os.path.join(root_dir, "dist", "jvman.app")
+    # 检查 app 是否存在
+    app_path = os.path.join(output_dir, "jvman", "jvman.app")
+    if not os.path.exists(app_path):
+        print(f"Error: {app_path} not found!")
+        print("Please make sure the app was built successfully.")
+        sys.exit(1)
+    
+    # 创建临时目录用于构建 DMG
+    dmg_temp = os.path.join(output_dir, "dmg_temp")
+    os.makedirs(dmg_temp, exist_ok=True)
+    
+    # 复制 app 到临时目录
+    temp_app = os.path.join(dmg_temp, "JVMan.app")
+    if os.path.exists(temp_app):
+        shutil.rmtree(temp_app)
+    shutil.copytree(app_path, temp_app)
+    
+    # 设置 DMG 文件路径
     dmg_path = os.path.join(output_dir, "JVMan_Installer.dmg")
+    if os.path.exists(dmg_path):
+        os.remove(dmg_path)
     
-    subprocess.run([
-        "create-dmg",
-        "--volname", "JVMan Installer",
-        "--window-pos", "200", "120",
-        "--window-size", "800", "400",
-        "--icon-size", "100",
-        "--icon", "JVMan.app", "200", "190",
-        "--hide-extension", "JVMan.app",
-        "--app-drop-link", "600", "185",
-        dmg_path,
-        app_path
-    ], check=True)
-    
-    print(f"\nInstaller build completed!")
-    print(f"Output directory: {output_dir}")
-    print(f"Version: {version}")
-    print(f"Timestamp: {timestamp}")
+    # 构建 DMG
+    try:
+        subprocess.run([
+            "create-dmg",
+            "--volname", "JVMan Installer",
+            "--volicon", os.path.join(root_dir, "resources", "icons", "app.icns"),
+            "--window-pos", "200", "120",
+            "--window-size", "800", "400",
+            "--icon-size", "100",
+            "--icon", "JVMan.app", "200", "190",
+            "--hide-extension", "JVMan.app",
+            "--app-drop-link", "600", "185",
+            "--no-internet-enable",
+            dmg_path,
+            dmg_temp
+        ], check=True)
+        
+        print(f"\nInstaller build completed!")
+        print(f"Output directory: {output_dir}")
+        print(f"DMG file: {dmg_path}")
+        print(f"Version: {version}")
+        print(f"Timestamp: {timestamp}")
+        
+    except subprocess.CalledProcessError as e:
+        print(f"\nError creating DMG: {e}")
+        print("Command output:")
+        if e.stdout:
+            print(e.stdout.decode())
+        if e.stderr:
+            print(e.stderr.decode())
+        sys.exit(1)
+    finally:
+        # 清理临时目录
+        if os.path.exists(dmg_temp):
+            shutil.rmtree(dmg_temp)
 
 def build_linux_installer(platform='linux', timestamp=None):
     """构建Linux安装包"""

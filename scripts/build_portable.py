@@ -5,6 +5,7 @@ import json
 import shutil
 import hashlib
 import subprocess
+import shlex
 from pathlib import Path
 from loguru import logger
 from datetime import datetime
@@ -73,7 +74,7 @@ def build_portable(platform='windows', timestamp=None):
         '--noconfirm',
         '--onedir',  # 生成文件夹模式
         '--noconsole',  # 不显示控制台窗口
-        f'--distpath={output_dir}',  # 指定输出目录
+        f'--distpath={shlex.quote(output_dir)}',  # 指定输出目录
         '--workpath=build/lib',  # 指定工作目录
         '--specpath=build',  # spec文件路径
         '--contents-directory=bin', #指定包含应用程序内容的目录
@@ -92,14 +93,14 @@ def build_portable(platform='windows', timestamp=None):
     
     # 添加图标
     if os.path.exists(icon_file):
-        build_args.append(f'--icon={icon_file}')
+        build_args.append(f'--icon={shlex.quote(icon_file)}')
     else:
         print(f"Warning: Icon file not found at: {icon_file}")
         
     # 添加Python路径和运行时钩子
     build_args.extend([
-        f'--paths={os.path.join(root_dir, "src")}',
-        f'--runtime-hook={os.path.join(root_dir, "src", "runtime", "runtime_hook.py")}',
+        f'--paths={shlex.quote(os.path.join(root_dir, "src"))}',
+        f'--runtime-hook={shlex.quote(os.path.join(root_dir, "src", "runtime", "runtime_hook.py"))}',
     ])
     
     # 添加必要的资源文件
@@ -122,9 +123,9 @@ def build_portable(platform='windows', timestamp=None):
     
     for src, dst in resources:
         if add_data_format.endswith('='):  # Linux/macOS 格式
-            resource_args.append(f'{add_data_format}{src}{sep}{dst}')
+            resource_args.append(f'{add_data_format}{shlex.quote(src)}{sep}{dst}')
         else:  # Windows 格式，确保有空格
-            resource_args.append(f'{add_data_format} {src}{sep}{dst}')
+            resource_args.append(f'{add_data_format} {shlex.quote(src)}{sep}{dst}')
     
     build_args.extend(resource_args)
     
@@ -189,7 +190,7 @@ def build_portable(platform='windows', timestamp=None):
         print("Error: src/main.py not found!")
         sys.exit(1)
         
-    build_args.append(main_script)
+    build_args.append(shlex.quote(main_script))
     
     print("Building with arguments:", ' '.join(build_args))
     
@@ -197,7 +198,12 @@ def build_portable(platform='windows', timestamp=None):
     os.chdir(root_dir)
     
     # 执行构建
-    result = subprocess.run(build_args, capture_output=True, text=True)
+    if platform == 'windows':
+        # Windows 上使用列表形式传递参数
+        result = subprocess.run(build_args, capture_output=True, text=True)
+    else:
+        # Linux/macOS 上使用字符串形式传递参数
+        result = subprocess.run(' '.join(build_args), capture_output=True, text=True, shell=True)
     
     # 打印输出
     if result.stdout:
