@@ -4,7 +4,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Build Status](https://github.com/l06066hb/jvman/workflows/build/badge.svg)](https://github.com/l06066hb/jvman/actions)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
 [![Open Collective](https://img.shields.io/opencollective/all/jvman?logo=opencollective)](https://opencollective.com/jvman)
 
 一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
