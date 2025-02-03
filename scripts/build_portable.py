@@ -6,6 +6,7 @@ import shutil
 import hashlib
 import subprocess
 import shlex
+import time
 from pathlib import Path
 from loguru import logger
 from datetime import datetime
@@ -233,7 +234,22 @@ def build_portable(platform='windows', timestamp=None):
     
     # 创建必要的目录和文件
     if platform == 'macos':
+        # macOS 上 PyInstaller 会自动创建 .app 目录结构
         dist_dir = os.path.join(output_dir, 'jvman.app', 'Contents', 'MacOS')
+        # 等待 .app 目录创建完成
+        max_retries = 10
+        retry_interval = 1  # 秒
+        
+        for i in range(max_retries):
+            if os.path.exists(dist_dir):
+                break
+            if i < max_retries - 1:
+                print(f"Waiting for app bundle to be ready... ({i + 1}/{max_retries})")
+                time.sleep(retry_interval)
+        else:
+            print(f"Error: {dist_dir} not found!")
+            print("Please make sure the app was built successfully.")
+            sys.exit(1)
     else:
         dist_dir = os.path.join(output_dir, 'jvman')
     
@@ -256,10 +272,14 @@ def build_portable(platform='windows', timestamp=None):
             sys.exit(1)
     
     # 创建ZIP文件
-    zip_file = os.path.join(output_dir, 'jvman.zip')
-    if os.path.exists(zip_file):
-        os.remove(zip_file)
-    shutil.make_archive(os.path.join(output_dir, 'jvman'), 'zip', dist_dir)
+    if platform == 'macos':
+        # macOS 上不创建 zip 文件，因为我们会创建 DMG
+        print("Skipping ZIP creation on macOS...")
+    else:
+        zip_file = os.path.join(output_dir, 'jvman.zip')
+        if os.path.exists(zip_file):
+            os.remove(zip_file)
+        shutil.make_archive(os.path.join(output_dir, 'jvman'), 'zip', dist_dir)
     
     # 清理构建文件
     build_dir = os.path.join(root_dir, 'build')

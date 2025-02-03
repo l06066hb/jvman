@@ -5,6 +5,7 @@ import json
 import shutil
 import hashlib
 import subprocess
+import time
 from pathlib import Path
 from loguru import logger
 from datetime import datetime
@@ -217,10 +218,19 @@ def build_macos_installer(platform='macos', timestamp=None):
         print("\nAfter installation, please try building again.")
         sys.exit(1)
     
-    # 检查 app 是否存在
-    app_path = os.path.join(output_dir, "jvman", "jvman.app")
-    if not os.path.exists(app_path):
-        print(f"Error: {app_path} not found!")
+    # 检查 app 是否存在，并等待一段时间以确保构建完成
+    app_path = os.path.join(output_dir, "jvman.app")
+    max_retries = 10
+    retry_interval = 1  # 秒
+    
+    for i in range(max_retries):
+        if os.path.exists(app_path) and os.path.exists(os.path.join(app_path, "Contents", "MacOS", "jvman")):
+            break
+        if i < max_retries - 1:
+            print(f"Waiting for app bundle to be ready... ({i + 1}/{max_retries})")
+            time.sleep(retry_interval)
+    else:
+        print(f"Error: {app_path} not found or incomplete!")
         print("Please make sure the app was built successfully.")
         sys.exit(1)
     
