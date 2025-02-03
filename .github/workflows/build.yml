@@ -55,11 +55,11 @@ jobs:
         if [ "${{ runner.os }}" == "Windows" ]; then
           echo "BUILD_PLATFORM=windows" >> $GITHUB_ENV
           echo "PYINSTALLER_SEP=;" >> $GITHUB_ENV
-          echo "BUILD_DEBUG=1" >> $GITHUB_ENV
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
         else
           echo "BUILD_PLATFORM=linux" >> $GITHUB_ENV
           echo "PYINSTALLER_SEP=:" >> $GITHUB_ENV
-          echo "BUILD_DEBUG=1" >> $GITHUB_ENV
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
         fi
         if [ "${{ runner.os }}" == "macOS" ]; then
           echo "BUILD_PLATFORM=macos" >> $GITHUB_ENV
@@ -71,6 +71,7 @@ jobs:
         echo "============ Build Environment ============"
         echo "Platform: $BUILD_PLATFORM"
         echo "PyInstaller separator: $PYINSTALLER_SEP"
+        echo "PyInstaller add-data format: $PYINSTALLER_ADD_DATA_FORMAT"
         echo "Python location: $pythonLocation"
         echo "Working directory: $(pwd)"
         echo "Directory contents:"
