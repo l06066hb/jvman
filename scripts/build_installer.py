@@ -251,10 +251,25 @@ def build_macos_installer(platform='macos', timestamp=None):
     
     # 构建 DMG
     try:
-        subprocess.run([
+        # 检查临时目录内容
+        print(f"\nChecking dmg_temp directory contents:")
+        for item in os.listdir(dmg_temp):
+            print(f"- {item}")
+        
+        # 检查图标文件
+        icon_path = os.path.join(root_dir, "resources", "icons", "app.icns")
+        if not os.path.exists(icon_path):
+            print(f"Warning: Volume icon not found at {icon_path}")
+            # 如果图标不存在，移除 volicon 参数
+            volicon_args = []
+        else:
+            volicon_args = ["--volicon", icon_path]
+        
+        # 构建命令
+        dmg_cmd = [
             "create-dmg",
             "--volname", "JVMan Installer",
-            "--volicon", os.path.join(root_dir, "resources", "icons", "app.icns"),
+            *volicon_args,
             "--window-pos", "200", "120",
             "--window-size", "800", "400",
             "--icon-size", "100",
@@ -264,7 +279,24 @@ def build_macos_installer(platform='macos', timestamp=None):
             "--no-internet-enable",
             dmg_path,
             dmg_temp
-        ], check=True)
+        ]
+        
+        print("\nExecuting create-dmg command:")
+        print(" ".join(dmg_cmd))
+        
+        # 运行命令并捕获输出
+        result = subprocess.run(dmg_cmd, capture_output=True, text=True)
+        
+        # 打印命令输出
+        if result.stdout:
+            print("\nCommand stdout:")
+            print(result.stdout)
+        if result.stderr:
+            print("\nCommand stderr:")
+            print(result.stderr)
+            
+        # 检查返回码
+        result.check_returncode()
         
         print(f"\nInstaller build completed!")
         print(f"Output directory: {output_dir}")
@@ -274,16 +306,33 @@ def build_macos_installer(platform='macos', timestamp=None):
         
     except subprocess.CalledProcessError as e:
         print(f"\nError creating DMG: {e}")
-        print("Command output:")
+        print("\nDetailed error information:")
         if e.stdout:
-            print(e.stdout.decode())
+            print("\nCommand stdout:")
+            print(e.stdout)
         if e.stderr:
-            print(e.stderr.decode())
+            print("\nCommand stderr:")
+            print(e.stderr)
+        
+        # 检查目录和文件权限
+        print("\nChecking file permissions:")
+        print(f"dmg_temp directory: {os.stat(dmg_temp).st_mode & 0o777:o}")
+        print(f"app bundle: {os.stat(temp_app).st_mode & 0o777:o}")
+        
+        sys.exit(1)
+    except Exception as e:
+        print(f"\nUnexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     finally:
         # 清理临时目录
         if os.path.exists(dmg_temp):
-            shutil.rmtree(dmg_temp)
+            try:
+                shutil.rmtree(dmg_temp)
+                print("\nCleaned up temporary directory")
+            except Exception as e:
+                print(f"\nWarning: Failed to clean up temporary directory: {e}")
 
 def build_linux_installer(platform='linux', timestamp=None):
     """构建Linux安装包"""
