@@ -120,15 +120,7 @@ def build_portable(platform='windows', timestamp=None):
     ])
     
     # 添加必要的资源文件
-    # 根据平台设置默认分隔符
-    if platform == 'windows':
-        sep = os.environ.get('PYINSTALLER_SEP', ';')
-        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data')  # 不带空格
-    else:
-        sep = os.environ.get('PYINSTALLER_SEP', ':')
-        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data=')  # 带等号
-    
-    # 构建资源文件参数
+    # 定义资源文件列表
     resources = [
         (os.path.join(root_dir, "resources", "icons"), "resources/icons"),
         (os.path.join(root_dir, "config", "app.json"), "config"),
@@ -136,8 +128,17 @@ def build_portable(platform='windows', timestamp=None):
         (os.path.join(root_dir, "LICENSE"), "."),
     ]
     
-    for src, dst in resources:
-        build_args.extend([add_data_format, f"{src}{sep}{dst}"])
+    # 根据平台设置默认分隔符和格式
+    if platform == 'windows':
+        sep = os.environ.get('PYINSTALLER_SEP', ';')
+        # Windows 格式: --add-data "SOURCE;DEST"
+        for src, dst in resources:
+            build_args.extend(['--add-data', f"{src}{sep}{dst}"])
+    else:
+        sep = os.environ.get('PYINSTALLER_SEP', ':')
+        # Linux/macOS 格式: --add-data="SOURCE:DEST"
+        for src, dst in resources:
+            build_args.append(f'--add-data={src}{sep}{dst}')
     
     # 添加隐藏导入
     hidden_imports = [
