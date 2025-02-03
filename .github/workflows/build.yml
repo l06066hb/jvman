@@ -49,22 +49,21 @@ jobs:
       run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
       shell: bash
     
-    - name: Set platform specific variables
+    - name: Set platform
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
-          echo "PATHSEP=;" >> $GITHUB_ENV
-          echo "ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
+          echo "BUILD_PLATFORM=windows" >> $GITHUB_ENV
+        elif [ "${{ runner.os }}" == "Linux" ]; then
+          echo "BUILD_PLATFORM=linux" >> $GITHUB_ENV
         else
-          echo "PATHSEP=:" >> $GITHUB_ENV
-          echo "ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
+          echo "BUILD_PLATFORM=macos" >> $GITHUB_ENV
         fi
     
     - name: Build
       shell: pwsh
       run: |
-        $platform = "${{ runner.os }}".ToLower()
-        python scripts/build.py --platform $platform --type all
+        python scripts/build.py --platform $env:BUILD_PLATFORM --type all
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
