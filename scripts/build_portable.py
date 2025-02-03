@@ -103,12 +103,30 @@ def build_portable(platform='windows', timestamp=None):
     ])
     
     # 添加必要的资源文件
-    build_args.extend([
-        f'--add-data={os.path.join(root_dir, "resources", "icons")};resources/icons',
-        f'--add-data={os.path.join(root_dir, "config", "app.json")};config',
-        f'--add-data={os.path.join(root_dir, "src", "i18n")};i18n',
-        f'--add-data={os.path.join(root_dir, "LICENSE")};.',
-    ])
+    # 根据平台设置默认分隔符
+    if platform == 'windows':
+        sep = os.environ.get('PYINSTALLER_SEP', ';')
+        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data ')  # 注意空格
+    else:
+        sep = os.environ.get('PYINSTALLER_SEP', ':')
+        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data=')  # 注意等号
+    
+    # 构建资源文件参数
+    resource_args = []
+    resources = [
+        (os.path.join(root_dir, "resources", "icons"), "resources/icons"),
+        (os.path.join(root_dir, "config", "app.json"), "config"),
+        (os.path.join(root_dir, "src", "i18n"), "i18n"),
+        (os.path.join(root_dir, "LICENSE"), "."),
+    ]
+    
+    for src, dst in resources:
+        if add_data_format.endswith('='):  # Linux/macOS 格式
+            resource_args.append(f'{add_data_format}{src}{sep}{dst}')
+        else:  # Windows 格式
+            resource_args.append(f'{add_data_format}{src}{sep}{dst}')
+    
+    build_args.extend(resource_args)
     
     # 添加隐藏导入
     hidden_imports = [
