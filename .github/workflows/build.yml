@@ -51,7 +51,7 @@ jobs:
     
     - name: Build
       run: |
-        python scripts/build.py ${{ runner.os }} ${{ env.timestamp }}
+        python scripts/build.py --platform ${{ runner.os }} --type all
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
