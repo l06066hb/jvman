@@ -1,10 +1,11 @@
 # JDK Version Manager
 
-![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)
-![Python](https://img.shields.io/badge/python-3.8+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-orange.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
+[![Version](https://img.shields.io/badge/version-1.0.7-blue)](https://github.com/l06066hb/jvman/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://github.com/l06066hb/jvman)
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
+[![Open Collective](https://img.shields.io/opencollective/all/jvman?logo=opencollective)](https://opencollective.com/jvman)
 
 A user-friendly JDK version management tool supporting Windows, macOS, and Linux platforms.
 
@@ -293,3 +294,14 @@ A: Check for sufficient privileges and ensure target JDK directory exists and is
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support the Project
+
+If this project has been helpful to you, you can:
+
+- ⭐ Star this project
+- 🐛 Submit Issues or Pull Requests
+- 💬 Help answer other users' questions
+- 💝 [Support the developer](docs/sponsor.md)
+
+Thank you to everyone who supports this project!
