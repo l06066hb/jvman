@@ -23,29 +23,33 @@ jobs:
           fetch-depth: 0  # 获取完整历史记录
           fetch-tags: true  # 确保获取所有标签
       
-      - name: Configure Git
+      - name: Configure Git and SSH
         run: |
-          git config --global safe.directory /github/workspace
+          # 配置 Git
+          git config --global safe.directory '*'
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-      
-      - name: Setup SSH
-        run: |
+          
+          # 配置 SSH
           mkdir -p ~/.ssh
+          # 配置 Gitee SSH
           echo "${{ secrets.GITEE_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           echo "Host gitee.com" > ~/.ssh/config
           echo "  HostName gitee.com" >> ~/.ssh/config
           echo "  User git" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          # 添加已知主机
           ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+          # 测试连接
+          ssh -T git@gitee.com || true
       
       - name: Sync to Gitee
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
         with:
-          source-repo: "git@github.com:${{ github.repository }}.git"
+          source-repo: "https://github.com/${{ github.repository }}.git"
           destination-repo: "git@gitee.com:l06066hb/jvman.git"
       
       - name: Sync Release Assets
