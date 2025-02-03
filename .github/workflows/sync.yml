@@ -2,21 +2,77 @@ name: Sync to Gitee
 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'  # 推送标签时触发
+  workflow_run:
+    workflows: ["Build and Release"]
+    types:
+      - completed
+  release:
+    types: [published, edited]  # 发布或编辑 release 时触发
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    
-    - name: Sync to Gitee
-      uses: wearerequired/git-mirror-action@master
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
-      with:
-        source-repo: "git@github.com:l06066hb/jvman.git"
-        destination-repo: "git@gitee.com:l06066hb/jvman.git" 
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史记录
+          fetch-tags: true  # 确保获取所有标签
+      
+      - name: Configure Git
+        run: |
+          git config --global safe.directory /github/workspace
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GITEE_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "Host gitee.com" > ~/.ssh/config
+          echo "  HostName gitee.com" >> ~/.ssh/config
+          echo "  User git" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+      
+      - name: Sync to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
+        with:
+          source-repo: "git@github.com:${{ github.repository }}.git"
+          destination-repo: "git@gitee.com:l06066hb/jvman.git"
+      
+      - name: Sync Release Assets
+        if: github.event_name == 'release'
+        run: |
+          # 获取当前 release 信息
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          echo "Processing release: $RELEASE_TAG"
+          
+          # 下载 release 资源
+          mkdir -p release_assets
+          cd release_assets
+          
+          # 使用 GitHub CLI 下载资源
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --dir .
+          
+          # 推送到 Gitee
+          git clone --depth 1 git@gitee.com:l06066hb/jvman.git gitee_repo
+          cd gitee_repo
+          
+          # 创建或更新 Gitee release
+          gitee-release update l06066hb/jvman $RELEASE_TAG -a ../release_assets/* || \
+          gitee-release create l06066hb/jvman $RELEASE_TAG -a ../release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Sync Tags
+        run: |
+          git fetch --tags origin
+          git push --tags git@gitee.com:l06066hb/jvman.git 
