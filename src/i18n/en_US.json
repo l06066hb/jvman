@@ -71,15 +71,17 @@
             "select_jdk_path": "Select JDK Storage Path",
             "select_symlink_path": "Select Symlink Path",
             "select_config_file": "Select Shell Config File",
-            "env_update_success": "Environment variables have been updated",
-            "env_update_unix": "Environment variables have been updated\nPlease run the following command to take effect:",
-            "env_update_error": "Failed to set environment variables: {error}",
-            "env_update_windows": "Environment variables have been updated successfully. The changes will take effect in new command prompts.",
+            "env_update_success": "Environment Variables Updated",
+            "env_update_unix": "Environment variables have been updated. Please run the following command to apply changes:\n{cmd}",
+            "env_update_error": "Failed to update environment variables: {error}",
+            "env_update_windows": "Environment variables have been updated. Changes will take effect in new command prompts.",
             "env_update_partial_failed": "Some environment variables failed to update:\n{errors}",
             "java_home_failed": "Failed to set JAVA_HOME",
             "path_failed": "Failed to update PATH",
             "classpath_failed": "Failed to set CLASSPATH",
-            "reset_close_action": "Close action has been reset, you will be asked again next time."
+            "reset_close_action": "Close action has been reset, will take effect after restart",
+            "path_select_failed": "Path selection failed",
+            "update_check_failed": "Update check failed, please check your network connection and try again"
         }
     },
     "jdk": {
