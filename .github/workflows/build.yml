@@ -49,6 +49,15 @@ jobs:
       run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
       shell: bash
     
+    - name: Set path separator
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "PATHSEP=;" >> $GITHUB_ENV
+        else
+          echo "PATHSEP=:" >> $GITHUB_ENV
+        fi
+    
     - name: Build
       shell: pwsh
       run: |
