@@ -49,13 +49,15 @@ jobs:
       run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
       shell: bash
     
-    - name: Set path separator
+    - name: Set platform specific variables
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
           echo "PATHSEP=;" >> $GITHUB_ENV
+          echo "ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
         else
           echo "PATHSEP=:" >> $GITHUB_ENV
+          echo "ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
         fi
     
     - name: Build
