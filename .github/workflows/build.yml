@@ -55,9 +55,11 @@ jobs:
         if [ "${{ runner.os }}" == "Windows" ]; then
           echo "BUILD_PLATFORM=windows" >> $GITHUB_ENV
           echo "PYINSTALLER_SEP=;" >> $GITHUB_ENV
+          echo "BUILD_DEBUG=1" >> $GITHUB_ENV
         else
           echo "BUILD_PLATFORM=linux" >> $GITHUB_ENV
           echo "PYINSTALLER_SEP=:" >> $GITHUB_ENV
+          echo "BUILD_DEBUG=1" >> $GITHUB_ENV
         fi
         if [ "${{ runner.os }}" == "macOS" ]; then
           echo "BUILD_PLATFORM=macos" >> $GITHUB_ENV
@@ -66,9 +68,15 @@ jobs:
     - name: Build
       shell: bash
       run: |
-        echo "Building for platform: $BUILD_PLATFORM"
+        echo "============ Build Environment ============"
+        echo "Platform: $BUILD_PLATFORM"
         echo "PyInstaller separator: $PYINSTALLER_SEP"
-        python scripts/build.py --platform $BUILD_PLATFORM --type all --debug
+        echo "Python location: $pythonLocation"
+        echo "Working directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        echo "========================================="
+        python scripts/build.py --platform $BUILD_PLATFORM --type all
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
