@@ -149,16 +149,6 @@ def build_portable(platform='windows', timestamp=None):
         'PyQt6.QtWidgets',
         'PyQt6.sip',
         'requests',
-        'win32api',
-        'win32con',
-        'win32gui',
-        'win32process',
-        'win32security',
-        'win32pipe',
-        'win32file',
-        'win32event',
-        'msvcrt',
-        'winreg',
         'ui',
         'ui.main_window',
         'ui.tabs',
@@ -176,11 +166,6 @@ def build_portable(platform='windows', timestamp=None):
         'utils.theme_manager',
         'utils.i18n_manager',
         'utils.update_manager',
-        'loguru.handlers',
-        'loguru._logger',
-        'loguru._file_sink',
-        'loguru._recattrs',
-        'loguru._datetime',
         'subprocess',
         'ctypes',
         'platform',
@@ -191,6 +176,22 @@ def build_portable(platform='windows', timestamp=None):
         'shutil',
         'datetime',
     ]
+
+    # Windows 特定的导入
+    if platform == 'windows':
+        windows_imports = [
+            'win32api',
+            'win32con',
+            'win32gui',
+            'win32process',
+            'win32security',
+            'win32pipe',
+            'win32file',
+            'win32event',
+            'msvcrt',
+            'winreg',
+        ]
+        hidden_imports.extend(windows_imports)
     
     for imp in hidden_imports:
         build_args.extend(['--hidden-import', imp])
@@ -231,7 +232,10 @@ def build_portable(platform='windows', timestamp=None):
         sys.exit(1)
     
     # 创建必要的目录和文件
-    dist_dir = os.path.join(output_dir, 'jvman')
+    if platform == 'macos':
+        dist_dir = os.path.join(output_dir, 'jvman.app', 'Contents', 'MacOS')
+    else:
+        dist_dir = os.path.join(output_dir, 'jvman')
     
     # 创建必要的目录结构
     dirs_to_create = [
