@@ -76,6 +76,9 @@ class SettingsTab(QWidget):
         self.save_thread = QThread()
         self.save_thread.start()
         
+        # 初始化手动检查标志位
+        self._is_manual_check = False
+        
         self.setup_ui()
         # 恢复自动设置状态
         self.restore_auto_settings()
@@ -1738,22 +1741,36 @@ class SettingsTab(QWidget):
 
     def check_for_updates(self):
         """手动检查更新"""
+        # 如果已经在检查中，直接返回
+        if not self.check_update_button.isEnabled():
+            return
+            
         try:
             self.check_update_button.setEnabled(False)
             self.check_update_button.setText(_("settings.buttons.checking"))
+            # 设置标志位表示这是手动检查
+            self._is_manual_check = True
             self.update_manager.manual_check_update()
         except Exception as e:
+            # 只记录日志并重置按钮状态
             logger.error(f"检查更新失败: {str(e)}")
-            QMessageBox.warning(self, _("settings.error.title"), _("settings.error.update_check_failed"))
-            self.check_update_button.setEnabled(True)
-            self.check_update_button.setText(_("settings.buttons.check_update"))
+            self._reset_update_button()
+
+    def _reset_update_button(self):
+        """重置更新按钮状态"""
+        self.check_update_button.setEnabled(True)
+        self.check_update_button.setText(_("settings.buttons.check_update"))
+        self._is_manual_check = False
 
     def on_check_update_complete(self, success, message):
         """更新检查完成回调"""
-        self.check_update_button.setEnabled(True)
-        self.check_update_button.setText(_("settings.buttons.check_update"))
-        if not success:
-            QMessageBox.warning(self, _("settings.error.title"), message)
+        # 如果不是手动检查，直接重置状态并返回
+        if not self._is_manual_check:
+            self._reset_update_button()
+            return
+            
+        # 重置按钮状态
+        self._reset_update_button()
 
 def create_synced_widget(synced_text):
     """创建同步状态的 QWidget 容器"""

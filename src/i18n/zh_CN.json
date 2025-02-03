@@ -60,20 +60,22 @@
             "all_paths": "所有环境变量路径"
         },
         "messages": {
-            "restart_required": "重启提示",
+            "restart_required": "需要重启",
             "restart_message": "语言设置已更改，需要重启程序才能生效。",
-            "select_jdk_path": "选择JDK存储路径",
+            "select_jdk_path": "选择 JDK 存储路径",
             "select_symlink_path": "选择软链接路径",
-            "select_config_file": "选择 Shell 配置文件",
-            "env_update_success": "环境变量设置已更新",
-            "env_update_unix": "环境变量设置已更新\n请运行以下命令使环境变量生效：",
-            "env_update_error": "设置环境变量失败：{error}",
-            "env_update_windows": "环境变量设置已更新成功。新打开的命令提示符中将生效。",
+            "path_select_failed": "路径选择失败",
+            "env_update_success": "环境变量更新成功",
+            "env_update_windows": "环境变量已更新，重新打开命令行窗口后生效",
+            "env_update_unix": "环境变量已更新，请运行以下命令使其生效：\n{cmd}",
             "env_update_partial_failed": "部分环境变量更新失败：\n{errors}",
+            "env_update_error": "环境变量更新失败：{error}",
             "java_home_failed": "设置 JAVA_HOME 失败",
             "path_failed": "更新 PATH 失败",
             "classpath_failed": "设置 CLASSPATH 失败",
-            "reset_close_action": "关闭行为已重置，下次关闭窗口时将重新询问。"
+            "reset_close_action": "关闭行为已重置，重启后生效",
+            "select_config_file": "选择配置文件",
+            "update_check_failed": "检查更新失败，请检查网络连接后重试"
         },
         "error": {
             "title": "设置错误",
