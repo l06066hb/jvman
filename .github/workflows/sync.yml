@@ -51,9 +51,8 @@ jobs:
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          source-repo: "git@github.com:${{ github.repository }}.git"
+          source-repo: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           destination-repo: "git@gitee.com:l06066hb/jvman.git"
       
       - name: Sync Release Assets
