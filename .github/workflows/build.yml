@@ -50,8 +50,9 @@ jobs:
       shell: bash
     
     - name: Build
+      shell: pwsh
       run: |
-        platform=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
+        $platform = "${{ runner.os }}".ToLower()
         python scripts/build.py --platform $platform --type all
     
     - name: Upload artifacts
