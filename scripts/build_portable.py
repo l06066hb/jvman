@@ -106,10 +106,10 @@ def build_portable(platform='windows', timestamp=None):
     # 根据平台设置默认分隔符
     if platform == 'windows':
         sep = os.environ.get('PYINSTALLER_SEP', ';')
-        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data ')  # 注意空格
+        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data')  # 不带空格
     else:
         sep = os.environ.get('PYINSTALLER_SEP', ':')
-        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data=')  # 注意等号
+        add_data_format = os.environ.get('PYINSTALLER_ADD_DATA_FORMAT', '--add-data=')  # 带等号
     
     # 构建资源文件参数
     resource_args = []
@@ -123,8 +123,8 @@ def build_portable(platform='windows', timestamp=None):
     for src, dst in resources:
         if add_data_format.endswith('='):  # Linux/macOS 格式
             resource_args.append(f'{add_data_format}{src}{sep}{dst}')
-        else:  # Windows 格式
-            resource_args.append(f'{add_data_format}{src}{sep}{dst}')
+        else:  # Windows 格式，确保有空格
+            resource_args.append(f'{add_data_format} {src}{sep}{dst}')
     
     build_args.extend(resource_args)
     

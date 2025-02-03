@@ -199,8 +199,18 @@ def build_macos_installer(platform='macos', timestamp=None):
     try:
         subprocess.run(["create-dmg", "--help"], capture_output=True)
     except FileNotFoundError:
-        print("Error: create-dmg not found!")
-        print("Please install create-dmg: brew install create-dmg")
+        print("\nError: create-dmg not found!")
+        print("\nTo install create-dmg, you can use one of the following methods:")
+        print("1. Using Homebrew (recommended):")
+        print("   brew install create-dmg")
+        print("\n2. Using MacPorts:")
+        print("   sudo port install create-dmg")
+        print("\n3. Manual installation:")
+        print("   git clone https://github.com/create-dmg/create-dmg.git")
+        print("   cd create-dmg")
+        print("   chmod +x create-dmg")
+        print("   sudo make install")
+        print("\nAfter installation, please try building again.")
         sys.exit(1)
     
     app_path = os.path.join(root_dir, "dist", "jvman.app")
