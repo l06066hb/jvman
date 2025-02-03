@@ -17,11 +17,14 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # 获取完整历史记录
           fetch-tags: true  # 确保获取所有标签
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Configure Git and SSH
         run: |
@@ -48,8 +51,9 @@ jobs:
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          source-repo: "https://${{ github.token }}@github.com/${{ github.repository }}.git"
+          source-repo: "git@github.com:${{ github.repository }}.git"
           destination-repo: "git@gitee.com:l06066hb/jvman.git"
       
       - name: Sync Release Assets
