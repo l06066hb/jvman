@@ -17,7 +17,6 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
             platform: windows
@@ -27,8 +26,6 @@ jobs:
             platform: macos
     
     runs-on: ${{ matrix.os }}
-    env:
-      BUILD_PLATFORM: ${{ matrix.platform }}
     
     steps:
     - uses: actions/checkout@v4
@@ -55,7 +52,7 @@ jobs:
       run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
       shell: bash
     
-    - name: Set PyInstaller variables
+    - name: Set build variables
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
@@ -67,10 +64,17 @@ jobs:
         fi
     
     - name: Build Application
-      run: |
-        echo "Building for platform: ${{ matrix.platform }}"
-        python scripts/build.py --platform ${{ matrix.platform }} --type all
       shell: bash
+      run: |
+        echo "============ Build Environment ============"
+        echo "Platform: ${{ matrix.platform }}"
+        echo "OS: ${{ runner.os }}"
+        echo "Python: ${{ env.pythonLocation }}"
+        echo "Working directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        echo "========================================="
+        python scripts/build.py --platform ${{ matrix.platform }} --type all
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
