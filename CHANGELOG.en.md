@@ -11,6 +11,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.0.7] - 2025-02-04
+
+### Added
+- CI/CD Workflow Guide Document
+- Added detailed logs and status checks during the construction process
+- Complete support for platform DMG construction
+- Release to Gitee functionality
+- Added hash value verification mechanism for building products
+- Added automatic checks and dependency installations for building environments
+- Added parallel execution support for cross platform construction
+
+### Changed
+- Optimized error handling and log output for building scripts
+- The construction process of the platform has added a waiting mechanism
+- Configure Actions using a more secure authentication method
+- The triggering conditions and execution sequence of workflow
+- Improved resource management mechanism for multi platform construction
+- Optimized the directory structure and naming conventions for building products
+- Improved automated process for version release and synchronization
+
+### Fixed
+- The issue of incorrect format of the ` -- add data ` parameter during platform construction
+- The issue of non-existent `. app ` directory during platform construction
+- Permission and path issues when building DMG on the platform
+- SSH authentication issue when synchronizing Actions to Gitee
+- Fixed compatibility issues with resource file paths during cross platform construction
+- Hidden import issues during packaging
+
+### Documentation
+- Related configuration instructions and best practices
+- Added detailed instructions and security recommendations for key configuration
+- Added process documentation for automated construction and publishing
+- Added troubleshooting guide for common issues
+
+### Security
+- Permission control for Actions
+- Improved the security of key management and usage
+- Optimized the security check mechanism during the construction process
+- Added integrity verification for building products
 ## [1.0.7] - 2025-02-04
 
 ### Added
