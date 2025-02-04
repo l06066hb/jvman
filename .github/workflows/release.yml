@@ -27,6 +27,8 @@ jobs:
             platform: macos
     
     runs-on: ${{ matrix.os }}
+    env:
+      BUILD_PLATFORM: ${{ matrix.platform }}
     
     steps:
     - uses: actions/checkout@v4
@@ -53,8 +55,21 @@ jobs:
       run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
       shell: bash
     
+    - name: Set PyInstaller variables
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "PYINSTALLER_SEP=;" >> $GITHUB_ENV
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
+        else
+          echo "PYINSTALLER_SEP=:" >> $GITHUB_ENV
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
+        fi
+    
     - name: Build Application
-      run: python scripts/build.py --platform ${{ matrix.platform }} --type all
+      run: |
+        echo "Building for platform: ${{ matrix.platform }}"
+        python scripts/build.py --platform ${{ matrix.platform }} --type all
       shell: bash
     
     - name: Create Release
