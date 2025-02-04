@@ -3,6 +3,15 @@ name: Release Build
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
 
 jobs:
   build:
