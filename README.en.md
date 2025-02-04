@@ -191,14 +191,15 @@ python scripts/build.py --platform windows --type all
 ## Latest Version
 
 v1.0.7 Major Updates:
-- ⚡ [Added] GitHub CI/CD Workflow Guide Document
+- ⚡ [Added] CI/CD Workflow Guide Document
 - 🔨 [Added] Added detailed logs and status checks during the construction process
 - 🔨 [Changed] Optimized error handling and log output for building scripts
-- 🔨 [Changed] The construction process of macOS platform has added a waiting mechanism
-- 🔨 [Fixed] The problem of incorrect format of the ` -- add data ` parameter during Windows platform construction
-- 🔨 [Fixed] The problem of non-existent `. app ` directory during macOS platform build
+- 🔨 [Changed] The construction process of the platform has added a waiting mechanism
+- 🔨 [Fixed] The issue of incorrect format of the ` -- add data ` parameter during platform construction
+- 🔨 [Fixed] The issue of non-existent `. app ` directory during platform construction
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
+
 
 
 
