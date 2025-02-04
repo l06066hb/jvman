@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.0.7] - 2025-02-04
+
+### Added
+- GitHub CI/CD 工作流程指南文档
+- 添加了构建过程中的详细日志和状态检查
+- macOS 平台 DMG 构建的完整支持
+- GitHub Releases 到 Gitee 的功能
+- 添加了构建产物的哈希值验证机制
+- 添加了构建环境的自动检查和依赖安装
+- 添加了跨平台构建的并行执行支持
+
+### Changed
+- 优化了构建脚本的错误处理和日志输出
+- macOS 平台的构建流程，添加了等待机制
+- GitHub Actions 的配置，使用更安全的认证方式
+- CI/CD 工作流的触发条件和执行顺序
+- 改进了多平台构建的资源管理机制
+- 优化了构建产物的目录结构和命名规范
+- 改进了版本发布和同步的自动化流程
+
+### Fixed
+- Windows 平台构建时 `--add-data` 参数格式错误的问题
+- macOS 平台构建时 `.app` 目录不存在的问题
+- macOS 平台构建 DMG 时的权限和路径问题
+- GitHub Actions 同步到 Gitee 时的 SSH 认证问题
+- 修复了跨平台构建时资源文件路径的兼容性问题
+- PyInstaller 打包时的隐藏导入问题
+
+### Documentation
+- CI/CD 相关的配置说明和最佳实践
+- 添加了密钥配置的详细说明和安全建议
+- 补充了自动化构建和发布的流程文档
+- 添加了常见问题的故障排除指南
+
+### Security
+- GitHub Actions 的权限控制
+- 改进了密钥管理和使用的安全性
+- 优化了构建过程中的安全检查机制
+- 添加了构建产物的完整性验证
 ## [1.0.7] - 2024-02-03
 
 ### Fixed
