@@ -191,11 +191,15 @@ python scripts/build.py --platform windows --type all
 ## 最新版本
 
 v1.0.7 的主要更新：
-- ✨ 增加更新包的哈希值验证功能，提升安全性
-- 📦 新增 release.json 文件，包含版本信息和文件哈希值
-- 🎨 优化资源文件结构和打包流程
+- ⚡ [Added] GitHub CI/CD Workflow Guide Document
+- 🔨 [Added] Added detailed logs and status checks during the construction process
+- 🔨 [Changed] Optimized error handling and log output for building scripts
+- 🔨 [Changed] The construction process of macOS platform has added a waiting mechanism
+- 🔨 [Fixed] The problem of incorrect format of the ` -- add data ` parameter during Windows platform construction
+- 🔨 [Fixed] The problem of non-existent `. app ` directory during macOS platform build
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 ## 贡献指南
 

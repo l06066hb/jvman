@@ -8,7 +8,11 @@
     "build": {
         "app_id": "com.jvman.app",
         "copyright": "Copyright © 2024",
-        "supported_platforms": ["windows", "macos", "linux"],
+        "supported_platforms": [
+            "windows",
+            "macos",
+            "linux"
+        ],
         "min_python_version": "3.8.0",
         "framework": "PyQt6"
     },
@@ -27,13 +31,23 @@
         },
         "platform": "gitee",
         "check_interval": 86400,
-        "changelog_path": "CHANGELOG.md",
+        "changelog": {
+            "default": "CHANGELOG.md",
+            "i18n": {
+                "zh_CN": "CHANGELOG.md",
+                "en_US": "CHANGELOG.en.md"
+            },
+            "format": "markdown",
+            "encoding": "utf-8"
+        },
         "allowed_domains": [
             "gitee.com",
             "github.com",
             "raw.githubusercontent.com"
         ],
-        "hash_algorithms": ["sha256"],
+        "hash_algorithms": [
+            "sha256"
+        ],
         "retry": {
             "max_attempts": 3,
             "delay": 1000
@@ -43,9 +57,20 @@
         "verify_ssl": true,
         "verify_hash": true,
         "max_download_size": 104857600,
-        "allowed_file_types": [".exe", ".zip", ".dmg", ".deb", ".rpm", ".AppImage"],
+        "allowed_file_types": [
+            ".exe",
+            ".zip",
+            ".dmg",
+            ".deb",
+            ".rpm",
+            ".AppImage"
+        ],
         "url_validation": {
-            "allowed_domains": ["gitee.com", "github.com", "githubusercontent.com"],
+            "allowed_domains": [
+                "gitee.com",
+                "github.com",
+                "githubusercontent.com"
+            ],
             "require_https": true,
             "timeout": 30
         }
@@ -57,7 +82,10 @@
         "env_management": true,
         "tray_support": true,
         "settings": true,
-        "i18n": ["zh_CN", "en_US"],
+        "i18n": [
+            "zh_CN",
+            "en_US"
+        ],
         "auto_update": {
             "enabled": true,
             "check_interval": 86400,
@@ -73,58 +101,6 @@
         "downloads": "downloads",
         "temp": "temp"
     },
-    "changelog": [
-        {
-            "version": "1.0.6",
-            "date": "2024-01-06",
-            "type": "feature",
-            "changes": [
-                "优化帮助文档和国际化支持",
-                "改进 IDE 配置指南内容",
-                "完善中英文翻译质量",
-                "优化文档搜索功能",
-                "改进文档显示样式",
-                "修复国际化切换问题",
-                "优化文档内容格式化",
-                "统一中英文文案风格"
-            ]
-        },
-        {
-            "version": "1.0.5",
-            "date": "2024-01-05",
-            "type": "feature",
-            "changes": [
-                "托盘菜单的版本切换功能",
-                "托盘图标显示当前版本信息",
-                "环境变量预览和同步状态显示",
-                "滚动条样式优化和主题适配",
-                "优化托盘菜单布局和样式",
-                "改进环境变量设置界面",
-                "优化版本切换后的状态同步",
-                "统一滚动条样式和交互体验",
-                "修复托盘菜单版本列表同步问题",
-                "修复环境变量设置后的显示更新",
-                "修复主题切换时的样式应用问题",
-                "修复版本切换后的状态刷新问题"
-            ]
-        },
-        {
-            "version": "1.0.4",
-            "date": "2024-12-30",
-            "type": "feature",
-            "changes": [
-                "优化构建系统，支持便携版和安装版",
-                "统一版本管理，使用 app.json 集中配置",
-                "改进图标显示和资源管理",
-                "优化日志系统，支持文件记录",
-                "完善帮助文档和 API 文档",
-                "添加中英文 README 支持",
-                "改进托盘菜单和版本切换功能",
-                "优化界面样式和用户体验",
-                "添加构建脚本的平台支持"
-            ]
-        }
-    ],
     "requirements": {
         "python": ">=3.8.0",
         "pyqt6": ">=6.4.0",
@@ -132,4 +108,4 @@
         "requests": ">=2.25.0",
         "packaging": ">=20.0"
     }
-} 
+}

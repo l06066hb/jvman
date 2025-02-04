@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# Project specific
+release/
+logs/
+*.log
+jdk/
+current/
+.env
+config/local.json
+config/personal.json
+
+# Test
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.history
+
+# Personal development tools
+scripts/push_all.ps1
+scripts/push_all.sh
+scripts/release.py
+scripts/release.py
+.cursorrules
+ABOUT.md
+config/platforms.json
+config/settings.json
+config/translate.json
+CONTRIBUTING.md
+docs/github_cicd_guide.md
+installer.iss
+jvman.spec
+src/i18n/Languages/ChineseSimplified.isl
