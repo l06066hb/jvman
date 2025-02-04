@@ -306,13 +306,53 @@
             "fetch_failed": "Failed to fetch version list: {error}",
             "info_failed": "Failed to get version information: {error}",
             "unsupported_vendor": "Unsupported vendor: {vendor}",
-            "no_version_info": "Unable to get version information",
+            "no_version_info": "No versions available",
             "manual_required": "Manual download required: {error}",
             "fetch_adoptium_failed": "Failed to fetch Adoptium version list: {error}",
             "fetch_zulu_failed": "Failed to fetch Zulu version list: {error}",
             "check_link_failed": "Failed to check OpenJDK {version} download link: {error}",
             "async_update_failed": "Failed to update version list asynchronously: {error}",
-            "cleanup_thread_failed": "Failed to clean up thread: {error}"
+            "cleanup_thread_failed": "Failed to clean up thread: {error}",
+            "check_update_failed": "Error checking update status: {error}",
+            "create_update_dir_failed": "Failed to create update directory: {error}",
+            "download_update_failed": "Failed to download update: {error}",
+            "get_changes_failed": "Failed to get update changes: {error}",
+            "compare_version_failed": "Failed to compare versions: {error}",
+            "update_dir_permission": "No write permission for update directory: {error}",
+            "get_update_path_failed": "Failed to get update save path: {error}",
+            "cache_read_failed": "Failed to read version cache: {error}",
+            "cache_write_failed": "Failed to update version cache: {error}",
+            "cache_clear_failed": "Failed to clear version cache: {error}",
+            "mirror_failed": "Mirror access failed: {error}",
+            "mirror_not_found": "No available mirrors found",
+            "mirror_add_failed": "Failed to add mirror: {error}",
+            "mirror_remove_failed": "Failed to remove mirror: {error}",
+            "path_not_dir": "Specified path is not a directory: {path}",
+            "path_not_writable": "Directory is not writable: {path}",
+            "create_dir_failed": "Failed to create directory: {error}",
+            "remove_existing_failed": "Failed to remove existing file: {error}",
+            "already_exists": "JDK {vendor} {version} is already installed at:\n{path}\n\nPlease use the existing installation or remove it first."
+        },
+        "cache": {
+            "using_cached": "Using cached version list",
+            "updating": "Updating version list...",
+            "update_success": "Version list updated",
+            "update_failed": "Failed to update version list",
+            "last_update": "Last update: {time}"
+        },
+        "mirror": {
+            "official": "Official Source",
+            "using_mirror": "Using mirror: {name}",
+            "speed_testing": "Testing mirror speed...",
+            "add_success": "Mirror added successfully",
+            "remove_success": "Mirror removed successfully",
+            "mirrors": {
+                "tencent": "Tencent Cloud Mirror",
+                "huawei": "Huawei Cloud Mirror",
+                "aliyun": "Aliyun Mirror",
+                "tsinghua": "Tsinghua University Mirror",
+                "azure_cn": "Azure China Mirror"
+            }
         },
         "manual": {
             "oracle": "Oracle account login required.\n\nPlease follow these steps:\n1. Visit {url}\n2. Login to Oracle account (register if needed)\n3. Download JDK {version}\n4. Place the downloaded file in: {dir}",
@@ -511,6 +551,25 @@
             "notes": {
                 "lts": "OpenJDK build provided by Azul Systems with enterprise support, recommended for production use",
                 "sts": "Non-LTS version, recommended for testing and development environments only, or wait for LTS"
+            }
+        },
+        "microsoft": {
+            "feature": {
+                "performance": "✓ Performance Optimized for Azure",
+                "security": "✓ Regular Security Updates",
+                "cloud": "✓ Cloud-Ready Features",
+                "support": "✓ Microsoft Support",
+                "container": "✓ Container Optimized",
+                "lts": "✓ Long Term Support (LTS)",
+                "sts": "⚠️ Short Term Support (non-LTS)"
+            },
+            "support": {
+                "lts": "Microsoft Support + Community Support (4+ years)",
+                "sts": "Microsoft Support + Community Support (6 months)"
+            },
+            "notes": {
+                "lts": "Microsoft's build of OpenJDK with enterprise-grade support and cloud optimizations",
+                "sts": "Non-LTS version, recommended for testing and development environments only"
             }
         }
     },

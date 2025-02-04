@@ -1,4 +1,4 @@
- # Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,286 +6,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-
-
-
-
-
-
-## [1.0.7] - 2025-02-04
+## [1.0.8] - 2025-02-04
 
 ### Added
-- CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for platform DMG construction
-- Release to Gitee functionality
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
+- Full support for Microsoft OpenJDK
+- Detailed description of JDK version features
+- Add feature and support strategy explanations for each publisher
+- Distinguishing identification of LTS/STS versions
+- Internationalization support for adding version information
+- Style optimization for adding version details
 
 ### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of the platform has added a waiting mechanism
-- Configure Actions using a more secure authentication method
-- The triggering conditions and execution sequence of workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
+- How to display JDK version information
+- Improve the display effect of version features
+- Optimize the organizational structure of publisher information
+- Improve version information caching mechanism
+- Optimize the management of international texts
+- Improve the stability of version checking
 
 ### Fixed
-- The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- The issue of non-existent `. app ` directory during platform construction
-- Permission and path issues when building DMG on the platform
-- SSH authentication issue when synchronizing Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during packaging
-
-### Documentation
-- Related configuration instructions and best practices
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission control for Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
+- The issue of Microsoft OpenJDK version retrieval failure
+- Fix the issue of incomplete version information display
+- Fix the issue of missing translated text in some parts
+- Fix the issue of information not being updated after version switching
+- Fix formatting errors in feature description
+- Fix display issues during internationalization switching
+## [1.0.8] - 2025-02-04
 
 ### Added
-- CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for platform DMG construction
-- Release to Gitee functionality
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
+- Added complete support for Microsoft OpenJDK
+- Added detailed descriptions of JDK version features
+- Added vendor-specific features and support policy descriptions
+- Added LTS/STS version identification
+- Added internationalization support for version information
+- Added style optimization for version details
 
 ### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of the platform has added a waiting mechanism
-- Configure Actions using a more secure authentication method
-- The triggering conditions and execution sequence of workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
+- Optimized JDK version information display
+- Improved version feature presentation
+- Enhanced vendor information organization
+- Improved version information caching mechanism
+- Optimized internationalization text management
+- Enhanced version detection stability
 
 ### Fixed
-- The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- The issue of non-existent `. app ` directory during platform construction
-- Permission and path issues when building DMG on the platform
-- SSH authentication issue when synchronizing Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during packaging
+- Fixed Microsoft OpenJDK version fetch failure
+- Fixed incomplete version information display
+- Fixed missing translation texts
+- Fixed information update after version switch
+- Fixed feature description formatting errors
+- Fixed display issues during language switching
 
-### Documentation
-- Related configuration instructions and best practices
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
+### Improved
+- JDK version management stability
+- Version information presentation
+- Internationalization support completeness
+- User interface interaction experience
+- Error handling reliability
+- Version detection performance
 
-### Security
-- Permission control for Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
-
-### Added
-- CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for platform DMG construction
-- Release to Gitee functionality
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
-
-### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of the platform has added a waiting mechanism
-- Configure Actions using a more secure authentication method
-- The triggering conditions and execution sequence of workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
-
-### Fixed
-- The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- The issue of non-existent `. app ` directory during platform construction
-- Permission and path issues when building DMG on the platform
-- SSH authentication issue when synchronizing Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during packaging
-
-### Documentation
-- Related configuration instructions and best practices
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission control for Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
-
-### Added
-- CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for platform DMG construction
-- Release to Gitee functionality
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
-
-### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of the platform has added a waiting mechanism
-- Configure Actions using a more secure authentication method
-- The triggering conditions and execution sequence of workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
-
-### Fixed
-- The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- The issue of non-existent `. app ` directory during platform construction
-- Permission and path issues when building DMG on the platform
-- SSH authentication issue when synchronizing Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during packaging
-
-### Documentation
-- Related configuration instructions and best practices
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission control for Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
-
-### Added
-- CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for platform DMG construction
-- Release to Gitee functionality
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
-
-### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of the platform has added a waiting mechanism
-- Configure Actions using a more secure authentication method
-- The triggering conditions and execution sequence of workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
-
-### Fixed
-- The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- The issue of non-existent `. app ` directory during platform construction
-- Permission and path issues when building DMG on the platform
-- SSH authentication issue when synchronizing Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during packaging
-
-### Documentation
-- Related configuration instructions and best practices
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission control for Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
-
-### Added
-- GitHub CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for building DMG on macOS platform
-- The function of GitHub releases to Gitee
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
-
-### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of macOS platform has added a waiting mechanism
-- Configure GitHub Actions using a more secure authentication method
-- Trigger conditions and execution sequence of CI/CD workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
-
-### Fixed
-- The problem of incorrect format of the ` -- add data ` parameter during Windows platform construction
-- The problem of non-existent `. app ` directory during macOS platform build
-- Permission and path issues when building DMG on macOS platform
-- SSH authentication issue when synchronizing GitHub Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during PyInstaller packaging
-
-### Documentation
-- Configuration instructions and best practices related to CI/CD
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission Control for GitHub Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2025-02-04
-
-### Added
-- GitHub CI/CD Workflow Guide Document
-- Added detailed logs and status checks during the construction process
-- Complete support for building DMG on macOS platform
-- The function of GitHub releases to Gitee
-- Added hash value verification mechanism for building products
-- Added automatic checks and dependency installations for building environments
-- Added parallel execution support for cross platform construction
-
-### Changed
-- Optimized error handling and log output for building scripts
-- The construction process of macOS platform has added a waiting mechanism
-- Configure GitHub Actions using a more secure authentication method
-- Trigger conditions and execution sequence of CI/CD workflow
-- Improved resource management mechanism for multi platform construction
-- Optimized the directory structure and naming conventions for building products
-- Improved automated process for version release and synchronization
-
-### Fixed
-- The problem of incorrect format of the ` -- add data ` parameter during Windows platform construction
-- The problem of non-existent `. app ` directory during macOS platform build
-- Permission and path issues when building DMG on macOS platform
-- SSH authentication issue when synchronizing GitHub Actions to Gitee
-- Fixed compatibility issues with resource file paths during cross platform construction
-- Hidden import issues during PyInstaller packaging
-
-### Documentation
-- Configuration instructions and best practices related to CI/CD
-- Added detailed instructions and security recommendations for key configuration
-- Added process documentation for automated construction and publishing
-- Added troubleshooting guide for common issues
-
-### Security
-- Permission Control for GitHub Actions
-- Improved the security of key management and usage
-- Optimized the security check mechanism during the construction process
-- Added integrity verification for building products
-## [1.0.7] - 2024-02-03
+## [1.0.7] - 2025-02-02
 
 ### Fixed
 - Fixed `--add-data` parameter format error on Windows platform
@@ -363,6 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment variable setting reliability and stability
 - Cross-platform compatibility of symlink paths
 
-[1.0.7]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.7
-[1.0.6]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.6
+
+[1.0.8]: https://github.com/l06066hb/jvman/releases/tag/v1.0.8
 [1.0.7]: https://github.com/l06066hb/jvman/releases/tag/v1.0.7
+[1.0.6]: https://github.com/l06066hb/jvman/releases/tag/v1.0.6

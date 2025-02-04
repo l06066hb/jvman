@@ -6,6 +6,8 @@ from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from datetime import datetime
 import time
 from utils.i18n_manager import i18n_manager
+from typing import Dict, List, Optional, Tuple
+from .download_mirrors import DownloadMirrors
 
 # 确保国际化管理器被正确初始化
 _ = i18n_manager.get_text
@@ -32,6 +34,13 @@ class VersionUpdateThread(QThread):
             openjdk_versions = self.downloader._get_openjdk_versions()
             if openjdk_versions:
                 self.downloader.api_config["OpenJDK"]["versions"] = openjdk_versions
+
+            # Microsoft OpenJDK
+            microsoft_versions = self.downloader._get_microsoft_versions()
+            if microsoft_versions:
+                self.downloader.api_config["Microsoft OpenJDK"][
+                    "versions"
+                ] = microsoft_versions
 
             # Adoptium
             adoptium_versions = self.downloader._get_adoptium_versions()
@@ -63,7 +72,7 @@ class JDKDownloader(QObject):
     download_progress = pyqtSignal(int, int)  # 当前大小，总大小
     download_complete = pyqtSignal(bool, str)  # 成功标志，消息
 
-    def __init__(self):
+    def __init__(self, config_dir: str = None):
         """初始化下载器"""
         super().__init__()
 
@@ -74,6 +83,7 @@ class JDKDownloader(QObject):
         self.base_versions = {
             "Oracle JDK": [
                 "23",
+                "22",
                 "21",
                 "20",
                 "19",
@@ -91,6 +101,7 @@ class JDKDownloader(QObject):
             ],
             "OpenJDK": [
                 "23",
+                "22",
                 "21",
                 "20",
                 "19",
@@ -108,6 +119,7 @@ class JDKDownloader(QObject):
             ],
             "Eclipse Temurin (Adoptium)": [
                 "23",
+                "22",
                 "21",
                 "20",
                 "19",
@@ -123,25 +135,11 @@ class JDKDownloader(QObject):
                 "9",
                 "8",
             ],
-            "Amazon Corretto": [
-                "23",
-                "21",
-                "20",
-                "19",
-                "18",
-                "17",
-                "16",
-                "15",
-                "14",
-                "13",
-                "12",
-                "11",
-                "10",
-                "9",
-                "8",
-            ],
+            "Microsoft OpenJDK": ["21", "17", "11", "8"],  # Microsoft 提供的主要LTS版本
+            "Amazon Corretto": ["21", "17", "11", "8"],  # Corretto 主要支持LTS版本
             "Azul Zulu": [
                 "23",
+                "22",
                 "21",
                 "20",
                 "19",
@@ -168,6 +166,10 @@ class JDKDownloader(QObject):
         # 连接语言变更信号
         i18n_manager.language_changed.connect(self._on_language_changed)
 
+        self.config_dir = config_dir
+        self.mirrors = DownloadMirrors(config_dir) if config_dir else None
+        self.session = requests.Session()
+
     def _on_language_changed(self):
         """处理语言变更"""
         # 清除版本信息缓存
@@ -189,6 +191,11 @@ class JDKDownloader(QObject):
             "Eclipse Temurin (Adoptium)": {
                 "api_url": "https://api.adoptium.net/v3/assets/latest/{version}/hotspot",
                 "versions": self.base_versions["Eclipse Temurin (Adoptium)"],
+                "auth_required": False,
+            },
+            "Microsoft OpenJDK": {
+                "api_url": "https://aka.ms/download-jdk/",
+                "versions": [],  # 将通过 _get_microsoft_versions 动态获取
                 "auth_required": False,
             },
             "Amazon Corretto": {
@@ -292,439 +299,487 @@ class JDKDownloader(QObject):
             return None
 
     def _fetch_version_info(self, vendor, version):
-        print(vendor, version)
-        """从API获取版本信息"""
-        # JDK版本特性映射
-        version_features = {
-            "23": {
-                "release_date": "2024-09-17",
-                "version_detail": "23",
-                "features": [
-                    "version.feature.23.generics",
-                    "version.feature.23.string_templates",
-                    "version.feature.23.unnamed_patterns",
-                    "version.feature.23.foreign_memory",
-                    "version.feature.23.vector_api",
-                ],
-                "lts": False,
-            },
-            "22": {
-                "release_date": "2024-03-19",
-                "version_detail": "22",
-                "features": [
-                    _("version.feature.22.scoped_values"),
-                    _("version.feature.22.string_templates"),
-                    _("version.feature.22.unnamed_patterns"),
-                    _("version.feature.22.foreign_memory"),
-                    _("version.feature.22.vector_api"),
-                ],
-                "lts": False,
-            },
-            "21": {
-                "release_date": "2023-09-19",
-                "version_detail": "21.0.2",
-                "features": [
-                    _("version.feature.21.string_templates"),
-                    _("version.feature.21.sequence_collections"),
-                    _("version.feature.21.virtual_threads"),
-                    _("version.feature.21.record_patterns"),
-                    _("version.feature.21.zgc"),
-                    _("version.feature.21.foreign_memory"),
-                ],
-                "lts": True,
-            },
-            "17": {
-                "release_date": "2021-09-14",
-                "version_detail": "17.0.10",
-                "features": [
-                    _("version.feature.17.sealed_classes"),
-                    _("version.feature.17.switch_patterns"),
-                    _("version.feature.17.random_generator"),
-                    _("version.feature.17.macos_aarch64"),
-                    _("version.feature.17.macos_rendering"),
-                ],
-                "lts": True,
-            },
-            "11": {
-                "release_date": "2018-09-25",
-                "version_detail": "11.0.22",
-                "features": [
-                    _("version.feature.11.http_client"),
-                    _("version.feature.11.lambda_vars"),
-                    _("version.feature.11.single_file"),
-                    _("version.feature.11.unicode_10"),
-                    _("version.feature.11.dynamic_constants"),
-                    _("version.feature.11.epsilon_gc"),
-                ],
-                "lts": True,
-            },
-            "8": {
-                "release_date": "2014-03-18",
-                "version_detail": "8u402",
-                "features": [
-                    _("version.feature.8.lambda"),
-                    _("version.feature.8.method_ref"),
-                    _("version.feature.8.default_methods"),
-                    _("version.feature.8.stream_api"),
-                    _("version.feature.8.date_time"),
-                    _("version.feature.8.optional"),
-                ],
-                "lts": True,
-            },
-        }
-
-        # 检查是否是 EA 版本
-        is_ea = False
-        is_temurin = False
+        """获取版本详细信息"""
         try:
-            if vendor == "OpenJDK":
-                # 检查是否是 EA 版本
-                if version in version_features:
-                    # 如果在版本特性映射中，说明是已发布的正式版本
-                    is_ea = False
-                else:
-                    # 检查是否是 EA 版本
-                    ea_url = f"https://jdk.java.net/{version}"
-                    response = requests.get(ea_url, timeout=5)
-                    if response.status_code == 200:
-                        # 更精确的 EA 检测：检查当前版本的下载链接是否包含 ea 或 early_access
-                        import re
+            # 获取平台信息
+            from .platform_manager import platform_manager
 
-                        download_links = re.findall(
-                            r'https://download\.java\.net/java/[^"]+?openjdk-[^"]+?windows-x64_bin\.(?:zip|tar\.gz)',
-                            response.text,
-                        )
-                        if download_links:
-                            is_ea = any(
-                                "ea" in link.lower() or "early_access" in link.lower()
-                                for link in download_links
-                            )
-                        else:
-                            # 如果找不到下载链接，检查页面内容
-                            is_ea = (
-                                "early access" in response.text.lower()
-                                and f"jdk {version}" in response.text.lower()
-                            )
+            is_windows = platform_manager.is_windows
+            is_macos = platform_manager.is_macos
+            arch = platform_manager.get_arch()
 
-                    # 如果不是 EA 版本，检查是否有正式发布版本
-                    if not is_ea:
-                        ga_url = "https://jdk.java.net/archive/"
-                        response = requests.get(ga_url, timeout=5)
-                        if response.status_code == 200:
-                            # 检查是否存在该版本的 GA 发布
-                            pattern = f'jdk{version}[^"]*?/GPL/openjdk-{version}[^"]*?windows-x64_bin\.(?:zip|tar\.gz)'
-                            if not re.search(pattern, response.text, re.I):
-                                # 如果既不是 EA 也找不到 GA 版本，尝试使用 Temurin
-                                temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot"
-                                response = requests.get(temurin_url, timeout=5)
-                                if response.status_code == 200:
-                                    is_temurin = True
-        except:
-            pass
+            # 如果是 Windows，使用 zip，否则使用 tar.gz
+            ext = "zip" if is_windows else "tar.gz"
 
-        base_info = {
-            "version": version,
-            "version_detail": version_features.get(version, {}).get(
-                "version_detail", version
-            ),
-            "release_date": version_features.get(version, {}).get(
-                "release_date", _("common.loading")
-            ),
-            "jvm_impl": "HotSpot",
-            "arch": "x86_64",
-            "os": "Windows",
-            "features": [],
-            "release_notes": "",
-            "support_policy": "",
-            "version_features": version_features.get(version, {}).get("features", []),
-            "is_lts": version_features.get(version, {}).get("lts", False),
-            "is_ea": is_ea,
-            "is_temurin": is_temurin,
-        }
-
-        try:
-            if vendor == "Oracle JDK":
-                features = [
-                    _("vendor.oracle.feature.commercial"),
-                    _("vendor.oracle.feature.graalvm"),
-                    _("vendor.oracle.feature.monitoring"),
-                    _("vendor.oracle.feature.jfr"),
-                    _("vendor.oracle.feature.jmc"),
-                    _("vendor.oracle.feature.cds"),
-                ]
-
-                # 添加版本特定标记
-                if base_info["is_lts"]:
-                    features.insert(0, _("vendor.oracle.feature.lts"))
-                    base_info["support_policy"] = _("vendor.oracle.support.lts")
-                    base_info["release_notes"] = _("vendor.oracle.notes.lts")
-                else:
-                    features.insert(0, _("vendor.oracle.feature.sts"))
-                    base_info["support_policy"] = _("vendor.oracle.support.sts")
-                    base_info["release_notes"] = _("vendor.oracle.notes.sts")
-
-                # 添加许可提醒
-                features.append(_("vendor.oracle.feature.license"))
-
-                # 设置发行商特性
-                base_info["features"] = features
-                # 确保版本特性使用正确的国际化文本
-                if version in version_features:
-                    base_info["version_features"] = [
-                        _(feature) for feature in version_features[version]["features"]
-                    ]
-
-            elif vendor == "OpenJDK":
-                features = [
-                    _("vendor.openjdk.feature.reference"),
-                    _("vendor.openjdk.feature.community"),
-                    _("vendor.openjdk.feature.standard"),
-                    _("vendor.openjdk.feature.updates"),
-                    _("vendor.openjdk.feature.transparent"),
-                ]
-
-                # 添加版本特定标记
-                if is_ea:
-                    features.insert(0, _("vendor.openjdk.feature.ea"))
-                    base_info["support_policy"] = _("vendor.openjdk.support.ea")
-                    base_info["release_notes"] = _("vendor.openjdk.notes.ea")
-                elif is_temurin:
-                    features.insert(0, _("vendor.openjdk.feature.temurin"))
-                    base_info["support_policy"] = _("vendor.openjdk.support.temurin")
-                    base_info["release_notes"] = _("vendor.openjdk.notes.temurin")
-                elif not base_info["is_lts"]:
-                    features.insert(0, _("vendor.openjdk.feature.sts"))
-                    base_info["support_policy"] = _("vendor.openjdk.support.sts")
-                    base_info["release_notes"] = _("vendor.openjdk.notes.sts")
-                else:
-                    features.insert(0, _("vendor.openjdk.feature.lts"))
-                    base_info["support_policy"] = _("vendor.openjdk.support.lts")
-                    base_info["release_notes"] = _("vendor.openjdk.notes.lts")
-
-                base_info["features"] = features
-
-            elif vendor == "Amazon Corretto":
-                features = [
-                    _("vendor.corretto.feature.aws"),
-                    _("vendor.corretto.feature.security"),
-                    _("vendor.corretto.feature.performance"),
-                    _("vendor.corretto.feature.production"),
-                    _("vendor.corretto.feature.platform"),
-                ]
-
-                # 添加版本特定标记
-                if base_info["is_lts"]:
-                    features.insert(0, _("vendor.corretto.feature.lts"))
-                    base_info["support_policy"] = _("vendor.corretto.support.lts")
-                    base_info["release_notes"] = _("vendor.corretto.notes.lts")
-                else:
-                    features.insert(0, _("vendor.corretto.feature.sts"))
-                    base_info["support_policy"] = _("vendor.corretto.support.sts")
-                    base_info["release_notes"] = _("vendor.corretto.notes.sts")
-
-                base_info.update({"features": features})
-
-            elif vendor == "Azul Zulu":
-                features = [
-                    _("vendor.zulu.feature.tck"),
-                    _("vendor.zulu.feature.performance"),
-                    _("vendor.zulu.feature.custom"),
-                    _("vendor.zulu.feature.cloud"),
-                    _("vendor.zulu.feature.container"),
-                ]
-
-                # 添加版本特定标记
-                if base_info["is_lts"]:
-                    features.insert(0, _("vendor.zulu.feature.lts"))
-                    base_info["support_policy"] = _("vendor.zulu.support.lts")
-                    base_info["release_notes"] = _("vendor.zulu.notes.lts")
-                else:
-                    features.insert(0, _("vendor.zulu.feature.sts"))
-                    base_info["support_policy"] = _("vendor.zulu.support.sts")
-                    base_info["release_notes"] = _("vendor.zulu.notes.sts")
-
-                base_info.update({"features": features})
-
-            # 获取下载链接
-            download_link = self._get_download_link(vendor, version)
-
-            # 预先获取所有需要的翻译文本
-            translations = {
-                "title": _("version.info.detail.title"),
-                "release_date": _("jdk.info.release_date"),
-                "runtime": _("version.info.detail.runtime"),
-                "features": _("jdk.info.features"),
-                "version_features": _("jdk.info.version_features"),
-                "support_policy": _("jdk.info.support_policy"),
-                "download_link": _("version.info.download_link"),
-                "badge": {
-                    "lts": _("version.badge.lts"),
-                    "sts": _("version.badge.sts"),
-                    "ea": _("version.badge.ea"),
-                    "temurin": _("version.badge.temurin"),
+            # 基础版本特性映射
+            version_features = {
+                "23": {
+                    "release_date": "2024-09-17",
+                    "version_detail": "23",
+                    "features": [
+                        "version.feature.23.generics",
+                        "version.feature.23.string_templates",
+                        "version.feature.23.unnamed_patterns",
+                        "version.feature.23.foreign_memory",
+                        "version.feature.23.vector_api",
+                    ],
+                    "lts": False,
                 },
-                "warning": {
-                    "ea": _("version.warning.ea"),
-                    "sts": _("version.warning.sts"),
+                "22": {
+                    "release_date": "2024-03-19",
+                    "version_detail": "22",
+                    "features": [
+                        _("version.feature.22.scoped_values"),
+                        _("version.feature.22.string_templates"),
+                        _("version.feature.22.unnamed_patterns"),
+                        _("version.feature.22.foreign_memory"),
+                        _("version.feature.22.vector_api"),
+                    ],
+                    "lts": False,
+                },
+                "21": {
+                    "release_date": "2023-09-19",
+                    "version_detail": "21.0.2",
+                    "features": [
+                        _("version.feature.21.string_templates"),
+                        _("version.feature.21.sequence_collections"),
+                        _("version.feature.21.virtual_threads"),
+                        _("version.feature.21.record_patterns"),
+                        _("version.feature.21.zgc"),
+                        _("version.feature.21.foreign_memory"),
+                    ],
+                    "lts": True,
+                },
+                "17": {
+                    "release_date": "2021-09-14",
+                    "version_detail": "17.0.10",
+                    "features": [
+                        _("version.feature.17.sealed_classes"),
+                        _("version.feature.17.switch_patterns"),
+                        _("version.feature.17.random_generator"),
+                        _("version.feature.17.macos_aarch64"),
+                        _("version.feature.17.macos_rendering"),
+                    ],
+                    "lts": True,
+                },
+                "11": {
+                    "release_date": "2018-09-25",
+                    "version_detail": "11.0.22",
+                    "features": [
+                        _("version.feature.11.http_client"),
+                        _("version.feature.11.lambda_vars"),
+                        _("version.feature.11.single_file"),
+                        _("version.feature.11.unicode_10"),
+                        _("version.feature.11.dynamic_constants"),
+                        _("version.feature.11.epsilon_gc"),
+                    ],
+                    "lts": True,
+                },
+                "8": {
+                    "release_date": "2014-03-18",
+                    "version_detail": "8u402",
+                    "features": [
+                        _("version.feature.8.lambda"),
+                        _("version.feature.8.method_ref"),
+                        _("version.feature.8.default_methods"),
+                        _("version.feature.8.stream_api"),
+                        _("version.feature.8.date_time"),
+                        _("version.feature.8.optional"),
+                    ],
+                    "lts": True,
                 },
             }
 
-            # 确保所有特性文本都被翻译
-            base_info["features"] = [
-                _(feature) if isinstance(feature, str) else feature
-                for feature in base_info["features"]
-            ]
-            base_info["version_features"] = [
-                _(feature) if isinstance(feature, str) else feature
-                for feature in base_info["version_features"]
-            ]
-            base_info["support_policy"] = (
-                _(base_info["support_policy"])
-                if isinstance(base_info["support_policy"], str)
-                else base_info["support_policy"]
-            )
-            base_info["release_notes"] = (
-                _(base_info["release_notes"])
-                if isinstance(base_info["release_notes"], str)
-                else base_info["release_notes"]
-            )
+            # 检查是否是 EA 版本
+            is_ea = False
+            is_temurin = False
+            try:
+                if vendor == "OpenJDK":
+                    # 检查是否是 EA 版本
+                    if version in version_features:
+                        # 如果在版本特性映射中，说明是已发布的正式版本
+                        is_ea = False
+                    else:
+                        # 检查是否是 EA 版本
+                        ea_url = f"https://jdk.java.net/{version}"
+                        response = requests.get(ea_url, timeout=5)
+                        if response.status_code == 200:
+                            # 更精确的 EA 检测：检查当前版本的下载链接是否包含 ea 或 early_access
+                            import re
 
-            # 构建格式化的版本信息
-            info_text = f"""<style>
-                .title {{ 
-                    color: #1a73e8; 
-                    font-weight: bold; 
-                    font-size: 14px; 
-                    margin-bottom: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                }}
-                .version-info {{
-                    display: flex;
-                    align-items: center;
-                }}
-                .vendor {{
-                    color: #666666;
-                    font-size: 12px;
-                    font-weight: normal;
-                    margin-left: 10px;
-                    padding-left: 10px;
-                    border-left: 2px solid #E0E0E0;
-                }}
-                .section {{ margin: 8px 0; }}
-                .label {{ color: #666666; font-weight: bold; }}
-                .value {{ color: #2C3E50; }}
-                .feature {{ color: #2C3E50; margin: 3px 0; }}
-                .note {{ color: #666666; font-style: italic; margin-top: 8px; }}
-                .badge {{ 
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    margin-left: 8px;
-                    background-color: {'#1a73e8' if base_info['is_lts'] else '#34A853'};
-                    color: white;
-                }}
-                .warning-badge {{
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    margin-left: 8px;
-                    background-color: {'#EA4335' if base_info['is_ea'] else '#FBBC05'};
-                    color: white;
-                }}
-                .provider-badge {{
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    margin-left: 8px;
-                    background-color: #4285F4;
-                    color: white;
-                }}
-                .version-feature {{
-                    color: #1a73e8;
-                    margin: 3px 0;
-                    padding-left: 20px;
-                    position: relative;
-                }}
-                .version-feature::before {{
-                    content: "•";
-                    position: absolute;
-                    left: 8px;
-                    color: #1a73e8;
-                }}
-                .divider {{
-                    border-top: 1px solid #E0E0E0;
-                    margin: 12px 0;
-                }}
-                .download-link {{
-                    color: #1a73e8;
-                    text-decoration: none;
-                    margin-top: 10px;
-                    display: block;
-                }}
-                .download-link:hover {{
-                    text-decoration: underline;
-                }}
-                .warning-text {{
-                    color: #EA4335;
-                    font-weight: bold;
-                    margin: 8px 0;
-                }}
-            </style>
-            <div class='title'>
-                <div class='version-info'>
-                    {translations['title']} {base_info['version']} ({base_info['version_detail']})
-                    <span class='vendor'>{vendor}</span>
-                    <span class='badge'>{translations['badge']['lts'] if base_info['is_lts'] else translations['badge']['sts']}</span>
-                    {f'<span class="warning-badge">{translations["badge"]["ea"]}</span>' if base_info['is_ea'] else ''}
-                    {f'<span class="provider-badge">{translations["badge"]["temurin"]}</span>' if base_info['is_temurin'] else ''}
+                            download_links = re.findall(
+                                r'https://download\.java\.net/java/[^"]+?openjdk-[^"]+?windows-x64_bin\.(?:zip|tar\.gz)',
+                                response.text,
+                            )
+                            if download_links:
+                                is_ea = any(
+                                    "ea" in link.lower()
+                                    or "early_access" in link.lower()
+                                    for link in download_links
+                                )
+                            else:
+                                # 如果找不到下载链接，检查页面内容
+                                is_ea = (
+                                    "early access" in response.text.lower()
+                                    and f"jdk {version}" in response.text.lower()
+                                )
+
+                        # 如果不是 EA 版本，检查是否有正式发布版本
+                        if not is_ea:
+                            ga_url = "https://jdk.java.net/archive/"
+                            response = requests.get(ga_url, timeout=5)
+                            if response.status_code == 200:
+                                # 检查是否存在该版本的 GA 发布
+                                pattern = f'jdk{version}[^"]*?/GPL/openjdk-{version}[^"]*?windows-x64_bin\.(?:zip|tar\.gz)'
+                                if not re.search(pattern, response.text, re.I):
+                                    # 如果既不是 EA 也找不到 GA 版本，尝试使用 Temurin
+                                    temurin_url = f"https://api.adoptium.net/v3/assets/latest/{version}/hotspot"
+                                    response = requests.get(temurin_url, timeout=5)
+                                    if response.status_code == 200:
+                                        is_temurin = True
+            except:
+                pass
+
+            base_info = {
+                "version": version,
+                "version_detail": version_features.get(version, {}).get(
+                    "version_detail", version
+                ),
+                "release_date": version_features.get(version, {}).get(
+                    "release_date", _("common.loading")
+                ),
+                "jvm_impl": "HotSpot",
+                "arch": "x86_64",
+                "os": "Windows",
+                "features": [],
+                "release_notes": "",
+                "support_policy": "",
+                "version_features": version_features.get(version, {}).get(
+                    "features", []
+                ),
+                "is_lts": version_features.get(version, {}).get("lts", False),
+                "is_ea": is_ea,
+                "is_temurin": is_temurin,
+            }
+
+            try:
+                if vendor == "Oracle JDK":
+                    features = [
+                        _("vendor.oracle.feature.commercial"),
+                        _("vendor.oracle.feature.graalvm"),
+                        _("vendor.oracle.feature.monitoring"),
+                        _("vendor.oracle.feature.jfr"),
+                        _("vendor.oracle.feature.jmc"),
+                        _("vendor.oracle.feature.cds"),
+                    ]
+
+                    # 添加版本特定标记
+                    if base_info["is_lts"]:
+                        features.insert(0, _("vendor.oracle.feature.lts"))
+                        base_info["support_policy"] = _("vendor.oracle.support.lts")
+                        base_info["release_notes"] = _("vendor.oracle.notes.lts")
+                    else:
+                        features.insert(0, _("vendor.oracle.feature.sts"))
+                        base_info["support_policy"] = _("vendor.oracle.support.sts")
+                        base_info["release_notes"] = _("vendor.oracle.notes.sts")
+
+                    # 添加许可提醒
+                    features.append(_("vendor.oracle.feature.license"))
+
+                    # 设置发行商特性
+                    base_info["features"] = features
+                    # 确保版本特性使用正确的国际化文本
+                    if version in version_features:
+                        base_info["version_features"] = [
+                            _(feature)
+                            for feature in version_features[version]["features"]
+                        ]
+
+                elif vendor == "OpenJDK":
+                    features = [
+                        _("vendor.openjdk.feature.reference"),
+                        _("vendor.openjdk.feature.community"),
+                        _("vendor.openjdk.feature.standard"),
+                        _("vendor.openjdk.feature.updates"),
+                        _("vendor.openjdk.feature.transparent"),
+                    ]
+
+                    # 添加版本特定标记
+                    if is_ea:
+                        features.insert(0, _("vendor.openjdk.feature.ea"))
+                        base_info["support_policy"] = _("vendor.openjdk.support.ea")
+                        base_info["release_notes"] = _("vendor.openjdk.notes.ea")
+                    elif is_temurin:
+                        features.insert(0, _("vendor.openjdk.feature.temurin"))
+                        base_info["support_policy"] = _(
+                            "vendor.openjdk.support.temurin"
+                        )
+                        base_info["release_notes"] = _("vendor.openjdk.notes.temurin")
+                    elif not base_info["is_lts"]:
+                        features.insert(0, _("vendor.openjdk.feature.sts"))
+                        base_info["support_policy"] = _("vendor.openjdk.support.sts")
+                        base_info["release_notes"] = _("vendor.openjdk.notes.sts")
+                    else:
+                        features.insert(0, _("vendor.openjdk.feature.lts"))
+                        base_info["support_policy"] = _("vendor.openjdk.support.lts")
+                        base_info["release_notes"] = _("vendor.openjdk.notes.lts")
+
+                    base_info["features"] = features
+
+                elif vendor == "Amazon Corretto":
+                    features = [
+                        _("vendor.corretto.feature.aws"),
+                        _("vendor.corretto.feature.security"),
+                        _("vendor.corretto.feature.performance"),
+                        _("vendor.corretto.feature.production"),
+                        _("vendor.corretto.feature.platform"),
+                    ]
+
+                    # 添加版本特定标记
+                    if base_info["is_lts"]:
+                        features.insert(0, _("vendor.corretto.feature.lts"))
+                        base_info["support_policy"] = _("vendor.corretto.support.lts")
+                        base_info["release_notes"] = _("vendor.corretto.notes.lts")
+                    else:
+                        features.insert(0, _("vendor.corretto.feature.sts"))
+                        base_info["support_policy"] = _("vendor.corretto.support.sts")
+                        base_info["release_notes"] = _("vendor.corretto.notes.sts")
+
+                    base_info.update({"features": features})
+
+                elif vendor == "Azul Zulu":
+                    features = [
+                        _("vendor.zulu.feature.tck"),
+                        _("vendor.zulu.feature.performance"),
+                        _("vendor.zulu.feature.custom"),
+                        _("vendor.zulu.feature.cloud"),
+                        _("vendor.zulu.feature.container"),
+                    ]
+
+                    # 添加版本特定标记
+                    if base_info["is_lts"]:
+                        features.insert(0, _("vendor.zulu.feature.lts"))
+                        base_info["support_policy"] = _("vendor.zulu.support.lts")
+                        base_info["release_notes"] = _("vendor.zulu.notes.lts")
+                    else:
+                        features.insert(0, _("vendor.zulu.feature.sts"))
+                        base_info["support_policy"] = _("vendor.zulu.support.sts")
+                        base_info["release_notes"] = _("vendor.zulu.notes.sts")
+
+                    base_info.update({"features": features})
+
+                elif vendor == "Microsoft OpenJDK":
+                    features = [
+                        _("vendor.microsoft.feature.performance"),
+                        _("vendor.microsoft.feature.security"),
+                        _("vendor.microsoft.feature.cloud"),
+                        _("vendor.microsoft.feature.support"),
+                        _("vendor.microsoft.feature.container"),
+                    ]
+
+                    # 添加版本特定标记
+                    if base_info["is_lts"]:
+                        features.insert(0, _("vendor.microsoft.feature.lts"))
+                        base_info["support_policy"] = _("vendor.microsoft.support.lts")
+                        base_info["release_notes"] = _("vendor.microsoft.notes.lts")
+                    else:
+                        features.insert(0, _("vendor.microsoft.feature.sts"))
+                        base_info["support_policy"] = _("vendor.microsoft.support.sts")
+                        base_info["release_notes"] = _("vendor.microsoft.notes.sts")
+
+                    # 设置发行商特性
+                    base_info["features"] = features
+                    # 确保版本特性使用正确的国际化文本
+                    if version in version_features:
+                        base_info["version_features"] = [
+                            _(feature)
+                            for feature in version_features[version]["features"]
+                        ]
+
+                # 获取下载链接
+                download_link = self._get_download_link(vendor, version)
+
+                # 预先获取所有需要的翻译文本
+                translations = {
+                    "title": _("version.info.detail.title"),
+                    "release_date": _("jdk.info.release_date"),
+                    "runtime": _("version.info.detail.runtime"),
+                    "features": _("jdk.info.features"),
+                    "version_features": _("jdk.info.version_features"),
+                    "support_policy": _("jdk.info.support_policy"),
+                    "download_link": _("version.info.download_link"),
+                    "badge": {
+                        "lts": _("version.badge.lts"),
+                        "sts": _("version.badge.sts"),
+                        "ea": _("version.badge.ea"),
+                        "temurin": _("version.badge.temurin"),
+                    },
+                    "warning": {
+                        "ea": _("version.warning.ea"),
+                        "sts": _("version.warning.sts"),
+                    },
+                }
+
+                # 确保所有特性文本都被翻译
+                base_info["features"] = [
+                    _(feature) if isinstance(feature, str) else feature
+                    for feature in base_info["features"]
+                ]
+                base_info["version_features"] = [
+                    _(feature) if isinstance(feature, str) else feature
+                    for feature in base_info["version_features"]
+                ]
+                base_info["support_policy"] = (
+                    _(base_info["support_policy"])
+                    if isinstance(base_info["support_policy"], str)
+                    else base_info["support_policy"]
+                )
+                base_info["release_notes"] = (
+                    _(base_info["release_notes"])
+                    if isinstance(base_info["release_notes"], str)
+                    else base_info["release_notes"]
+                )
+
+                # 构建格式化的版本信息
+                info_text = f"""<style>
+                    .title {{ 
+                        color: #1a73e8; 
+                        font-weight: bold; 
+                        font-size: 14px; 
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }}
+                    .version-info {{
+                        display: flex;
+                        align-items: center;
+                    }}
+                    .vendor {{
+                        color: #666666;
+                        font-size: 12px;
+                        font-weight: normal;
+                        margin-left: 10px;
+                        padding-left: 10px;
+                        border-left: 2px solid #E0E0E0;
+                    }}
+                    .section {{ margin: 8px 0; }}
+                    .label {{ color: #666666; font-weight: bold; }}
+                    .value {{ color: #2C3E50; }}
+                    .feature {{ color: #2C3E50; margin: 3px 0; }}
+                    .note {{ color: #666666; font-style: italic; margin-top: 8px; }}
+                    .badge {{ 
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-left: 8px;
+                        background-color: {'#1a73e8' if base_info['is_lts'] else '#34A853'};
+                        color: white;
+                    }}
+                    .warning-badge {{
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-left: 8px;
+                        background-color: {'#EA4335' if base_info['is_ea'] else '#FBBC05'};
+                        color: white;
+                    }}
+                    .provider-badge {{
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-left: 8px;
+                        background-color: #4285F4;
+                        color: white;
+                    }}
+                    .version-feature {{
+                        color: #1a73e8;
+                        margin: 3px 0;
+                        padding-left: 20px;
+                        position: relative;
+                    }}
+                    .version-feature::before {{
+                        content: "•";
+                        position: absolute;
+                        left: 8px;
+                        color: #1a73e8;
+                    }}
+                    .divider {{
+                        border-top: 1px solid #E0E0E0;
+                        margin: 12px 0;
+                    }}
+                    .download-link {{
+                        color: #1a73e8;
+                        text-decoration: none;
+                        margin-top: 10px;
+                        display: block;
+                    }}
+                    .download-link:hover {{
+                        text-decoration: underline;
+                    }}
+                    .warning-text {{
+                        color: #EA4335;
+                        font-weight: bold;
+                        margin: 8px 0;
+                    }}
+                </style>
+                <div class='title'>
+                    <div class='version-info'>
+                        {translations['title']} {base_info['version']} ({base_info['version_detail']})
+                        <span class='vendor'>{vendor}</span>
+                        <span class='badge'>{translations['badge']['lts'] if base_info['is_lts'] else translations['badge']['sts']}</span>
+                        {f'<span class="warning-badge">{translations["badge"]["ea"]}</span>' if base_info['is_ea'] else ''}
+                        {f'<span class="provider-badge">{translations["badge"]["temurin"]}</span>' if base_info['is_temurin'] else ''}
+                    </div>
                 </div>
-            </div>
-            
-            {f'<div class="warning-text">{translations["warning"]["ea"]}</div>' if base_info['is_ea'] else ''}
-            {f'<div class="warning-text">{translations["warning"]["sts"]}</div>' if not base_info['is_lts'] and not base_info['is_ea'] else ''}
-            
-            <div class='section'>
-                <span class='label'>{translations['release_date']}:</span>
-                <span class='value'> {base_info['release_date']}</span>
-            </div>
-            
-            <div class='section'>
-                <span class='label'>{translations['runtime']}:</span>
-                <span class='value'> {base_info['jvm_impl']} VM, {base_info['arch']}, {base_info['os']}</span>
-            </div>
-            
-            <div class='section'>
-                <div class='label'>{translations['features']}:</div>
-                {"".join(f"<div class='feature'>{feature}</div>" for feature in base_info['features'])}
-            </div>
-            
-            <div class='divider'></div>
-            
-            <div class='section'>
-                <div class='label'>{translations['version_features']}:</div>
-                {"".join(f"<div class='version-feature'>{feature}</div>" for feature in base_info['version_features'])}
-            </div>
-            
-            <div class='divider'></div>
-            
-            <div class='section'>
-                <span class='label'>{translations['support_policy']}:</span>
-                <span class='value'> {base_info['support_policy']}</span>
-            </div>
-            
-            <div class='note'>{base_info['release_notes']}</div>
-            
-            {f'<a href="{download_link}" class="download-link" target="_blank">{translations["download_link"]}</a>' if download_link else ''}"""
+                
+                {f'<div class="warning-text">{translations["warning"]["ea"]}</div>' if base_info['is_ea'] else ''}
+                {f'<div class="warning-text">{translations["warning"]["sts"]}</div>' if not base_info['is_lts'] and not base_info['is_ea'] else ''}
+                
+                <div class='section'>
+                    <span class='label'>{translations['release_date']}:</span>
+                    <span class='value'> {base_info['release_date']}</span>
+                </div>
+                
+                <div class='section'>
+                    <span class='label'>{translations['runtime']}:</span>
+                    <span class='value'> {base_info['jvm_impl']} VM, {base_info['arch']}, {base_info['os']}</span>
+                </div>
+                
+                <div class='section'>
+                    <div class='label'>{translations['features']}:</div>
+                    {"".join(f"<div class='feature'>{feature}</div>" for feature in base_info['features'])}
+                </div>
+                
+                <div class='divider'></div>
+                
+                <div class='section'>
+                    <div class='label'>{translations['version_features']}:</div>
+                    {"".join(f"<div class='version-feature'>{feature}</div>" for feature in base_info['version_features'])}
+                </div>
+                
+                <div class='divider'></div>
+                
+                <div class='section'>
+                    <span class='label'>{translations['support_policy']}:</span>
+                    <span class='value'> {base_info['support_policy']}</span>
+                </div>
+                
+                <div class='note'>{base_info['release_notes']}</div>
+                
+                {f'<a href="{download_link}" class="download-link" target="_blank">{translations["download_link"]}</a>' if download_link else ''}"""
 
-            return info_text
+                return info_text
+            except Exception as e:
+                logger.error(_("version.info.detail.get_failed").format(error=str(e)))
+                return _("version.info.not_available")
+
         except Exception as e:
-            logger.error(_("version.info.detail.get_failed").format(error=str(e)))
-            return _("version.info.not_available")
+            logger.error(_("downloader.log.error.info_failed").format(error=str(e)))
+            return None
 
     def _get_download_link(self, vendor, version):
         """获取官方下载链接"""
@@ -895,6 +950,36 @@ class JDKDownloader(QObject):
 
                 return version_map.get(version)
 
+            elif vendor == "Microsoft OpenJDK":
+                # Microsoft OpenJDK 下载链接
+                if is_windows:
+                    os_suffix = "windows"
+                elif is_macos:
+                    os_suffix = "macos"
+                else:
+                    os_suffix = "linux"
+
+                # Microsoft OpenJDK 版本映射
+                version_map = {
+                    "21": f"https://aka.ms/download-jdk/microsoft-jdk-21.0.2-{os_suffix}-{arch}.{ext}",
+                    "17": f"https://aka.ms/download-jdk/microsoft-jdk-17.0.10-{os_suffix}-{arch}.{ext}",
+                    "11": f"https://aka.ms/download-jdk/microsoft-jdk-11.0.22-{os_suffix}-{arch}.{ext}",
+                    "8": f"https://aka.ms/download-jdk/microsoft-jdk-8.0.402-{os_suffix}-{arch}.{ext}",
+                }
+
+                # 如果版本不在映射表中，尝试从 API 获取
+                if version not in version_map:
+                    try:
+                        # 尝试从 Microsoft OpenJDK 的 API 获取最新版本
+                        api_url = f"https://aka.ms/download-jdk/microsoft-jdk-{version}-latest-{os_suffix}-{arch}.{ext}"
+                        response = requests.head(api_url, timeout=5)
+                        if response.status_code == 200:
+                            return api_url
+                    except Exception as e:
+                        logger.error(f"获取 Microsoft OpenJDK {version} 下载链接失败: {str(e)}")
+
+                return version_map.get(version)
+
             elif vendor == "Amazon Corretto":
                 # Amazon Corretto 下载链接
                 if is_windows:
@@ -969,31 +1054,128 @@ class JDKDownloader(QObject):
             logger.error(f"获取下载链接失败: {str(e)}")
             return None
 
-    def download_jdk(self, vendor, version, target_dir, progress_callback=None):
-        """下载指定版本的JDK"""
-        file_name = None
-        response = None
-        file_handle = None
+    def _get_download_url(self, vendor: str, version: str) -> Optional[str]:
+        """获取下载链接（兼容性方法）
+
+        Args:
+            vendor: JDK 发行商
+            version: JDK 版本
+
+        Returns:
+            下载链接
+        """
         try:
             # 获取平台信息
             from .platform_manager import platform_manager
 
             is_windows = platform_manager.is_windows
             is_macos = platform_manager.is_macos
+            arch = platform_manager.get_arch()
 
-            # 根据平台选择文件扩展名
-            ext = "zip" if is_windows else "tar.gz"
+            # 根据平台选择系统标识
+            if is_windows:
+                os_name = "windows"
+            elif is_macos:
+                os_name = "macos"
+            else:  # Linux
+                os_name = "linux"
 
-            # 获取下载链接
-            download_url = self._get_download_url(vendor, version)
-            if not download_url:
+            # 优先使用镜像源
+            if self.mirrors:
+                url = self.mirrors.get_download_url(vendor, version, os_name, arch)
+                if url:
+                    return url
+
+            # 如果没有镜像源或镜像源获取失败，使用官方源
+            return self._get_download_link(vendor, version)
+
+        except Exception as e:
+            logger.error(f"获取下载链接失败: {str(e)}")
+            return None
+
+    def download(
+        self,
+        vendor: str,
+        version: str,
+        os_name: str,
+        arch: str,
+        save_path: str,
+        progress_callback=None,
+    ) -> Tuple[bool, str, Optional[Dict]]:
+        """下载 JDK
+
+        Args:
+            vendor: JDK 发行商
+            version: JDK 版本
+            os_name: 操作系统
+            arch: 架构
+            save_path: 保存路径
+            progress_callback: 进度回调函数
+
+        Returns:
+            (是否成功, 消息, JDK信息字典)
+        """
+        response = None
+        try:
+            # 确保保存路径是绝对路径
+            save_path = os.path.abspath(save_path)
+            save_dir = os.path.dirname(save_path)
+
+            # 确保目录存在，如果不存在则创建
+            try:
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir, exist_ok=True)
+                elif not os.path.isdir(save_dir):
+                    return (
+                        False,
+                        _("downloader.error.path_not_dir").format(path=save_dir),
+                        None,
+                    )
+                elif not os.access(save_dir, os.W_OK):
+                    return (
+                        False,
+                        _("downloader.error.path_not_writable").format(path=save_dir),
+                        None,
+                    )
+            except Exception as e:
+                return (
+                    False,
+                    _("downloader.error.create_dir_failed").format(error=str(e)),
+                    None,
+                )
+
+            # 如果文件已存在，先删除
+            if os.path.exists(save_path):
+                try:
+                    os.remove(save_path)
+                except Exception as e:
+                    return (
+                        False,
+                        _("downloader.error.remove_existing_failed").format(
+                            error=str(e)
+                        ),
+                        None,
+                    )
+
+            # 获取下载URL（优先使用镜像源）
+            url = None
+            if self.mirrors:
+                url = self.mirrors.get_download_url(vendor, version, os_name, arch)
+
+            # 如果没有找到镜像源，使用官方源
+            if not url:
+                url = self._get_download_link(vendor, version)
+
+            if not url:
                 # 根据不同供应商提供不同的手动下载指导
                 if vendor == "Oracle JDK":
                     manual_url = "https://www.oracle.com/java/technologies/downloads/"
                     return (
                         False,
                         _("downloader.manual.oracle").format(
-                            url=manual_url, version=version, dir=target_dir
+                            url=manual_url,
+                            version=version,
+                            dir=os.path.dirname(save_path),
                         ),
                         None,
                     )
@@ -1002,7 +1184,9 @@ class JDKDownloader(QObject):
                     return (
                         False,
                         _("downloader.manual.openjdk").format(
-                            url=manual_url, version=version, dir=target_dir
+                            url=manual_url,
+                            version=version,
+                            dir=os.path.dirname(save_path),
                         ),
                         None,
                     )
@@ -1011,7 +1195,9 @@ class JDKDownloader(QObject):
                     return (
                         False,
                         _("downloader.manual.corretto").format(
-                            url=manual_url, version=version, dir=target_dir
+                            url=manual_url,
+                            version=version,
+                            dir=os.path.dirname(save_path),
                         ),
                         None,
                     )
@@ -1020,7 +1206,9 @@ class JDKDownloader(QObject):
                     return (
                         False,
                         _("downloader.manual.zulu").format(
-                            url=manual_url, version=version, dir=target_dir
+                            url=manual_url,
+                            version=version,
+                            dir=os.path.dirname(save_path),
                         ),
                         None,
                     )
@@ -1033,11 +1221,10 @@ class JDKDownloader(QObject):
                         None,
                     )
 
-            # 创建目标目录
-            os.makedirs(target_dir, exist_ok=True)
-            file_name = os.path.join(target_dir, f"jdk-{version}.{ext}")
+            # 创建保存目录
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-            # 下载文件
+            # 设置请求头
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -1048,80 +1235,66 @@ class JDKDownloader(QObject):
                 "Cache-Control": "max-age=0",
             }
 
-            try:
-                # 先检查链接是否可用
-                head_response = requests.head(download_url, headers=headers, timeout=10)
-                if head_response.status_code == 403:
-                    # 特殊处理 403 错误（通常是需要登录）
-                    if vendor == "Oracle JDK":
-                        manual_url = (
-                            "https://www.oracle.com/java/technologies/downloads/"
-                        )
-                        return (
-                            False,
-                            _("downloader.error.oracle_auth").format(
-                                url=manual_url, version=version, dir=target_dir
-                            ),
-                            None,
-                        )
+            # 先检查链接是否可用
+            head_response = requests.head(url, headers=headers, timeout=10)
+            if head_response.status_code == 403:
+                # 特殊处理 403 错误（通常是需要登录）
+                if vendor == "Oracle JDK":
+                    manual_url = "https://www.oracle.com/java/technologies/downloads/"
                     return (
                         False,
-                        _("downloader.error.access_denied").format(url=download_url),
-                        None,
-                    )
-                elif head_response.status_code != 200:
-                    return (
-                        False,
-                        _("downloader.error.invalid_url").format(
-                            status=head_response.status_code, url=download_url
+                        _("downloader.error.oracle_auth").format(
+                            url=manual_url,
+                            version=version,
+                            dir=os.path.dirname(save_path),
                         ),
                         None,
                     )
-
-                # 开始下载
-                response = requests.get(
-                    download_url, headers=headers, stream=True, timeout=30
+                return False, _("downloader.error.access_denied").format(url=url), None
+            elif head_response.status_code != 200:
+                return (
+                    False,
+                    _("downloader.error.invalid_url").format(
+                        status=head_response.status_code, url=url
+                    ),
+                    None,
                 )
-                if response.status_code != 200:
-                    return (
-                        False,
-                        _("downloader.error.download_failed").format(
-                            status=response.status_code, url=download_url
-                        ),
-                        None,
-                    )
 
-                total_size = int(response.headers.get("content-length", 0))
-                if total_size == 0:
-                    return (
-                        False,
-                        _("downloader.error.no_size").format(url=download_url),
-                        None,
-                    )
+            # 下载文件
+            response = self.session.get(url, stream=True, headers=headers, timeout=30)
+            if response.status_code != 200:
+                return (
+                    False,
+                    _("downloader.error.download_failed").format(
+                        status=response.status_code
+                    ),
+                    None,
+                )
 
-                block_size = 1024 * 1024  # 1MB
-                downloaded_size = 0
-                last_progress_time = time.time()
+            total_size = int(response.headers.get("content-length", 0))
+            if total_size == 0:
+                return False, _("downloader.error.no_size").format(url=url), None
 
-                # 打开文件
-                file_handle = open(file_name, "wb")
+            block_size = 1024 * 1024  # 1 MB
+            downloaded_size = 0
+            last_progress_time = time.time()
 
+            with open(save_path, "wb") as f:
                 # 如果progress_callback有file_handle属性，设置它
                 if hasattr(progress_callback, "set_handles"):
-                    progress_callback.set_handles(response, file_handle)
+                    progress_callback.set_handles(response, f)
 
-                # 下载数据
                 for data in response.iter_content(block_size):
                     # 检查是否取消下载
                     if (
                         hasattr(progress_callback, "cancelled")
                         and progress_callback.cancelled
                     ):
-                        file_handle.close()
+                        f.close()
                         response.close()
-                        if os.path.exists(file_name):
+                        if os.path.exists(save_path):
                             try:
-                                os.remove(file_name)
+                                os.remove(save_path)
                             except Exception as e:
                                 logger.error(
                                     _("downloader.error.cleanup_failed").format(
@@ -1131,7 +1304,7 @@ class JDKDownloader(QObject):
                         return False, _("downloader.status.cancelled"), None
 
                     downloaded_size += len(data)
-                    file_handle.write(data)
+                    f.write(data)
 
                     # 限制进度回调的频率，每0.1秒最多一次
                     current_time = time.time()
@@ -1139,119 +1312,103 @@ class JDKDownloader(QObject):
                         progress_callback(downloaded_size, total_size)
                         last_progress_time = current_time
 
-                # 最后一次进度更新
-                if progress_callback:
-                    progress_callback(downloaded_size, total_size)
+            # 验证下载的文件大小
+            if os.path.getsize(save_path) != total_size:
+                if os.path.exists(save_path):
+                    os.remove(save_path)
+                return False, _("downloader.error.incomplete"), None
 
-                # 关闭文件和响应
-                file_handle.close()
-                file_handle = None
-                response.close()
-                response = None
+            # 获取版本信息
+            version_info = self.get_version_info(vendor, version)
 
-                # 验证下载的文件大小
-                if os.path.getsize(file_name) != total_size:
-                    if os.path.exists(file_name):
-                        os.remove(file_name)
-                    return (
-                        False,
-                        _("downloader.error.incomplete").format(
-                            url=download_url, dir=target_dir
-                        ),
-                        None,
-                    )
+            # 获取完整版本号（如果有）
+            full_version = version
+            if version_info and "version_detail" in version_info:
+                full_version = version_info["version_detail"]
+            elif version_info and "full_version" in version_info:
+                full_version = version_info["full_version"]
 
-                # 获取版本信息
-                version_info = self.get_version_info(vendor, version)
+            # 生成发行商目录名
+            vendor_dir_name = {
+                "Oracle JDK": "oracle",
+                "OpenJDK": "openjdk",
+                "Eclipse Temurin (Adoptium)": "temurin",
+                "Microsoft OpenJDK": "microsoft",
+                "Amazon Corretto": "corretto",
+                "Azul Zulu": "zulu",
+            }.get(vendor, vendor.lower().replace(" ", "-"))
 
-                # 准备JDK信息
-                jdk_info = {
-                    "path": file_name,  # 先使用压缩文件路径，解压后会更新为实际JDK目录
-                    "version": version,
-                    "type": "downloaded",
-                    "vendor": vendor,  # 添加发行商信息
-                    "features": version_info.get("features", [])
-                    if version_info
-                    else [],
-                    "import_time": int(datetime.now().timestamp()),
-                }
+            # 生成JDK目录名（只包含版本号）
+            jdk_dir_name = f"jdk-{full_version}"
 
-                # 如果是 OpenJDK 且使用了 Temurin 构建
-                if (
-                    vendor == "OpenJDK"
-                    and version_info
-                    and "is_temurin" in version_info
-                    and version_info["is_temurin"]
-                ):
-                    jdk_info["vendor"] = "Eclipse Temurin"
+            # 构建完整路径：vendor/jdk-version
+            vendor_dir = os.path.join(os.path.dirname(save_path), vendor_dir_name)
+            jdk_dir = os.path.join(vendor_dir, jdk_dir_name)
 
-                return True, _("downloader.status.success"), jdk_info
+            # 确保发行商目录存在
+            if not os.path.exists(vendor_dir):
+                os.makedirs(vendor_dir, exist_ok=True)
 
-            except requests.Timeout:
-                if file_handle:
-                    file_handle.close()
-                if os.path.exists(file_name):
-                    os.remove(file_name)
+            # 检查目录是否已存在
+            if os.path.exists(jdk_dir):
+                # 如果目录已存在，返回提示信息
                 return (
                     False,
-                    _("downloader.error.timeout").format(
-                        url=download_url, dir=target_dir
+                    _("download.error.already_exists").format(
+                        vendor=vendor,
+                        version=full_version,
+                        path=os.path.abspath(jdk_dir),
                     ),
                     None,
                 )
-            except requests.ConnectionError:
-                if file_handle:
-                    file_handle.close()
-                if os.path.exists(file_name):
-                    os.remove(file_name)
-                return (
-                    False,
-                    _("downloader.error.connection").format(
-                        url=download_url, dir=target_dir
-                    ),
-                    None,
-                )
-            except Exception as e:
-                if file_handle:
-                    file_handle.close()
-                if os.path.exists(file_name):
-                    os.remove(file_name)
-                return (
-                    False,
-                    _("downloader.error.general").format(
-                        error=str(e), url=download_url
-                    ),
-                    None,
-                )
-            finally:
-                if response:
-                    response.close()
-                if file_handle:
-                    file_handle.close()
+
+            # 准备JDK信息，包含完整的版本和发行商信息
+            jdk_info = {
+                "path": os.path.abspath(jdk_dir),
+                "version": version,
+                "full_version": full_version,
+                "type": "downloaded",
+                "vendor": vendor,
+                "arch": arch,
+                "features": version_info.get("features", []) if version_info else [],
+                "import_time": int(datetime.now().timestamp()),
+                "display_name": f"{vendor} JDK {full_version} ({arch})",  # 添加显示名称
+            }
+
+            # 如果是 OpenJDK 且使用了 Temurin 构建
+            if (
+                vendor == "OpenJDK"
+                and version_info
+                and "is_temurin" in version_info
+                and version_info["is_temurin"]
+            ):
+                jdk_info["vendor"] = "Eclipse Temurin"
+                jdk_info[
+                    "display_name"
+                ] = f"Eclipse Temurin JDK {full_version} ({arch})"
+
+            return True, _("downloader.status.success"), jdk_info
+
+        except requests.Timeout:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            return False, _("downloader.error.timeout").format(url=url), None
+
+        except requests.ConnectionError:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            return False, _("downloader.error.connection").format(url=url), None
 
         except Exception as e:
-            if file_handle:
-                file_handle.close()
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            error_msg = str(e)
+            logger.error(_("downloader.error.download_failed").format(error=error_msg))
+            return False, _("downloader.error.general").format(error=error_msg), None
+
+        finally:
             if response:
                 response.close()
-            if file_name and os.path.exists(file_name):
-                os.remove(file_name)
-            logger.error(_("downloader.error.download_failed").format(error=str(e)))
-            return (
-                False,
-                _("downloader.error.manual_required").format(error=str(e)),
-                None,
-            )
-
-    def _get_download_url(self, vendor, version):
-        """获取下载链接"""
-        try:
-            # 直接返回 _get_download_link 的结果
-            return self._get_download_link(vendor, version)
-
-        except Exception as e:
-            logger.error(f"获取下载链接失败: {str(e)}")
-            return None
 
     def _get_oracle_versions(self):
         """获取Oracle JDK版本列表"""
@@ -1399,3 +1556,59 @@ class JDKDownloader(QObject):
                 _("downloader.log.error.fetch_zulu_failed").format(error=str(e))
             )
         return self.base_versions["Azul Zulu"]
+
+    def get_versions(self, vendor: str) -> List[str]:
+        """获取可用的 JDK 版本列表
+
+        Args:
+            vendor: JDK 发行商
+
+        Returns:
+            版本列表
+        """
+        try:
+            # 检查 vendor 是否在 api_config 中
+            if vendor not in self.api_config:
+                logger.error(
+                    _("downloader.error.unsupported_vendor").format(vendor=vendor)
+                )
+                return []
+
+            # 返回已缓存的版本列表
+            return self.api_config[vendor]["versions"]
+
+        except Exception as e:
+            logger.error(_("downloader.error.fetch_failed").format(error=str(e)))
+            return self.base_versions.get(vendor, [])
+
+    def _get_microsoft_versions(self) -> List[str]:
+        """获取 Microsoft OpenJDK 版本列表"""
+        try:
+            # 优先使用镜像源
+            url = None
+            if self.mirrors:
+                url = self.mirrors.get_best_mirror("microsoft") + "versions.json"
+
+            # 如果没有镜像源，使用官方源
+            if not url:
+                url = "https://aka.ms/download-jdk/versions.json"
+
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                versions = []
+                for v in data.get("versions", []):
+                    version = v.get("version")
+                    if version and version not in versions:
+                        versions.append(version)
+                # 按版本号排序（降序）
+                versions.sort(
+                    key=lambda x: [int(i) for i in x.split(".")], reverse=True
+                )
+                return versions
+            return self.base_versions["Microsoft OpenJDK"]
+        except Exception as e:
+            logger.error(
+                _("downloader.error.fetch_microsoft_failed").format(error=str(e))
+            )
+            return self.base_versions["Microsoft OpenJDK"]

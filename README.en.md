@@ -1,6 +1,6 @@
 # JDK Version Manager
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.8-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://github.com/l06066hb/jvman)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
@@ -190,15 +190,16 @@ python scripts/build.py --platform windows --type all
 
 ## Latest Version
 
-v1.0.7 Major Updates:
-- ⚡ [Added] CI/CD Workflow Guide Document
-- 🔨 [Added] Added detailed logs and status checks during the construction process
-- 🔨 [Changed] Optimized error handling and log output for building scripts
-- 🔨 [Changed] The construction process of the platform has added a waiting mechanism
-- 🔨 [Fixed] The issue of incorrect format of the ` -- add data ` parameter during platform construction
-- 🔨 [Fixed] The issue of non-existent `. app ` directory during platform construction
+v1.0.8 Major Updates:
+- ✨ [Added] Full support for Microsoft OpenJDK
+- ✨ [Added] Detailed description of JDK version features
+- ✨ [Changed] How to display JDK version information
+- ✨ [Changed] Improve the display effect of version features
+- ✨ [Fixed] The issue of Microsoft OpenJDK version retrieval failure
+- ✨ [Fixed] Fix the issue of incomplete version information display
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
+
 
 
 

@@ -24,6 +24,7 @@ import shutil
 import logging
 from datetime import datetime
 import requests
+from utils.version_cache import VersionCache
 
 # 获取logger
 logger = logging.getLogger(__name__)
@@ -609,6 +610,10 @@ class DownloadTab(QWidget):
         self.download_thread = None
         self.install_thread = None
         self.is_downloading = False  # 添加下载状态标志
+
+        # 初始化版本缓存
+        self.version_cache = VersionCache(self.config.get_config_dir())
+
         self.init_ui()
         self.connect_signals()
         # 连接语言切换信号
@@ -651,6 +656,7 @@ class DownloadTab(QWidget):
                     "Oracle JDK",
                     "OpenJDK",
                     "Eclipse Temurin (Adoptium)",
+                    "Microsoft OpenJDK",
                     "Amazon Corretto",
                     "Azul Zulu",
                 ]
@@ -732,6 +738,7 @@ class DownloadTab(QWidget):
                 "Oracle JDK",
                 "OpenJDK",
                 "Eclipse Temurin (Adoptium)",
+                "Microsoft OpenJDK",
                 "Amazon Corretto",
                 "Azul Zulu",
             ]
@@ -1114,7 +1121,7 @@ class DownloadTab(QWidget):
                 self.current_version = self.version  # 使用类成员变量中保存的版本
 
             # 创建安装线程
-            self.install_thread = InstallThread(zip_file, self.target_dir)
+            self.install_thread = InstallThread(zip_file, self.target_dir, self.vendor)
             self.install_thread.progress.connect(self.update_install_progress)
             self.install_thread.finished.connect(self.on_install_complete)
 
@@ -1140,7 +1147,7 @@ class DownloadTab(QWidget):
             self.progress_dialog.cancel_button.setText(_("common.close"))
             self.progress_dialog.cancel_button.setEnabled(True)
 
-    def on_install_complete(self, success, message):
+    def on_install_complete(self, success, message, install_time, import_time):
         """安装完成回调"""
         try:
             if success:
@@ -1154,21 +1161,34 @@ class DownloadTab(QWidget):
 
                 logger.debug(_("install.status.finding_jdk").format(dir=install_dir))
 
+                # 获取发行商目录名
+                vendor_dir_name = {
+                    "Oracle JDK": "oracle",
+                    "OpenJDK": "openjdk",
+                    "Eclipse Temurin (Adoptium)": "temurin",
+                    "Microsoft OpenJDK": "microsoft",
+                    "Amazon Corretto": "corretto",
+                    "Azul Zulu": "zulu",
+                }.get(self.vendor, self.vendor.lower().replace(" ", "-"))
+
+                # 构建发行商目录路径
+                vendor_dir = os.path.join(install_dir, vendor_dir_name)
+
                 # 获取正确的 JDK 路径（安装目录下的具体版本目录）
                 jdk_name = None
-                for item in os.listdir(install_dir):
-                    item_path = os.path.join(install_dir, item)
+                for item in os.listdir(vendor_dir):
+                    item_path = os.path.join(vendor_dir, item)
                     if os.path.isdir(item_path) and "jdk" in item.lower():
                         # 检查是否是最新创建的目录
                         if not jdk_name or os.path.getctime(
                             item_path
-                        ) > os.path.getctime(os.path.join(install_dir, jdk_name)):
+                        ) > os.path.getctime(os.path.join(vendor_dir, jdk_name)):
                             jdk_name = item
 
                 if not jdk_name:
                     raise Exception(_("install.status.jdk_not_found"))
 
-                jdk_path = os.path.join(install_dir, jdk_name)
+                jdk_path = os.path.join(vendor_dir, jdk_name)
                 logger.debug(_("install.status.found_jdk").format(path=jdk_path))
 
                 if not os.path.exists(jdk_path):
@@ -1198,6 +1218,7 @@ class DownloadTab(QWidget):
                     "vendor": vendor,
                     "type": "downloaded",
                     "import_time": import_time,
+                    "display_name": f"{vendor} JDK {self.current_version}",
                 }
 
                 logger.debug(_("log.debug.adding_jdk").format(info=jdk_info))
@@ -1447,6 +1468,9 @@ class DownloadTab(QWidget):
 
     def on_vendor_changed(self, vendor):
         """处理发行版变更"""
+        # 清除当前版本缓存
+        self.version_cache.clear_cache(vendor)
+        # 刷新版本列表
         self.refresh_versions()
 
     def on_version_changed(self, version):
@@ -1557,9 +1581,51 @@ class DownloadTab(QWidget):
         """刷新版本列表"""
         self.version_combo.clear()
         vendor = self.vendor_combo.currentText()
-        versions = self.downloader.get_available_versions(vendor)
-        for version in versions:
-            self.version_combo.addItem(f"JDK {version}", version)
+
+        # 先尝试从缓存获取版本列表
+        cached_versions = self.version_cache.get_cached_versions(vendor)
+        if cached_versions:
+            for version in cached_versions:
+                self.version_combo.addItem(f"JDK {version}", version)
+            # 如果缓存存在，在后台更新版本列表
+            QTimer.singleShot(0, lambda: self._update_versions_async(vendor))
+        else:
+            # 如果没有缓存，直接获取版本列表
+            self._update_versions_async(vendor)
+
+    def _update_versions_async(self, vendor):
+        """异步更新版本列表"""
+        try:
+            # 显示加载状态
+            self.refresh_button.setEnabled(False)
+            self.refresh_button.setText(_("common.loading"))
+
+            # 获取新的版本列表
+            versions = self.downloader.get_available_versions(vendor)
+
+            # 更新UI
+            self.version_combo.clear()
+            for version in versions:
+                self.version_combo.addItem(f"JDK {version}", version)
+
+            # 更新缓存
+            self.version_cache.update_cache(vendor, versions)
+
+        except Exception as e:
+            logger.error(f"获取版本列表失败: {str(e)}")
+            QMessageBox.warning(
+                self,
+                _("common.error"),
+                _("download.error.fetch_failed").format(error=str(e)),
+            )
+        finally:
+            # 恢复按钮状态
+            self.refresh_button.setEnabled(True)
+            self.refresh_button.setText(_("download.button.refresh"))
+
+            # 如果列表为空，显示提示
+            if self.version_combo.count() == 0:
+                self.version_combo.addItem(_("download.error.no_version_info"))
 
     def update_settings(self):
         """更新设置"""
@@ -1732,17 +1798,32 @@ class InstallThread(QThread):
     progress = pyqtSignal(int, int)  # 当前文件数，总文件数
     finished = pyqtSignal(bool, str, str, str)  # 成功标志，消息，安装时间，导入时间
 
-    def __init__(self, zip_path, target_dir):
+    def __init__(self, zip_file, target_dir, vendor):
         super().__init__()
-        self.zip_path = zip_path
-        self.target_dir = target_dir
+        self.zip_file = zip_file
+        self.target_dir = target_dir  # 这个是 jdk 目录
+        self.vendor = vendor
         self.is_cancelled = False
 
     def run(self):
         try:
             start_time = QDateTime.currentDateTime()
 
-            with zipfile.ZipFile(self.zip_path, "r") as zip_ref:
+            # 获取发行商目录名
+            vendor_dir_name = {
+                "Oracle JDK": "oracle",
+                "OpenJDK": "openjdk",
+                "Eclipse Temurin (Adoptium)": "temurin",
+                "Microsoft OpenJDK": "microsoft",
+                "Amazon Corretto": "corretto",
+                "Azul Zulu": "zulu",
+            }.get(self.vendor, self.vendor.lower().replace(" ", "-"))
+
+            # 构建完整的目录路径：jdk/vendor_dir_name
+            vendor_dir = os.path.join(self.target_dir, vendor_dir_name)
+            os.makedirs(vendor_dir, exist_ok=True)
+
+            with zipfile.ZipFile(self.zip_file, "r") as zip_ref:
                 # 获取所有文件列表
                 file_list = zip_ref.namelist()
                 total_files = len(file_list)
@@ -1756,7 +1837,8 @@ class InstallThread(QThread):
                         self.finished.emit(False, _("install.status.cancelled"), "", "")
                         return
 
-                    zip_ref.extract(member, self.target_dir)
+                    # 解压到发行商目录下
+                    zip_ref.extract(member, vendor_dir)
                     self.progress.emit(index, total_files)
 
             # 计算安装时间
@@ -1767,31 +1849,20 @@ class InstallThread(QThread):
             import_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
 
             # 删除zip文件
-            os.remove(self.zip_path)
+            os.remove(self.zip_file)
 
-            # 重命名文件夹为标准格式
+            # 获取完整的JDK路径（使用解压后的原始目录名）
+            jdk_path = os.path.join(vendor_dir, root_dir)
+
+            # 获取版本号（从zip文件名中提取）
             version = (
-                os.path.basename(self.zip_path).replace("jdk-", "").replace(".zip", "")
+                os.path.basename(self.zip_file).replace("jdk-", "").replace(".zip", "")
             )
-            old_path = os.path.join(self.target_dir, root_dir)
-            new_path = os.path.join(self.target_dir, f"jdk-{version}")
-
-            # 如果目标目录已存在，先删除
-            if os.path.exists(new_path):
-                shutil.rmtree(new_path, ignore_errors=True)
-
-            # 重命名目录
-            try:
-                os.rename(old_path, new_path)
-            except Exception as e:
-                logger.error(_("log.error.rename_failed").format(error=str(e)))
-                # 如果重命名失败，尝试使用复制的方式
-                shutil.copytree(old_path, new_path)
-                shutil.rmtree(old_path, ignore_errors=True)
 
             self.finished.emit(
                 True, _("install.status.success"), install_time_str, import_time
             )
+
         except Exception as e:
             self.finished.emit(False, str(e), "", "")
 
