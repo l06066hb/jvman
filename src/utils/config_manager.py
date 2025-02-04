@@ -3,6 +3,7 @@ import json
 from loguru import logger
 import sys
 import re
+import winreg
 
 
 class ConfigManager:
@@ -179,6 +180,10 @@ class ConfigManager:
         """添加映射的JDK"""
         mapped_jdks = self.get("mapped_jdks", [])
 
+        # 确保路径是绝对路径
+        if "path" in jdk_info:
+            jdk_info["path"] = os.path.abspath(jdk_info["path"])
+
         # 确保版本信息完整
         if "version" in jdk_info and not jdk_info["version"].startswith("1."):
             # 对于JDK 9及以上版本，保持原样
@@ -197,10 +202,11 @@ class ConfigManager:
 
         jdk_info["version"] = version
 
-        # 检查是否已存在相同路径的JDK
+        # 检查是否已存在相同路径的JDK（使用绝对路径比较）
         for existing_jdk in mapped_jdks:
             try:
-                if os.path.samefile(existing_jdk["path"], jdk_info["path"]):
+                existing_path = os.path.abspath(existing_jdk["path"])
+                if os.path.samefile(existing_path, jdk_info["path"]):
                     # 更新现有JDK的信息
                     existing_jdk.update(jdk_info)
                     self.set("mapped_jdks", mapped_jdks)
@@ -218,6 +224,10 @@ class ConfigManager:
             self.load()  # 重新加载配置
             downloaded_jdks = self.get("downloaded_jdks", [])
 
+            # 确保路径是绝对路径
+            if "path" in jdk_info:
+                jdk_info["path"] = os.path.abspath(jdk_info["path"])
+
             # 确保版本信息完整
             if "version" in jdk_info and not jdk_info["version"].startswith("1."):
                 version = jdk_info["version"]
@@ -234,13 +244,43 @@ class ConfigManager:
 
             jdk_info["version"] = version
 
-            # 检查是否已存在相同路径的JDK
+            # 检查是否已存在相同路径的JDK（使用绝对路径比较）
             for existing_jdk in downloaded_jdks:
-                if existing_jdk["path"] == jdk_info["path"]:
-                    existing_jdk.update(jdk_info)
-                    self.set("downloaded_jdks", downloaded_jdks)
-                    logger.debug(f"更新已存在的JDK信息: {jdk_info}")
-                    return True
+                try:
+                    existing_path = os.path.abspath(existing_jdk["path"])
+                    if os.path.samefile(existing_path, jdk_info["path"]):
+                        # 更新现有JDK的信息
+                        existing_jdk.update(jdk_info)
+                        self.set("downloaded_jdks", downloaded_jdks)
+                        logger.debug(f"更新已存在的JDK信息: {jdk_info}")
+                        return True
+                except Exception:
+                    continue
+
+            # 检查是否已存在相同版本和发行商的JDK
+            vendor = jdk_info.get("vendor", "")
+            arch = jdk_info.get("arch", "")
+            for existing_jdk in downloaded_jdks:
+                if (
+                    existing_jdk.get("vendor") == vendor
+                    and existing_jdk.get("version") == version
+                    and existing_jdk.get("arch") == arch
+                ):
+                    # 如果存在，返回错误信息
+                    display_name = existing_jdk.get(
+                        "display_name", f"{vendor} JDK {version}"
+                    )
+                    return False, _("download.error.already_exists").format(
+                        vendor=vendor,
+                        version=version,
+                        path=os.path.abspath(existing_jdk["path"]),
+                    )
+
+            # 如果没有 display_name，生成一个
+            if "display_name" not in jdk_info:
+                full_version = jdk_info.get("full_version", version)
+                arch = jdk_info.get("arch", "")
+                jdk_info["display_name"] = f"{vendor} JDK {full_version} ({arch})"
 
             jdk_info["type"] = "downloaded"
             downloaded_jdks.append(jdk_info)
@@ -340,8 +380,6 @@ class ConfigManager:
     def set_auto_start(self, enabled):
         """设置自启动状态"""
         try:
-            import winreg
-
             key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             app_name = "JDK Version Manager"
             exe_path = os.path.abspath(
@@ -375,26 +413,39 @@ class ConfigManager:
 
     def get_auto_start_status(self):
         """获取自启动状态"""
-        try:
-            import winreg
-
-            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-            app_name = "JDK Version Manager"
-
-            # 打开注册表项
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_READ)
-
+        if sys.platform == "win32":
             try:
-                winreg.QueryValueEx(key, app_name)
-                is_auto_start = True
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Run",
+                    0,
+                    winreg.KEY_READ,
+                )
+                try:
+                    value, _ = winreg.QueryValueEx(key, "JVMan")
+                    return True
+                except WindowsError:
+                    return False
+                finally:
+                    winreg.CloseKey(key)
             except WindowsError:
-                is_auto_start = False
+                return False
+        else:
+            # 在 Linux/macOS 上检查自启动配置
+            user_home = os.path.expanduser("~")
+            autostart_dir = os.path.join(user_home, ".config", "autostart")
+            desktop_file = os.path.join(autostart_dir, "jvman.desktop")
+            return os.path.exists(desktop_file)
 
-            winreg.CloseKey(key)
-            return is_auto_start
-        except Exception as e:
-            logger.error(f"获取自启动状态失败: {str(e)}")
-            return False
+    def get_config_dir(self):
+        """获取配置目录路径"""
+        user_home = os.path.expanduser("~")
+        if sys.platform == "win32":
+            config_dir = os.path.join(os.getenv("APPDATA", user_home), "jvman")
+        else:
+            config_dir = os.path.join(user_home, ".config", "jvman")
+        os.makedirs(config_dir, exist_ok=True)
+        return config_dir
 
     def add_jdk(self, jdk_info):
         """添加JDK到配置"""

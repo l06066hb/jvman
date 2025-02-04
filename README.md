@@ -1,6 +1,6 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.8-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -190,15 +190,16 @@ python scripts/build.py --platform windows --type all
 
 ## 最新版本
 
-v1.0.7 的主要更新：
-- ⚡ [Added] CI/CD 工作流程指南文档
-- 🔨 [Added] 添加了构建过程中的详细日志和状态检查
-- 🔨 [Changed] 优化了构建脚本的错误处理和日志输出
-- 🔨 [Changed] 平台的构建流程，添加了等待机制
-- 🔨 [Fixed] 平台构建时 `--add-data` 参数格式错误的问题
-- 🔨 [Fixed] 平台构建时 `.app` 目录不存在的问题
+v1.0.8 的主要更新：
+- ✨ [Added] Microsoft OpenJDK 的完整支持
+- ✨ [Added] JDK 版本特性的详细说明
+- ✨ [Changed] JDK 版本信息的显示方式
+- ✨ [Changed] 改进版本特性的展示效果
+- ✨ [Fixed] Microsoft OpenJDK 版本获取失败的问题
+- ✨ [Fixed] 修复版本信息显示不完整的问题
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 
 

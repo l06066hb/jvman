@@ -325,7 +325,21 @@
             "access_denied": "访问下载链接被拒绝：{url}",
             "invalid_url": "无效的下载链接（状态码：{status}）：{url}",
             "download_failed": "下载失败（状态码：{status}）：{url}",
-            "no_size": "无法获取文件大小：{url}"
+            "no_size": "无法获取文件大小：{url}",
+            "fetch_failed": "获取版本列表失败：{error}",
+            "no_version_info": "暂无可用版本",
+            "cache_read_failed": "读取版本缓存失败：{error}",
+            "cache_write_failed": "更新版本缓存失败：{error}",
+            "cache_clear_failed": "清除版本缓存失败：{error}",
+            "mirror_failed": "镜像源访问失败：{error}",
+            "mirror_not_found": "未找到可用的镜像源",
+            "mirror_add_failed": "添加镜像源失败：{error}",
+            "mirror_remove_failed": "移除镜像源失败：{error}",
+            "path_not_dir": "指定的路径不是目录: {path}",
+            "path_not_writable": "目录没有写入权限: {path}",
+            "create_dir_failed": "创建目录失败: {error}",
+            "remove_existing_failed": "删除已存在的文件失败: {error}",
+            "already_exists": "JDK {vendor} {version} 已经安装在：\n{path}\n\n请使用现有安装或先删除它。"
         },
         "manual": {
             "oracle": "需要登录 Oracle 账号。\n\n请按以下步骤操作：\n1. 访问 {url}\n2. 登录 Oracle 账号（如果没有请先注册）\n3. 下载 JDK {version}\n4. 将下载的文件放到目录：{dir}",
@@ -371,6 +385,27 @@
             "zulu": "Azul Zulu",
             "microsoft": "微软 OpenJDK",
             "unknown": "未知"
+        },
+        "cache": {
+            "using_cached": "使用缓存的版本列表",
+            "updating": "正在更新版本列表...",
+            "update_success": "版本列表已更新",
+            "update_failed": "版本列表更新失败",
+            "last_update": "上次更新：{time}"
+        },
+        "mirror": {
+            "official": "官方源",
+            "using_mirror": "使用镜像源：{name}",
+            "speed_testing": "正在测试镜像源速度...",
+            "add_success": "添加镜像源成功",
+            "remove_success": "移除镜像源成功",
+            "mirrors": {
+                "tencent": "腾讯云镜像",
+                "huawei": "华为云镜像",
+                "aliyun": "阿里云镜像",
+                "tsinghua": "清华大学镜像",
+                "azure_cn": "Azure中国镜像"
+            }
         }
     },
     "version": {
@@ -398,11 +433,49 @@
         },
         "feature": {
             "23": {
-                "generics": "✦ 泛型类型推断增强",
+                "generics": "✦ 增强的泛型类型推断",
                 "string_templates": "✦ 字符串模板增强",
-                "unnamed_patterns": "✦ 未命名模式和变量增强",
-                "foreign_memory": "✦ 外部内存访问 API（三期）",
-                "vector_api": "✦ 向量 API（七期）"
+                "unnamed_patterns": "✦ 未命名模式和变量",
+                "foreign_memory": "✦ 外部内存访问 API（第 3 阶段）",
+                "vector_api": "✦ 向量 API（第 7 阶段）"
+            },
+            "22": {
+                "scoped_values": "作用域值",
+                "string_templates": "字符串模板（最终版）",
+                "unnamed_patterns": "未命名模式和变量（最终版）",
+                "foreign_memory": "外部函数和内存 API（第二预览版）",
+                "vector_api": "向量 API（第九孵化器版本）"
+            },
+            "21": {
+                "string_templates": "字符串模板（预览版）",
+                "sequence_collections": "序列集合（预览版）",
+                "virtual_threads": "虚拟线程（最终版）",
+                "record_patterns": "记录模式（最终版）",
+                "zgc": "分代 ZGC",
+                "foreign_memory": "外部函数和内存 API（预览版）"
+            },
+            "17": {
+                "sealed_classes": "密封类（最终版）",
+                "switch_patterns": "switch 的模式匹配（预览版）",
+                "random_generator": "增强的伪随机数生成器",
+                "macos_aarch64": "macOS AArch64 支持",
+                "macos_rendering": "新的 macOS 渲染管线"
+            },
+            "11": {
+                "http_client": "HTTP 客户端（标准版）",
+                "lambda_vars": "Lambda 参数的局部变量语法",
+                "single_file": "启动单文件源代码程序",
+                "unicode_10": "Unicode 10",
+                "dynamic_constants": "动态类文件常量",
+                "epsilon_gc": "Epsilon 垃圾收集器"
+            },
+            "8": {
+                "lambda": "Lambda 表达式",
+                "method_ref": "方法引用",
+                "default_methods": "默认方法",
+                "stream_api": "流式 API",
+                "date_time": "新的日期时间 API",
+                "optional": "Optional 类"
             }
         },
         "format": "{vendor} JDK {version}",
@@ -963,6 +1036,25 @@
             "notes": {
                 "lts": "由 Azul Systems 提供的 OpenJDK 构建版本，提供企业级支持，建议用于生产环境",
                 "sts": "非长期支持版本，建议仅用于测试和开发环境，或等待 LTS 版本"
+            }
+        },
+        "microsoft": {
+            "feature": {
+                "performance": "✓ 针对 Azure 优化的性能",
+                "security": "✓ 定期安全更新",
+                "cloud": "✓ 云原生特性支持",
+                "support": "✓ 微软官方支持",
+                "container": "✓ 容器化优化",
+                "lts": "✓ 长期支持版本（LTS）",
+                "sts": "⚠️ 短期支持版本（非 LTS）"
+            },
+            "support": {
+                "lts": "微软官方支持 + 社区支持（4年以上）",
+                "sts": "微软官方支持 + 社区支持（6个月）"
+            },
+            "notes": {
+                "lts": "微软构建的 OpenJDK，提供企业级支持和云端优化",
+                "sts": "非长期支持版本，建议仅用于测试和开发环境"
             }
         }
     },
