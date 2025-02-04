@@ -191,12 +191,12 @@ python scripts/build.py --platform windows --type all
 ## Latest Version
 
 v1.0.7 Major Updates:
-- ⚡ [Added] GitHub CI/CD 工作流程指南文档
-- 🔨 [Added] 添加了构建过程中的详细日志和状态检查
-- 🔨 [Changed] 优化了构建脚本的错误处理和日志输出
-- 🔨 [Changed] macOS 平台的构建流程，添加了等待机制
-- 🔨 [Fixed] Windows 平台构建时 `--add-data` 参数格式错误的问题
-- 🔨 [Fixed] macOS 平台构建时 `.app` 目录不存在的问题
+- ⚡ [Added] Added GitHub CI/CD workflow guide documentation
+- 🔨 [Added] Added detailed logging and status checks during build process
+- 🔨 [Changed] Optimized error handling and logging output in build scripts
+- 🔨 [Changed] Added waiting mechanism to macOS build process
+- 🔨 [Fixed] Fixed `--add-data` parameter format issue in Windows platform build
+- 🔨 [Fixed] Fixed missing `.app` directory issue in macOS platform build
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
 

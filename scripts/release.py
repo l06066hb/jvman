@@ -297,22 +297,6 @@ class ChangelogManager:
         except Exception as e:
             logger.error(f"Failed to read changes from {filename}: {str(e)}")
             return None
-    
-    def format_readme_updates(self, changes, is_english=False):
-        """格式化 README 更新内容"""
-        updates = []
-        for change_type, items in changes.items():
-            if items:
-                for item in items[:2]:  # 每个类型最多取2个
-                    if len(updates) >= 6:  # 总共最多6个
-                        break
-                    emoji = self.get_emoji(item)
-                    if is_english:
-                        updates.append(f"- {emoji} [{change_type}] {item}")
-                    else:
-                        translated_item = self.translate(item)
-                        updates.append(f"- {emoji} [{change_type}] {translated_item}")
-        return updates
 
 def update_changelog(version, changes):
     """更新更新日志"""
@@ -347,32 +331,44 @@ def update_changelog(version, changes):
                 logger.debug(f"Translated: {item} -> {translated_item}")
     
     # 更新两个文件
-    for is_english, (content, new_entry) in enumerate([(content, new_entry), 
-                                                      (content_en, new_entry_en)]):
+    for is_english, (content_file, new_entry_content) in enumerate([(content, new_entry), 
+                                                                   (content_en, new_entry_en)]):
         # 在第一个版本记录之前插入新记录
-        insert_pos = content.find('## [')
+        insert_pos = content_file.find('## [')
         if insert_pos == -1:
-            content += new_entry
+            content_file += new_entry_content
         else:
-            content = content[:insert_pos] + new_entry + content[insert_pos:]
+            content_file = content_file[:insert_pos] + new_entry_content + content_file[insert_pos:]
         
         # 更新版本链接
-        if '[Unreleased]' in content:
-            content = content.replace('[Unreleased]', f'[{version}]')
+        if '[Unreleased]' in content_file:
+            content_file = content_file.replace('[Unreleased]', f'[{version}]')
         
         # 添加版本链接
         link_pattern = f"[{version}]: https://github.com/l06066hb/jvman/releases/tag/v{version}"
-        if link_pattern not in content:
-            content += f"\n{link_pattern}"
+        if link_pattern not in content_file:
+            content_file += f"\n{link_pattern}"
         
-    # 写入更新后的内容
-    filename = 'CHANGELOG.en.md' if is_english else 'CHANGELOG.md'
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(content)
-
+        # 写入更新后的内容
+        filename = 'CHANGELOG.en.md' if is_english else 'CHANGELOG.md'
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(content_file)
+    
     # 准备 README 更新内容
-    zh_updates = manager.format_readme_updates(changes, False)
-    en_updates = manager.format_readme_updates(changes, True)
+    zh_updates = []
+    en_updates = []
+    
+    # 从中文版本生成更新内容
+    for change_type, items in changes.items():
+        if items:
+            for item in items[:2]:  # 每个类型最多取2个
+                if len(zh_updates) >= 6:  # 总共最多6个
+                    break
+                emoji = manager.get_emoji(item)
+                zh_updates.append(f"- {emoji} [{change_type}] {item}")
+                # 为英文版本翻译
+                translated_item = manager.translate(item)
+                en_updates.append(f"- {emoji} [{change_type}] {translated_item}")
     
     return zh_updates, en_updates
 
@@ -389,7 +385,7 @@ def update_readme_files(version, updates_zh, updates_en):
         if re.search(version_badge_pattern, content):
             content = re.sub(version_badge_pattern, new_version_badge, content)
         
-        # 更新最新版本部分
+        # 更新最新版本部分（中文）
         version_section = f"""## 最新版本
 
 v{version} 的主要更新：
@@ -413,6 +409,7 @@ v{version} 的主要更新：
         if re.search(version_badge_pattern, content):
             content = re.sub(version_badge_pattern, new_version_badge, content)
         
+        # 更新最新版本部分（英文）
         version_section = f"""## Latest Version
 
 v{version} Major Updates:
