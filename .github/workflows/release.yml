@@ -34,6 +34,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        if [ "${{ runner.os }}" == "macOS" ]; then
+          brew install create-dmg
+        fi
+      shell: bash
     
     - name: Get version from tag
       id: get_version
@@ -41,8 +45,8 @@ jobs:
       shell: bash
     
     - name: Build Application
-      run: |
-        python scripts/build.py --platform ${{ matrix.platform }} --type all
+      run: python scripts/build.py --platform ${{ matrix.platform }} --type all
+      shell: bash
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
