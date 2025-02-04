@@ -1,56 +1,57 @@
 from PyQt6.QtWidgets import QApplication
 
+
 class ThemeManager:
     """主题管理器"""
-    
+
     # 定义主题颜色常量
     THEME_COLORS = {
-        'cyan': {
-            'primary': '#48A1B6',          # 主色调
-            'primary_light': '#E3F2FD',    # 主色调亮色
-            'border': '#B8D4D9',           # 边框色
-            'hover': '#E3EEF0',            # 悬停色
-            'pressed': '#D1E5E9',          # 按压色
-            'background': '#F5F9FA',       # 背景色
-            'text': '#2C3E50',             # 文本色
-            'secondary_bg': '#FFFFFF',      # 次要背景色
-            'container_bg': '#F8F9FA',     # 容器背景色
-            'warning': '#f0ad4e',          # 警告色
-            'success': '#28a745',          # 成功色
-            'error': '#dc3545',            # 错误色
+        "cyan": {
+            "primary": "#48A1B6",  # 主色调
+            "primary_light": "#E3F2FD",  # 主色调亮色
+            "border": "#B8D4D9",  # 边框色
+            "hover": "#E3EEF0",  # 悬停色
+            "pressed": "#D1E5E9",  # 按压色
+            "background": "#F5F9FA",  # 背景色
+            "text": "#2C3E50",  # 文本色
+            "secondary_bg": "#FFFFFF",  # 次要背景色
+            "container_bg": "#F8F9FA",  # 容器背景色
+            "warning": "#f0ad4e",  # 警告色
+            "success": "#28a745",  # 成功色
+            "error": "#dc3545",  # 错误色
         },
-        'light': {
-            'primary': '#1976D2',
-            'primary_light': '#EBF3FE',
-            'border': '#DEE2E6',
-            'hover': '#E9ECEF',
-            'pressed': '#DEE2E6',
-            'background': '#FFFFFF',
-            'text': '#2C3E50',
-            'secondary_bg': '#FFFFFF',
-            'container_bg': '#F8F9FA',
-            'warning': '#f0ad4e',
-            'success': '#28a745',
-            'error': '#dc3545',
+        "light": {
+            "primary": "#1976D2",
+            "primary_light": "#EBF3FE",
+            "border": "#DEE2E6",
+            "hover": "#E9ECEF",
+            "pressed": "#DEE2E6",
+            "background": "#FFFFFF",
+            "text": "#2C3E50",
+            "secondary_bg": "#FFFFFF",
+            "container_bg": "#F8F9FA",
+            "warning": "#f0ad4e",
+            "success": "#28a745",
+            "error": "#dc3545",
         },
-        'dark': {
-            'primary': '#90CAF9',
-            'primary_light': '#1A237E',
-            'border': '#404040',
-            'hover': '#505050',
-            'pressed': '#606060',
-            'background': '#2D2D2D',
-            'text': '#E0E0E0',
-            'secondary_bg': '#353535',
-            'container_bg': '#353535',
-            'warning': '#f0ad4e',
-            'success': '#28a745',
-            'error': '#dc3545',
-        }
+        "dark": {
+            "primary": "#90CAF9",
+            "primary_light": "#1A237E",
+            "border": "#404040",
+            "hover": "#505050",
+            "pressed": "#606060",
+            "background": "#2D2D2D",
+            "text": "#E0E0E0",
+            "secondary_bg": "#353535",
+            "container_bg": "#353535",
+            "warning": "#f0ad4e",
+            "success": "#28a745",
+            "error": "#dc3545",
+        },
     }
 
     _instance = None
-    _current_theme = 'cyan'
+    _current_theme = "cyan"
 
     @classmethod
     def initialize(cls, config):
@@ -58,7 +59,7 @@ class ThemeManager:
         if cls._instance is None:
             cls._instance = cls()
             # 从配置中获取主题，如果没有则使用默认的青色主题
-            theme = config.get('theme', 'cyan')
+            theme = config.get("theme", "cyan")
             cls._current_theme = theme
             cls.apply_theme(theme)
         return cls._instance
@@ -69,19 +70,19 @@ class ThemeManager:
         return cls._current_theme
 
     @classmethod
-    def apply_theme(cls, theme='cyan'):
+    def apply_theme(cls, theme="cyan"):
         """应用主题"""
         try:
             # 如果传入的主题不是有效值，使用青色主题
             if theme not in cls.THEME_COLORS:
-                theme = 'cyan'
-            
+                theme = "cyan"
+
             # 更新当前主题
             cls._current_theme = theme
-            
+
             # 获取当前主题的颜色
             colors = cls.THEME_COLORS[theme]
-            
+
             # 基础样式
             base_styles = """
                 /* 基础列表样式 */
@@ -184,7 +185,7 @@ class ThemeManager:
                     border: none;
                 }
             """
-            
+
             # 主题样式
             theme_styles = f"""
                 QMainWindow, QWidget {{
@@ -351,12 +352,12 @@ class ThemeManager:
                     border: 1px solid {colors['success']};
                 }}
             """
-            
+
             # 获取应用实例
             app = QApplication.instance()
             if app:
                 # 应用样式
                 app.setStyleSheet(base_styles + theme_styles)
-                
+
         except Exception as e:
-            print(f"应用主题失败: {str(e)}") 
+            print(f"应用主题失败: {str(e)}")

@@ -5,59 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.7] - 2024-01-22
-
-### Added
-- 增强了更新管理器的安全性和稳定性
-  - 添加了更新包的哈希值验证功能
-  - 增加了 URL 安全性验证机制
-  - 支持配置允许的下载域名和文件类型
-- 优化了更新通知对话框的用户体验
-  - 添加了下载进度动画效果
-  - 显示下载速度和剩余时间
-  - 支持查看更新日志和备选下载
-- 改进了版本号解析和比较逻辑
-  - 支持多种 JDK 版本号格式（1.8.0_392、8u392、11.0.21等）
-  - 优化了版本号显示格式
-  - 增强了版本比较的准确性
-
-### Changed
-- 优化了资源文件的目录结构
-  - 图标文件保持在根目录的 resources/icons 下
-  - 配置文件移至 bin/config 目录
-  - 国际化文件移至 bin/i18n 目录
-- 改进了符号链接和环境变量管理
-  - 优化了符号链接路径的设置逻辑
-  - 改进了环境变量的应用和同步机制
-  - 增强了权限检查和错误处理
-- 更新了依赖包版本要求
-  - requests >= 2.31.0
-  - urllib3 >= 2.0.0
-  - 其他依赖包版本更新
+## [1.0.7] - 2024-02-03
 
 ### Fixed
-- 修复了更新检查和下载过程中的问题
-  - 解决了更新检查失败时的错误处理
-  - 修复了下载进度显示异常
-  - 改进了网络超时处理
-- 修复了版本管理相关问题
-  - 解决了版本号解析错误
-  - 修复了版本比较逻辑问题
-  - 优化了版本类型判断
-- 修复了打包和资源文件问题
-  - 解决了打包后图标丢失问题
-  - 修复了配置文件路径错误
-  - 改进了资源文件管理
+- 修复了 Windows 平台构建时 `--add-data` 参数格式错误的问题
+- 修复了 macOS 平台构建时 `.app` 目录不存在的问题
+- 修复了 macOS 平台构建 DMG 时的权限和路径问题
+- 修复了 GitHub Actions 同步到 Gitee 时的 SSH 认证问题
+- 修复了跨平台构建时资源文件路径的兼容性问题
+- 修复了 PyInstaller 打包时的隐藏导入问题
+
+### Changed
+- 优化了构建脚本的错误处理和日志输出
+- 改进了 macOS 平台的构建流程，添加了等待机制
+- 改进了 GitHub Actions 的配置，使用更安全的认证方式
+- 优化了 CI/CD 工作流的触发条件和执行顺序
+- 改进了多平台构建的资源管理机制
+- 优化了构建产物的目录结构和命名规范
+- 改进了版本发布和同步的自动化流程
+
+### Added
+- 添加了详细的 GitHub CI/CD 工作流程指南文档
+- 添加了构建过程中的详细日志和状态检查
+- 添加了对 macOS 平台 DMG 构建的完整支持
+- 添加了自动同步 GitHub Releases 到 Gitee 的功能
+- 添加了构建产物的哈希值验证机制
+- 添加了构建环境的自动检查和依赖安装
+- 添加了跨平台构建的并行执行支持
+
+### Documentation
+- 补充了 CI/CD 相关的配置说明和最佳实践
+- 添加了密钥配置的详细说明和安全建议
+- 补充了自动化构建和发布的流程文档
+- 添加了常见问题的故障排除指南
+
 
 ### Security
-- 增强了更新过程的安全性
-  - 添加了 SSL 证书验证
-  - 实现了文件完整性校验
-  - 限制了最大下载文件大小
-- 改进了网络请求安全性
-  - 添加了域名白名单验证
-  - 强制使用 HTTPS 协议
-  - 优化了错误处理和日志记录
+- 增强了 GitHub Actions 的权限控制
+- 改进了密钥管理和使用的安全性
+- 优化了构建过程中的安全检查机制
+- 添加了构建产物的完整性验证
 
 ## [1.0.6] - 2025-01-06
 
@@ -194,11 +181,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyQt6 界面框架
 - 基础配置系统
 
-[1.0.7]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.7
-[1.0.6]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.6
-[1.0.5]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.5
-[1.0.4]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.4
-[1.0.3]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.3
-[1.0.2]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.2
-[1.0.1]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.1
-[1.0.0]: https://gitee.com/l06066hb/jvman/releases/tag/v1.0.0 
+[1.0.7]: https://github.com/l06066hb/jvman/releases/tag/v1.0.7
+[1.0.6]: https://github.com/l06066hb/jvman/releases/tag/v1.0.6
+[1.0.5]: https://github.com/l06066hb/jvman/releases/tag/v1.0.5
+[1.0.4]: https://github.com/l06066hb/jvman/releases/tag/v1.0.4
+[1.0.3]: https://github.com/l06066hb/jvman/releases/tag/v1.0.3
+[1.0.2]: https://github.com/l06066hb/jvman/releases/tag/v1.0.2
+[1.0.1]: https://github.com/l06066hb/jvman/releases/tag/v1.0.1
+[1.0.0]: https://github.com/l06066hb/jvman/releases/tag/v1.0.0 
