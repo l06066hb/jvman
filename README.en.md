@@ -191,14 +191,15 @@ python scripts/build.py --platform windows --type all
 ## Latest Version
 
 v1.0.8 Major Updates:
-- ✨ [Added] Full support for OpenJDK
+- ✨ [Added] Complete support
 - ✨ [Added] Detailed description of version features
 - ✨ [Changed] Display method of version information
 - ✨ [Changed] Improve the display effect of version features
-- ✨ [Fixed] The issue of OpenJDK version retrieval failure
+- ✨ [Fixed] The issue of version retrieval failure
 - ✨ [Fixed] Fix the issue of incomplete version information display
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
+
 
 
 
