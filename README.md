@@ -191,14 +191,15 @@ python scripts/build.py --platform windows --type all
 ## 最新版本
 
 v1.0.8 的主要更新：
-- ✨ [Added] - 的完整支持
-- ✨ [Added] - 版本特性的详细说明
+- ✨ [Added] Microsoft OpenJDK 的完整支持
+- ✨ [Added] JDK 版本特性的详细说明
 - ✨ [Added] - 添加各发行商的特性和支持策略说明
-- ✨ [Added] - 版本的区分标识
+- ✨ [Added] LTS/STS 版本的区分标识
 - ✨ [Added] - 添加版本信息的国际化支持
 - ✨ [Added] - 添加版本详情的样式优化
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 
 

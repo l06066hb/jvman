@@ -62,20 +62,25 @@ jobs:
           RELEASE_TAG="${{ github.event.release.tag_name }}"
           echo "Processing release: $RELEASE_TAG"
           
+          # 安装 gitee-release-action
+          pip install gitee-release-action
+          
           # 下载 release 资源
           mkdir -p release_assets
           cd release_assets
           
-          # 使用 GitHub CLI 下载资源
-          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --dir .
+          # 使用 GitHub CLI 下载所有资源
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --pattern "*" --dir .
           
-          # 推送到 Gitee
-          git clone --depth 1 git@gitee.com:l06066hb/jvman.git gitee_repo
-          cd gitee_repo
+          # 列出所有下载的文件
+          echo "Downloaded assets:"
+          ls -la
           
           # 创建或更新 Gitee release
-          gitee-release update l06066hb/jvman $RELEASE_TAG -a ../release_assets/* || \
-          gitee-release create l06066hb/jvman $RELEASE_TAG -a ../release_assets/*
+          gitee-release -o l06066hb -r jvman -t $RELEASE_TAG \
+            --description "$(cat ../CHANGELOG.md)" \
+            --assets ./* \
+            --token ${{ secrets.GITEE_ACCESS_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
