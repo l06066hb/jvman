@@ -432,44 +432,64 @@ For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)"""
         return False
 
 def validate_release():
-    """发布前验证"""
+    """验证发布环境"""
     try:
-        # 检查代码风格
-        logger.info("Checking code style...")
-        result = subprocess.run(['black', '--check', 'src/'], capture_output=True, text=True)
-        if result.returncode != 0:
-            logger.warning("Code style check failed. Running black to format code...")
-            subprocess.run(['black', 'src/'])
-            logger.info("Code formatting completed.")
+        # 1. 检查 git 是否安装
+        subprocess.run(['git', '--version'], check=True, capture_output=True)
         
-        # 检查必要文件是否存在
+        # 2. 检查是否在 git 仓库中
+        subprocess.run(['git', 'rev-parse', '--git-dir'], check=True, capture_output=True)
+        
+        # 3. 检查代码风格
+        logger.info("检查代码风格...")
+        try:
+            result = subprocess.run(['black', '--check', 'src/'], capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.warning("代码风格检查失败，正在格式化代码...")
+                subprocess.run(['black', 'src/'])
+                logger.info("代码格式化完成")
+        except FileNotFoundError:
+            logger.warning("未找到 black 工具，跳过代码风格检查")
+        
+        # 4. 检查必要文件是否存在
         required_files = [
             'config/app.json',
             'CHANGELOG.md',
             'CHANGELOG.en.md',
-            'README.md',  # 中文版 README
-            'README.en.md',  # 英文版 README
+            'README.md',
+            'README.en.md',
             'requirements/requirements.txt',
             'requirements/requirements-dev.txt'
         ]
+        missing_files = []
         for file in required_files:
             if not os.path.exists(file):
-                logger.error(f"Required file missing: {file}")
-                return False
+                missing_files.append(file)
         
-        # 检查版本一致性
+        if missing_files:
+            logger.error("缺少必要文件:")
+            for file in missing_files:
+                logger.error(f"- {file}")
+            return False
+        
+        # 5. 检查版本一致性
         try:
             with open('config/app.json', 'r', encoding='utf-8') as f:
                 config_version = json.load(f)['version']
             
-            # 检查 README 中的版本号
-            for readme in ['README.md', 'README.en.md']:  # 更新文件名
+            version_mismatches = []
+            for readme in ['README.md', 'README.en.md']:
                 with open(readme, 'r', encoding='utf-8') as f:
                     content = f.read()
                     if f'version-{config_version}-' not in content and f'Version: v{config_version}' not in content:
-                        logger.warning(f"Version mismatch in {readme}")
+                        version_mismatches.append(readme)
+            
+            if version_mismatches:
+                logger.warning("版本号不匹配:")
+                for file in version_mismatches:
+                    logger.warning(f"- {file} 中的版本号与 app.json 不一致")
         except Exception as e:
-            logger.error(f"Failed to check version consistency: {str(e)}")
+            logger.error(f"检查版本一致性失败: {str(e)}")
             return False
         
         # 检查 Git 仓库配置
@@ -492,8 +512,12 @@ def validate_release():
             return False
         
         return True
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"验证发布环境失败: {str(e)}")
+        return False
     except Exception as e:
-        logger.error(f"Validation failed: {str(e)}")
+        logger.error(f"验证发布环境时发生错误: {str(e)}")
         return False
 
 def sync_with_remote():
@@ -659,12 +683,13 @@ def main():
         
         subprocess.run(['git', 'tag', '-a', f'v{new_version}', '-m', tag_message])
         
-        # 10. 推送更改
-        logger.info("Pushing changes...")
-        subprocess.run(['git', 'push', 'origin', 'master'])
-        subprocess.run(['git', 'push', 'origin', f'v{new_version}'])
+        # 10. 同步到远程仓库
+        logger.info("Syncing changes with remote repositories...")
+        if not sync_with_remote():
+            logger.error("Failed to sync changes with remote repositories!")
+            return False
         
-        logger.info("Release process completed successfully!")
+        logger.info(f"Successfully released version {new_version}!")
         return True
         
     except Exception as e:
