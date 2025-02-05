@@ -220,157 +220,157 @@ class Translator:
         return result
 
 class ChangelogManager:
-    """更新日志管理类"""
+    """更新日志管理器"""
+
     def __init__(self):
-        self.translator = Translator()
         self.emoji_map = {
             'Added': '✨',
             'Changed': '🔄',
             'Fixed': '🐛',
-            'Removed': '🗑️',
-            'Security': '🔒',
-            'Performance': '⚡',
             'Documentation': '📚',
-            'Feature': '🎯',
-            'UI': '🎨',
-            'Config': '⚙️',
-            'Build': '🔨',
-            'Test': '🧪',
-            'CI': '⚡',
-            'Deps': '📦',
-            'Breaking': '💥'
+            'Security': '🔒',
+            'Improved': '⚡',
+            'Other': '🔧'
         }
-    
+        self.translator = Translator()
+
     def translate(self, text):
         """翻译文本"""
         return self.translator.translate_with_retry(text)
-    
+
     def get_emoji(self, content):
-        """根据内容获取合适的 emoji"""
+        """获取对应的 emoji"""
         content_lower = content.lower()
-        if any(keyword in content_lower for keyword in ['ui', 'interface', '界面', '样式']):
-            return self.emoji_map['UI']
-        elif any(keyword in content_lower for keyword in ['build', 'compile', '构建', '编译']):
-            return self.emoji_map['Build']
-        elif any(keyword in content_lower for keyword in ['config', 'setting', '配置', '设置']):
-            return self.emoji_map['Config']
-        elif any(keyword in content_lower for keyword in ['test', 'coverage', '测试', '覆盖']):
-            return self.emoji_map['Test']
-        elif any(keyword in content_lower for keyword in ['ci', 'pipeline', 'action']):
-            return self.emoji_map['CI']
-        elif any(keyword in content_lower for keyword in ['dependency', 'upgrade', '依赖', '升级']):
-            return self.emoji_map['Deps']
-        elif any(keyword in content_lower for keyword in ['break', 'breaking', '破坏性']):
-            return self.emoji_map['Breaking']
-        return self.emoji_map.get('Added', '✨')
-    
-    def get_changes_from_changelog(self, is_english=False):
-        """从 CHANGELOG 中读取最新的更改内容"""
+        for key, emoji in self.emoji_map.items():
+            if key.lower() in content_lower:
+                return emoji
+        return '🔧'  # 默认 emoji
+
+    def check_version_exists(self, version, file_path):
+        """检查版本是否已存在于更新日志中"""
         try:
-            filename = 'CHANGELOG.en.md' if is_english else 'CHANGELOG.md'
-            with open(filename, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            latest_section = re.search(r'## \[[\d.]+\] - \d{4}-\d{2}-\d{2}\n\n(.*?)(?=\n## \[|$)', 
-                                     content, re.DOTALL)
-            if not latest_section:
-                return None
-            
-            changes = {
-                'Added': [],
-                'Changed': [],
-                'Fixed': [],
-                'Documentation': [],
-                'Security': []
-            }
-            
-            current_type = None
-            for line in latest_section.group(1).split('\n'):
-                if line.startswith('### '):
-                    current_type = line[4:].strip()
-                elif line.startswith('- ') and current_type in changes:
-                    # 移除可能存在的 emoji
-                    item = re.sub(r'^- [^\s]+ ', '- ', line)[2:].strip()
-                    changes[current_type].append(item)
-            
-            return changes
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # 使用正则表达式检查版本是否存在
+                    version_pattern = rf'## \[{version}\] - \d{{4}}-\d{{2}}-\d{{2}}'
+                    return bool(re.search(version_pattern, content))
+            return False
         except Exception as e:
-            logger.error(f"Failed to read changes from {filename}: {str(e)}")
+            logger.error(f"检查版本是否存在时出错: {str(e)}")
+            return False
+
+    def get_latest_changes(self, file_path):
+        """获取最新版本的更新内容"""
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # 匹配最新版本的内容
+                    latest_section = re.search(r'## \[[\d.]+\] - \d{4}-\d{2}-\d{2}\n\n(.*?)(?=\n## \[|$)', 
+                                            content, re.DOTALL)
+                    if latest_section:
+                        return latest_section.group(1).strip()
+            return None
+        except Exception as e:
+            logger.error(f"获取最新更新内容时出错: {str(e)}")
             return None
 
-def update_changelog(version, changes):
-    """更新更新日志"""
-    today = datetime.now().strftime('%Y-%m-%d')
-    manager = ChangelogManager()
-    
-    # 更新中文版 CHANGELOG
-    logger.info("Updating Chinese CHANGELOG...")
-    with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    new_entry = f"\n## [{version}] - {today}\n"
-    for change_type, items in changes.items():
-        if items:
-            new_entry += f"\n### {change_type}\n"
-            for item in items:
-                new_entry += f"- {item}\n"
-    
-    # 更新英文版 CHANGELOG
-    logger.info("Updating English CHANGELOG...")
-    with open('CHANGELOG.en.md', 'r', encoding='utf-8') as f:
-        content_en = f.read()
-    
-    new_entry_en = f"\n## [{version}] - {today}\n"
-    for change_type, items in changes.items():
-        if items:
-            new_entry_en += f"\n### {change_type}\n"
-            logger.info(f"Translating {change_type} entries...")
-            for item in items:
-                translated_item = manager.translate(item)
-                new_entry_en += f"- {translated_item}\n"
-                logger.debug(f"Translated: {item} -> {translated_item}")
-    
-    # 更新两个文件
-    for is_english, (content_file, new_entry_content) in enumerate([(content, new_entry), 
-                                                                   (content_en, new_entry_en)]):
-        # 在第一个版本记录之前插入新记录
-        insert_pos = content_file.find('## [')
-        if insert_pos == -1:
-            content_file += new_entry_content
-        else:
-            content_file = content_file[:insert_pos] + new_entry_content + content_file[insert_pos:]
+    def generate_changelog(self, version, changes, file_path):
+        """生成更新日志"""
+        try:
+            # 检查版本是否已存在
+            if self.check_version_exists(version, file_path):
+                logger.info(f"版本 {version} 的更新日志已存在，跳过生成")
+                return True
+
+            today = datetime.now().strftime('%Y-%m-%d')
+            new_content = f"\n## [{version}] - {today}\n\n"
+
+            # 按类型分组更改
+            grouped_changes = {}
+            for change in changes:
+                change_type = change['type']
+                if change_type not in grouped_changes:
+                    grouped_changes[change_type] = []
+                grouped_changes[change_type].append(change['description'])
+
+            # 生成更新内容
+            for change_type, descriptions in grouped_changes.items():
+                if descriptions:
+                    new_content += f"### {change_type}\n"
+                    for desc in descriptions:
+                        emoji = self.get_emoji(change_type)
+                        new_content += f"- {emoji} {desc}\n"
+                    new_content += "\n"
+
+            # 更新文件
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # 在第一个版本标题之前插入新内容
+                pattern = r'(## \[[\d.]+\])'
+                if re.search(pattern, content):
+                    content = re.sub(pattern, f'{new_content}\\1', content, 1)
+                else:
+                    content += new_content
+            else:
+                # 创建新文件
+                header = """# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+"""
+                content = header + new_content
+
+            # 写入文件
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            return True
+
+        except Exception as e:
+            logger.error(f"生成更新日志失败: {str(e)}")
+            return False
+
+    def update_changelog(self, version, changes):
+        """更新中英文更新日志"""
+        # 更新中文更新日志
+        self.generate_changelog(version, changes, 'CHANGELOG.md')
         
-        # 更新版本链接
-        if '[Unreleased]' in content_file:
-            content_file = content_file.replace('[Unreleased]', f'[{version}]')
+        # 翻译并更新英文更新日志
+        en_changes = []
+        for change in changes:
+            en_change = change.copy()
+            en_change['description'] = self.translate(change['description'])
+            en_changes.append(en_change)
         
-        # 添加版本链接
-        link_pattern = f"[{version}]: https://github.com/l06066hb/jvman/releases/tag/v{version}"
-        if link_pattern not in content_file:
-            content_file += f"\n{link_pattern}"
+        self.generate_changelog(version, en_changes, 'CHANGELOG.en.md')
         
-        # 写入更新后的内容
-        filename = 'CHANGELOG.en.md' if is_english else 'CHANGELOG.md'
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(content_file)
-    
-    # 准备 README 更新内容
-    zh_updates = []
-    en_updates = []
-    
-    # 从中文版本生成更新内容
-    for change_type, items in changes.items():
-        if items:
-            for item in items[:2]:  # 每个类型最多取2个
-                if len(zh_updates) >= 6:  # 总共最多6个
-                    break
-                emoji = manager.get_emoji(item)
-                zh_updates.append(f"- {emoji} [{change_type}] {item}")
-                # 为英文版本翻译
-                translated_item = manager.translate(item)
-                en_updates.append(f"- {emoji} [{change_type}] {translated_item}")
-    
-    return zh_updates, en_updates
+        # 准备并返回 README 更新内容
+        return self.prepare_readme_updates(changes)
+
+    def prepare_readme_updates(self, changes):
+        """准备 README 更新内容"""
+        zh_updates = []
+        en_updates = []
+        
+        # 从中文版本生成更新内容
+        for change in changes:
+            if len(zh_updates) >= 6:  # 总共最多6个
+                break
+            emoji = self.get_emoji(change['type'])
+            description = change.get('description', '')
+            zh_updates.append(f"- {emoji} [{change['type']}] {description}")
+            # 为英文版本翻译
+            translated_description = self.translate(description)
+            en_updates.append(f"- {emoji} [{change['type']}] {translated_description}")
+        
+        return zh_updates, en_updates
 
 def update_readme_files(version, updates_zh, updates_en):
     """更新 README 文件"""
@@ -572,35 +572,53 @@ def main():
         
         # 5. 获取更新内容
         manager = ChangelogManager()
-        changes = None
+        changes = []
         use_cursor = input("Use existing changelog from cursor? (y/N): ").strip().lower() == 'y'
         
         if use_cursor:
-            changes = manager.get_changes_from_changelog()
-            if not changes:
+            # 从现有的 changelog 中读取更改
+            logger.info("Reading changes from existing changelog...")
+            with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 查找最新版本的更改
+            latest_section = re.search(r'## \[[\d.]+\] - \d{4}-\d{2}-\d{2}\n\n(.*?)(?=\n## \[|$)', 
+                                     content, re.DOTALL)
+            if not latest_section:
                 logger.error("Failed to read changes from cursor!")
                 return False
-        else:
-            changes = {
-                'Added': [],
-                'Changed': [],
-                'Fixed': [],
-                'Documentation': [],
-                'Security': []
-            }
             
+            # 解析更改内容
+            current_type = None
+            for line in latest_section.group(1).split('\n'):
+                if line.startswith('### '):
+                    current_type = line[4:].strip()
+                elif line.startswith('- '):
+                    # 移除可能存在的 emoji
+                    description = re.sub(r'^- [^\s]+ ', '', line).strip()
+                    if description:
+                        changes.append({
+                            'type': current_type,
+                            'description': description
+                        })
+        else:
+            # 手动输入更改
+            change_types = ['Added', 'Changed', 'Fixed', 'Documentation', 'Security']
             print("\nEnter changes (empty line to finish each section):")
-            for change_type in changes.keys():
+            for change_type in change_types:
                 print(f"\n{change_type}:")
                 while True:
-                    item = input("- ").strip()
-                    if not item:
+                    description = input("- ").strip()
+                    if not description:
                         break
-                    changes[change_type].append(item)
+                    changes.append({
+                        'type': change_type,
+                        'description': description
+                    })
         
         # 6. 更新更新日志
         logger.info("Updating changelog...")
-        updates_zh, updates_en = update_changelog(new_version, changes)
+        updates_zh, updates_en = manager.update_changelog(new_version, changes)
         
         # 7. 更新 README 文件
         logger.info("Updating README files...")
@@ -611,28 +629,42 @@ def main():
         # 8. 提交更改
         logger.info("Committing changes...")
         commit_message = f"release: v{new_version}\n\n"
-        for change_type, items in changes.items():
-            if items:
+        
+        # 按类型分组更改
+        grouped_changes = {}
+        for change in changes:
+            change_type = change['type']
+            if change_type not in grouped_changes:
+                grouped_changes[change_type] = []
+            grouped_changes[change_type].append(change['description'])
+        
+        # 生成提交信息
+        for change_type, descriptions in grouped_changes.items():
+            if descriptions:
                 commit_message += f"{change_type}:\n"
-                for item in items:
-                    commit_message += f"- {item}\n"
+                for description in descriptions:
+                    commit_message += f"- {description}\n"
         
         subprocess.run(['git', 'add', '.'])
         subprocess.run(['git', 'commit', '-m', commit_message])
         
         # 9. 创建标签
-        logger.info("Creating git tag...")
-        if not create_git_tag(new_version):
-            logger.error("Failed to create git tag!")
-            return False
+        logger.info("Creating tag...")
+        tag_message = f"Release version {new_version}\n\n"
         
-        # 10. 同步到远程仓库
-        logger.info("Syncing changes with remote repositories...")
-        if not sync_with_remote():
-            logger.error("Failed to sync changes with remote repositories!")
-            return False
+        # 获取最新版本的更新日志内容
+        latest_changes = manager.get_latest_changes('CHANGELOG.md')
+        if latest_changes:
+            tag_message += latest_changes
         
-        logger.info(f"Successfully released version {new_version}!")
+        subprocess.run(['git', 'tag', '-a', f'v{new_version}', '-m', tag_message])
+        
+        # 10. 推送更改
+        logger.info("Pushing changes...")
+        subprocess.run(['git', 'push', 'origin', 'master'])
+        subprocess.run(['git', 'push', 'origin', f'v{new_version}'])
+        
+        logger.info("Release process completed successfully!")
         return True
         
     except Exception as e:
