@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.0.8] - 2025-02-05
+
+### Added
+- Complete support
+- Detailed description of version features
+- Add feature and support strategy explanations for each publisher
+- Identification of version differentiation
+- Internationalization support for adding version information
+- Style optimization for adding version details
+
+### Changed
+- Display method of version information
+- Improve the display effect of version features
+- Optimize the organizational structure of publisher information
+- Improve version information caching mechanism
+- Optimize the management of international texts
+- Improve the stability of version checking
+
+### Fixed
+- The issue of version retrieval failure
+- Fix the issue of incomplete version information display
+- Fix the issue of missing translated text in some parts
+- Fix the issue of information not being updated after version switching
+- Fix formatting errors in feature description
+- Fix display issues during internationalization switching
 ## [1.0.8] - 2025-02-05
 
 ### Added
