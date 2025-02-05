@@ -191,14 +191,15 @@ python scripts/build.py --platform windows --type all
 ## 最新版本
 
 v1.0.8 的主要更新：
-- ✨ [Added] 的完整支持
-- ✨ [Added] 版本特性的详细说明
-- ✨ [Changed] 版本信息的显示方式
-- ✨ [Changed] 改进版本特性的展示效果
-- ✨ [Fixed] 版本获取失败的问题
-- ✨ [Fixed] 修复版本信息显示不完整的问题
+- ✨ [Added] - 的完整支持
+- ✨ [Added] - 版本特性的详细说明
+- ✨ [Added] - 添加各发行商的特性和支持策略说明
+- ✨ [Added] - 版本的区分标识
+- ✨ [Added] - 添加版本信息的国际化支持
+- ✨ [Added] - 添加版本详情的样式优化
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 
 
