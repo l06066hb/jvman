@@ -158,12 +158,12 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          release/release-windows/jvman-${{ env.version }}-windows-setup.exe
-          release/release-windows/jvman-${{ env.version }}-windows.zip
-          release/release-macos/jvman-${{ env.version }}-macos-setup.dmg
-          release/release-macos/jvman-${{ env.version }}-macos.zip
-          release/release-linux/jvman-${{ env.version }}-linux-setup.deb
-          release/release-linux/jvman-${{ env.version }}-linux.zip
+          release/release-windows/**/jvman-${{ env.version }}-windows-setup.exe
+          release/release-windows/**/jvman-${{ env.version }}-windows.zip
+          release/release-macos/**/jvman-${{ env.version }}-macos-setup.dmg
+          release/release-macos/**/jvman-${{ env.version }}-macos.zip
+          release/release-linux/**/jvman-${{ env.version }}-linux-setup.deb
+          release/release-linux/**/jvman-${{ env.version }}-linux.zip
           release/release.json
         body_path: CHANGELOG.md
       env:
