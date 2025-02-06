@@ -42,8 +42,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/requirements.txt
         pip install -r requirements/requirements-dev.txt
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          pip install pywin32
+        fi
         if [ "${{ runner.os }}" == "macOS" ]; then
           brew install create-dmg
+        fi
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev debhelper fakeroot
         fi
       shell: bash
     

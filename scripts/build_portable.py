@@ -276,10 +276,35 @@ def build_portable(platform='windows', timestamp=None):
         # macOS 上不创建 zip 文件，因为我们会创建 DMG
         print("Skipping ZIP creation on macOS...")
     else:
-        zip_file = os.path.join(output_dir, 'jvman.zip')
+        # 创建一个临时目录来组织文件
+        zip_name = f"jvman-{version}-{platform}"
+        temp_dir = os.path.join(output_dir, "temp")
+        final_dir = os.path.join(temp_dir, zip_name)
+        
+        # 清理可能存在的旧目录
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.makedirs(final_dir)
+        
+        # 复制所有文件到临时目录
+        for item in os.listdir(dist_dir):
+            src = os.path.join(dist_dir, item)
+            dst = os.path.join(final_dir, item)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
+        
+        # 创建ZIP文件
+        zip_file = os.path.join(output_dir, f"{zip_name}.zip")
         if os.path.exists(zip_file):
             os.remove(zip_file)
-        shutil.make_archive(os.path.join(output_dir, 'jvman'), 'zip', dist_dir)
+        
+        # 从临时目录创建zip文件
+        shutil.make_archive(os.path.join(output_dir, zip_name), 'zip', temp_dir)
+        
+        # 清理临时目录
+        shutil.rmtree(temp_dir)
     
     # 清理构建文件
     build_dir = os.path.join(root_dir, 'build')
