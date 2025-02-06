@@ -335,104 +335,137 @@ def build_macos_installer(platform='macos', timestamp=None):
                 print(f"\nWarning: Failed to clean up temporary directory: {e}")
 
 def build_linux_installer(platform='linux', timestamp=None):
-    """构建Linux安装包"""
+    """构建 Linux 安装包"""
     print("Building Linux installer...")
     root_dir = get_project_root()
     version = get_version()
-    if timestamp is None:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    # 创建release目录
+    # 获取构建目录
     release_dir = os.path.join(root_dir, 'release')
-    os.makedirs(release_dir, exist_ok=True)
-    
-    # 生成输出目录名
     output_name = f"jvman_{version}_{platform}_{timestamp}"
     output_dir = os.path.join(release_dir, output_name)
-    os.makedirs(output_dir, exist_ok=True)
+    dist_dir = os.path.join(output_dir, 'jvman')
     
-    # 创建 .deb 包
-    try:
-        subprocess.run(["dpkg-deb", "--help"], capture_output=True)
-    except FileNotFoundError:
-        print("Error: dpkg-deb not found!")
-        print("Please install dpkg: sudo apt-get install dpkg")
-        sys.exit(1)
-    
-    # 创建必要的目录结构
-    deb_root = os.path.join(output_dir, "deb")
-    os.makedirs(os.path.join(deb_root, "DEBIAN"), exist_ok=True)
-    os.makedirs(os.path.join(deb_root, "usr", "local", "bin"), exist_ok=True)
-    os.makedirs(os.path.join(deb_root, "usr", "share", "applications"), exist_ok=True)
-    os.makedirs(os.path.join(deb_root, "usr", "share", "icons", "hicolor", "256x256", "apps"), exist_ok=True)
-    
-    # 创建控制文件
-    with open(os.path.join(deb_root, "DEBIAN", "control"), "w") as f:
-        f.write(f"""Package: jvman
-Version: {version}
-Section: utils
-Priority: optional
-Architecture: amd64
-Depends: python3
-Maintainer: Your Name <your.email@example.com>
-Description: JDK Version Manager
- A tool to manage multiple JDK versions on your system.
-""")
-    
-    # 复制文件
-    dist_dir = os.path.join(root_dir, "dist", "jvman")
-    target_dir = os.path.join(deb_root, "usr", "local", "bin", "jvman")
-    if os.path.exists(dist_dir):
-        shutil.copytree(dist_dir, target_dir, dirs_exist_ok=True)
-        
-        # 确保目标目录中存在必要的子目录（确保为空）
-        dirs_to_create = [
-            os.path.join(target_dir, 'jdk'),
-            os.path.join(target_dir, 'logs'),
-            os.path.join(target_dir, 'current'),  # 添加 current 目录
-        ]
-        
-        # 创建所有必要的目录
-        for dir_path in dirs_to_create:
-            try:
-                if os.path.exists(dir_path):
-                    shutil.rmtree(dir_path)
-                os.makedirs(dir_path)
-                print(f"Created directory: {dir_path}")
-            except Exception as e:
-                print(f"Error creating directory {dir_path}: {str(e)}")
-                sys.exit(1)
-    
-    # 复制图标
-    icon_src = os.path.join(root_dir, "resources", "icons", "app.png")
-    icon_dst = os.path.join(deb_root, "usr", "share", "icons", "hicolor", "256x256", "apps", "jvman.png")
-    if os.path.exists(icon_src):
-        shutil.copy2(icon_src, icon_dst)
-    
-    # 创建桌面文件
-    with open(os.path.join(deb_root, "usr", "share", "applications", "jvman.desktop"), "w") as f:
-        f.write("""[Desktop Entry]
-Name=JVMan
-Comment=JDK Version Manager
-Exec=/usr/local/bin/jvman/jvman
-Icon=jvman
-Terminal=false
-Type=Application
-Categories=Development;Utility;
-""")
-    
-    # 构建 .deb 包
-    deb_file = os.path.join(output_dir, "jvman.deb")
-    subprocess.run(["dpkg-deb", "--build", deb_root, deb_file], check=True)
-    
-    # 清理临时文件
+    # 创建 DEB 包目录结构
+    deb_root = os.path.join(output_dir, 'deb_root')
     if os.path.exists(deb_root):
         shutil.rmtree(deb_root)
     
-    print(f"\nInstaller build completed!")
-    print(f"Output directory: {output_dir}")
-    print(f"Version: {version}")
-    print(f"Timestamp: {timestamp}")
+    # 创建必要的目录
+    deb_dirs = {
+        'DEBIAN': os.path.join(deb_root, 'DEBIAN'),
+        'usr_bin': os.path.join(deb_root, 'usr', 'bin'),
+        'usr_share_jvman': os.path.join(deb_root, 'usr', 'share', 'jvman'),
+        'usr_share_applications': os.path.join(deb_root, 'usr', 'share', 'applications'),
+        'usr_share_icons': os.path.join(deb_root, 'usr', 'share', 'icons', 'hicolor', '256x256', 'apps'),
+    }
+    
+    for dir_path in deb_dirs.values():
+        os.makedirs(dir_path, exist_ok=True)
+    
+    # 复制应用程序文件
+    shutil.copytree(dist_dir, deb_dirs['usr_share_jvman'], dirs_exist_ok=True)
+    
+    # 创建启动脚本
+    launcher_script = os.path.join(deb_dirs['usr_bin'], 'jvman')
+    with open(launcher_script, 'w') as f:
+        f.write('#!/bin/bash\n')
+        f.write('exec /usr/share/jvman/jvman "$@"\n')
+    os.chmod(launcher_script, 0o755)
+    
+    # 复制图标
+    icon_src = os.path.join(root_dir, 'resources', 'icons', 'app_256.png')
+    icon_dst = os.path.join(deb_dirs['usr_share_icons'], 'jvman.png')
+    shutil.copy2(icon_src, icon_dst)
+    
+    # 创建桌面文件
+    desktop_file = os.path.join(deb_dirs['usr_share_applications'], 'jvman.desktop')
+    with open(desktop_file, 'w') as f:
+        f.write("""[Desktop Entry]
+Name=JDK Version Manager
+Comment=Manage multiple JDK versions
+Exec=/usr/share/jvman/jvman
+Icon=jvman
+Terminal=false
+Type=Application
+Categories=Development;Java;
+Keywords=Java;JDK;Development;
+""")
+    
+    # 创建 control 文件
+    control_file = os.path.join(deb_dirs['DEBIAN'], 'control')
+    with open(control_file, 'w') as f:
+        f.write(f"""Package: jvman
+Version: {version}
+Architecture: amd64
+Maintainer: l06066hb <l06066hb@gmail.com>
+Description: JDK Version Manager
+ A tool for managing multiple JDK versions.
+ Supports downloading, installing, and switching between different JDK versions.
+Section: devel
+Priority: optional
+Homepage: https://github.com/l06066hb/jvman
+Depends: python3 (>= 3.8)
+""")
+    
+    # 创建 postinst 脚本
+    postinst_file = os.path.join(deb_dirs['DEBIAN'], 'postinst')
+    with open(postinst_file, 'w') as f:
+        f.write("""#!/bin/bash
+set -e
+
+# 设置权限
+chmod 755 /usr/share/jvman/jvman
+chmod 755 /usr/bin/jvman
+
+# 更新桌面数据库
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database -q
+fi
+
+# 更新图标缓存
+if [ -x "$(command -v gtk-update-icon-cache)" ]; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+fi
+
+exit 0
+""")
+    os.chmod(postinst_file, 0o755)
+    
+    # 创建 prerm 脚本
+    prerm_file = os.path.join(deb_dirs['DEBIAN'], 'prerm')
+    with open(prerm_file, 'w') as f:
+        f.write("""#!/bin/bash
+set -e
+
+# 清理可能存在的临时文件
+rm -rf /usr/share/jvman/temp/* || true
+rm -rf /usr/share/jvman/logs/* || true
+
+exit 0
+""")
+    os.chmod(prerm_file, 0o755)
+    
+    # 构建 DEB 包
+    deb_name = f"jvman-{version}-linux-setup.deb"
+    deb_file = os.path.join(output_dir, deb_name)
+    
+    try:
+        subprocess.run(['fakeroot', 'dpkg-deb', '--build', deb_root, deb_file], check=True)
+        print(f"Successfully created DEB package: {deb_file}")
+        
+        # 计算并生成哈希值
+        hash_value = calculate_file_hash(deb_file)
+        if hash_value:
+            generate_hash_file(deb_file, hash_value)
+        
+        # 清理临时文件
+        shutil.rmtree(deb_root)
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to create DEB package: {str(e)}")
+        return False
 
 def build_installer(platform='windows', timestamp=None):
     """构建安装包"""
