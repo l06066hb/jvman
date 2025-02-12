@@ -46,8 +46,8 @@ def get_default_paths():
     return {
         'jdk_path': os.path.join(app_dir, 'jdk'),  # JDK 存储目录
         'symlink_path': os.path.join(app_dir, 'current'),  # 当前使用的 JDK 软链接
-        'config_file': os.path.join(app_dir, 'config', 'jvman.json'),  # 配置文件路径
-        'log_file': os.path.join(app_dir, 'logs', 'jvman.log')  # 日志文件路径
+        'config_file': os.path.join(app_dir, 'config', 'jvman.json') # 配置文件路径
+        #, 'log_file': os.path.join(app_dir, 'logs', 'jvman.log')  # 日志文件路径
     }
 
 def quote_path(path, platform='windows'):
@@ -66,9 +66,40 @@ def normalize_path(path, platform='windows'):
         return path.replace('/', '\\')
     return path
 
+def check_macos_build_environment():
+    """检查 macOS 构建环境"""
+    # 检查 Python 版本
+    if sys.version_info < (3, 8):
+        print("Error: Python 3.8 or higher is required")
+        sys.exit(1)
+    
+    # 检查必要的命令
+    required_commands = ['codesign', 'chmod']
+    for cmd in required_commands:
+        try:
+            subprocess.run(['which', cmd], check=True, capture_output=True)
+        except subprocess.CalledProcessError:
+            print(f"Error: {cmd} command not found")
+            sys.exit(1)
+    
+    # 检查 PyInstaller 版本
+    try:
+        import PyInstaller
+        version = PyInstaller.__version__
+        if not version.startswith('5.'):
+            print(f"Warning: PyInstaller version {version} might not be compatible. Version 5.x is recommended.")
+    except ImportError:
+        print("Error: PyInstaller not found")
+        sys.exit(1)
+
 def build_portable(platform='windows', timestamp=None):
     """构建免安装版"""
     print("Building portable version...")
+    
+    # 检查构建环境
+    if platform == 'macos':
+        check_macos_build_environment()
+    
     root_dir = get_project_root()
     version = get_version()
     if timestamp is None:
@@ -104,7 +135,103 @@ def build_portable(platform='windows', timestamp=None):
         icon_file = os.path.join(root_dir, "resources", "icons", "app.ico")
     elif platform == 'macos':
         icon_file = os.path.join(root_dir, "resources", "icons", "app.icns")
-        build_args.extend(['--osx-bundle-identifier', 'com.jvman.app'])
+        build_args.extend([
+            '--osx-bundle-identifier', 'com.jvman.app',
+            '--codesign-identity', '-',  # 使用临时签名
+            '--icon', icon_file,  # 直接在构建参数中指定图标
+        ])
+        
+        # 确保图标文件存在
+        if not os.path.exists(icon_file):
+            print(f"Error: Icon file not found at: {icon_file}")
+            sys.exit(1)
+        
+        # 创建 Info.plist 文件
+        info_plist = os.path.join(root_dir, "resources", "Info.plist")
+        if not os.path.exists(info_plist):
+            with open(info_plist, 'w') as f:
+                f.write('''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleDisplayName</key>
+    <string>JVMan</string>
+    <key>CFBundleExecutable</key>
+    <string>jvman</string>
+    <key>CFBundleIconFile</key>
+    <string>app.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.jvman.app</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>JVMan</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+    <key>LSEnvironment</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>JVMan needs to control system events to manage JDK versions.</string>
+    <key>NSSystemAdministrationUsageDescription</key>
+    <string>JVMan needs administrator privileges to manage JDK installations.</string>
+    <key>CFBundleIconName</key>
+    <string>app</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+</dict>
+</plist>''')
+        
+        # 创建 entitlements.plist 文件
+        entitlements_plist = os.path.join(root_dir, "resources", "entitlements.plist")
+        if not os.path.exists(entitlements_plist):
+            with open(entitlements_plist, 'w') as f:
+                f.write('''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+    <key>com.apple.security.temporary-exception.apple-events</key>
+    <array>
+        <string>com.apple.systemevents</string>
+        <string>com.apple.finder</string>
+    </array>
+</dict>
+</plist>''')
+        
+        # 添加 Info.plist 和 entitlements.plist 作为资源文件
+        build_args.extend([
+            '--add-data', f'{info_plist}:.',
+            '--add-data', f'{entitlements_plist}:.'
+        ])
+        
     else:  # linux
         icon_file = os.path.join(root_dir, "resources", "icons", "app_256.png")
     
@@ -236,6 +363,9 @@ def build_portable(platform='windows', timestamp=None):
     if platform == 'macos':
         # macOS 上 PyInstaller 会自动创建 .app 目录结构
         dist_dir = os.path.join(output_dir, 'jvman.app', 'Contents', 'MacOS')
+        resources_dir = os.path.join(output_dir, 'jvman.app', 'Contents', 'Resources')
+        contents_dir = os.path.join(output_dir, 'jvman.app', 'Contents')
+        
         # 等待 .app 目录创建完成
         max_retries = 10
         retry_interval = 1  # 秒
@@ -250,26 +380,173 @@ def build_portable(platform='windows', timestamp=None):
             print(f"Error: {dist_dir} not found!")
             print("Please make sure the app was built successfully.")
             sys.exit(1)
+            
+        # 创建运行时钩子文件
+        runtime_hook = os.path.join(root_dir, "src", "runtime", "runtime_hook.py")
+        if not os.path.exists(runtime_hook):
+            os.makedirs(os.path.dirname(runtime_hook), exist_ok=True)
+            with open(runtime_hook, 'w') as f:
+                f.write('''import os
+import sys
+
+def init_user_dirs():
+    """初始化用户目录"""
+    user_home = os.path.expanduser("~")
+    app_dir = os.path.join(user_home, ".jvman")
+    
+    # 创建必要的目录
+    os.makedirs(app_dir, exist_ok=True)
+    os.makedirs(os.path.join(app_dir, "jdk"), exist_ok=True)
+    # os.makedirs(os.path.join(app_dir, "logs"), exist_ok=True)
+    
+    # 创建 current 软链接（如果不存在）
+    current_link = os.path.join(app_dir, "current")
+    if not os.path.exists(current_link):
+        # 创建一个临时的 JDK 目录结构
+        temp_jdk_dir = os.path.join(app_dir, "jdk", "temp_jdk")
+        os.makedirs(temp_jdk_dir, exist_ok=True)
+        os.makedirs(os.path.join(temp_jdk_dir, "bin"), exist_ok=True)
+        os.makedirs(os.path.join(temp_jdk_dir, "lib"), exist_ok=True)
+        
+        # 创建一个空的 java 可执行文件
+        java_exe = os.path.join(temp_jdk_dir, "bin", "java")
+        if not os.path.exists(java_exe):
+            with open(java_exe, 'w') as f:
+                f.write('#!/bin/bash\\necho "Placeholder java executable"\\n')
+            os.chmod(java_exe, 0o755)
+        
+        # 创建软链接
+        try:
+            os.symlink(temp_jdk_dir, current_link)
+        except FileExistsError:
+            pass
+
+# 初始化用户目录
+init_user_dirs()
+''')
+        
+        os.makedirs(resources_dir, exist_ok=True)
+        
+        # 移动 plist 文件到正确的位置
+        info_plist_src = os.path.join(dist_dir, 'Info.plist')
+        info_plist_dst = os.path.join(contents_dir, 'Info.plist')
+        if os.path.exists(info_plist_src):
+            shutil.move(info_plist_src, info_plist_dst)
+        else:
+            shutil.copy2(os.path.join(root_dir, "resources", "Info.plist"), info_plist_dst)
+            
+        # 移动 entitlements.plist
+        entitlements_src = os.path.join(dist_dir, 'entitlements.plist')
+        if os.path.exists(entitlements_src):
+            os.remove(entitlements_src)  # 不需要在应用程序包中保留
+            
+        # 复制图标文件到 Resources 目录
+        icon_src = os.path.join(root_dir, "resources", "icons", "app.icns")
+        if os.path.exists(icon_src):
+            # 确保 Resources 目录存在
+            os.makedirs(resources_dir, exist_ok=True)
+            
+            # 复制图标文件
+            icon_dst = os.path.join(resources_dir, "app.icns")
+            shutil.copy2(icon_src, icon_dst)
+            
+            # 设置图标文件的权限
+            subprocess.run(['chmod', '644', icon_dst])
+            
+            # 设置图标文件的属性
+            try:
+                subprocess.run(['xattr', '-cr', icon_dst], check=False)
+                subprocess.run(['SetFile', '-a', 'C', icon_dst], check=False)
+            except Exception as e:
+                print(f"Warning: Failed to set icon attributes: {e}")
+            
+            # 刷新图标缓存
+            subprocess.run(['touch', os.path.join(output_dir, 'jvman.app')])
+            
+            print(f"Icon file copied to: {icon_dst}")
+        else:
+            print(f"Warning: Icon file not found at: {icon_src}")
+        
+        # 复制所有资源文件到正确的位置
+        resources_src = os.path.join(dist_dir, 'resources')
+        if os.path.exists(resources_src):
+            for item in os.listdir(resources_src):
+                src = os.path.join(resources_src, item)
+                dst = os.path.join(resources_dir, item)
+                if os.path.exists(dst):
+                    if os.path.isdir(dst):
+                        shutil.rmtree(dst)
+                    else:
+                        os.remove(dst)
+                if os.path.isdir(src):
+                    shutil.copytree(src, dst)
+                else:
+                    shutil.copy2(src, dst)
+            shutil.rmtree(resources_src)
+        
+        # 复制额外的资源文件
+        icons_src = os.path.join(root_dir, "resources", "icons")
+        icons_dst = os.path.join(resources_dir, "icons")
+        if os.path.exists(icons_src):
+            if os.path.exists(icons_dst):
+                shutil.rmtree(icons_dst)
+            shutil.copytree(icons_src, icons_dst)
+            
+            # 设置图标目录的权限
+            subprocess.run(['chmod', '-R', '644', icons_dst])
+        
+        # 设置正确的权限
+        subprocess.run(['chmod', '-R', '755', os.path.join(output_dir, 'jvman.app')])
+        
+        # 重新签名应用程序
+        try:
+            # 首先签名所有第三方库
+            frameworks_path = os.path.join(dist_dir, 'lib')
+            if os.path.exists(frameworks_path):
+                for root, dirs, files in os.walk(frameworks_path):
+                    for file in files:
+                        if file.endswith('.so') or file.endswith('.dylib'):
+                            file_path = os.path.join(root, file)
+                            subprocess.run(['codesign', '--force', '--sign', '-', file_path])
+            
+            # 然后签名主程序
+            subprocess.run([
+                'codesign', '--force', '--deep', '--sign', '-',
+                '--entitlements', os.path.join(root_dir, "resources", "entitlements.plist"),
+                '--options', 'runtime',
+                os.path.join(output_dir, 'jvman.app')
+            ])
+            
+            # 验证签名
+            subprocess.run([
+                'codesign', '--verify', '--deep', '--strict',
+                '--verbose=2',
+                os.path.join(output_dir, 'jvman.app')
+            ])
+        except Exception as e:
+            print(f"Warning: Code signing failed: {e}")
+            print("The app will still work but might show security warnings.")
+        
     else:
         dist_dir = os.path.join(output_dir, 'jvman')
-    
-    # 创建必要的目录结构
-    dirs_to_create = [
-        os.path.join(dist_dir, 'jdk'),
-        os.path.join(dist_dir, 'logs'),
-        os.path.join(dist_dir, 'current'),  # 添加 current 目录
-    ]
-    
-    # 创建所有必要的目录
-    for dir_path in dirs_to_create:
-        try:
-            if os.path.exists(dir_path):
-                shutil.rmtree(dir_path)
-            os.makedirs(dir_path)
-            print(f"Created directory: {dir_path}")
-        except Exception as e:
-            print(f"Error creating directory {dir_path}: {str(e)}")
-            sys.exit(1)
+        
+        # 创建必要的目录结构
+        dirs_to_create = [
+            os.path.join(dist_dir, 'jdk'),
+            #os.path.join(dist_dir, 'logs'),
+            os.path.join(dist_dir, 'current'),
+        ]
+        
+        # 创建所有必要的目录
+        for dir_path in dirs_to_create:
+            try:
+                if os.path.exists(dir_path):
+                    shutil.rmtree(dir_path)
+                os.makedirs(dir_path)
+                print(f"Created directory: {dir_path}")
+            except Exception as e:
+                print(f"Error creating directory {dir_path}: {str(e)}")
+                sys.exit(1)
     
     # 创建ZIP文件
     if platform == 'macos':
@@ -294,6 +571,26 @@ def build_portable(platform='windows', timestamp=None):
                 shutil.copytree(src, dst)
             else:
                 shutil.copy2(src, dst)
+        
+        # 删除 bin 目录下的 resources 文件夹
+        bin_resources = os.path.join(final_dir, 'bin', 'resources')
+        if os.path.exists(bin_resources):
+            shutil.rmtree(bin_resources)
+            print(f"Removed resources folder from bin directory")
+                
+        # 只复制 resources/icons 到根目录
+        icons_src = os.path.join(root_dir, "resources", "icons")
+        resources_dst = os.path.join(final_dir, "resources")
+        icons_dst = os.path.join(resources_dst, "icons")
+        
+        if os.path.exists(icons_src):
+            if os.path.exists(resources_dst):
+                shutil.rmtree(resources_dst)
+            os.makedirs(resources_dst)
+            shutil.copytree(icons_src, icons_dst)
+            print(f"Copied icons folder to: {icons_dst}")
+        else:
+            print(f"Warning: Icons folder not found at: {icons_src}")
         
         # 创建ZIP文件
         zip_file = os.path.join(output_dir, f"{zip_name}.zip")

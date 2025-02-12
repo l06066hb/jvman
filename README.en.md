@@ -1,6 +1,6 @@
 # JDK Version Manager
 
-[![Version](https://img.shields.io/badge/version-1.0.8-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.9-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://github.com/l06066hb/jvman)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
@@ -190,15 +190,16 @@ python scripts/build.py --platform windows --type all
 
 ## Latest Version
 
-v1.0.8 Major Updates:
-- ✨ [Added] Full support for Microsoft OpenJDK
-- ✨ [Added] Detailed description of JDK version features
-- ✨ [Added] -Add feature and support strategy explanations for each publisher
-- ✨ [Added] Distinguishing identification of LTS/STS versions
-- ✨ [Added] -Internationalization support for adding version information
-- ✨ [Added] -Style optimization for adding version details
+v1.0.9 Major Updates:
+- ✨ [Added] -Add environment variable backup management function
+- ✨ [Added] -Add backup creation, recovery, and viewing functions
+- ✨ [Added] -Add support for automatic and manual backups
+- ✨ [Added] -Add backup restrictions and automatic cleaning mechanism
+- ✨ [Added] -Add backup content comparison and preview function
+- ✨ [Added] -Add internationalization support for universal operation buttons
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
+
 
 
 

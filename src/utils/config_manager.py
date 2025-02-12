@@ -3,7 +3,11 @@ import json
 from loguru import logger
 import sys
 import re
-import winreg
+import platform
+
+# Windows 特定的导入
+if platform.system() == "Windows":
+    import winreg
 
 
 class ConfigManager:
@@ -31,7 +35,7 @@ class ConfigManager:
         if sys.platform == "win32":
             config_dir = os.path.join(os.getenv("APPDATA", user_home), "jvman")
         else:
-            config_dir = os.path.join(user_home, ".config", "jvman")
+            config_dir = os.path.join(user_home, ".jvman")
 
         os.makedirs(config_dir, exist_ok=True)
         return os.path.join(config_dir, "settings.json")
@@ -159,11 +163,14 @@ class ConfigManager:
         """创建默认用户配置"""
         from .version_manager import version_manager
 
+        user_home = os.path.expanduser("~")
+        app_dir = os.path.join(user_home, ".jvman")
+
         self.user_config = {
             "language": version_manager.get_default_language(),
             "theme": "cyan",
-            "jdk_store_path": "jdk",
-            "junction_path": "current",
+            "jdk_store_path": os.path.join(app_dir, "jdk"),
+            "junction_path": os.path.join(app_dir, "current"),
             "mapped_jdks": [],
             "downloaded_jdks": [],
             "jdks": [],
@@ -380,31 +387,67 @@ class ConfigManager:
     def set_auto_start(self, enabled):
         """设置自启动状态"""
         try:
-            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-            app_name = "JDK Version Manager"
-            exe_path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                    "jvman.exe",
+            if platform.system() == "Windows":
+                key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+                app_name = "JDK Version Manager"
+                exe_path = os.path.abspath(
+                    os.path.join(
+                        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                        "jvman.exe",
+                    )
                 )
-            )
 
-            # 打开注册表项
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE
-            )
+                # 打开注册表项
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE
+                )
 
-            if enabled:
-                # 添加自启动项
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, exe_path)
+                if enabled:
+                    # 添加自启动项
+                    winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, exe_path)
+                else:
+                    try:
+                        # 删除自启动项
+                        winreg.DeleteValue(key, app_name)
+                    except WindowsError:
+                        pass  # 如果键不存在，忽略错误
+
+                winreg.CloseKey(key)
             else:
-                try:
-                    # 删除自启动项
-                    winreg.DeleteValue(key, app_name)
-                except WindowsError:
-                    pass  # 如果键不存在，忽略错误
+                # Unix 系统（Mac/Linux）的自启动设置
+                user_home = os.path.expanduser("~")
+                autostart_dir = os.path.join(user_home, ".config", "autostart")
+                desktop_file = os.path.join(autostart_dir, "jvman.desktop")
 
-            winreg.CloseKey(key)
+                if enabled:
+                    # 创建自启动目录
+                    os.makedirs(autostart_dir, exist_ok=True)
+
+                    # 获取可执行文件路径
+                    if getattr(sys, "frozen", False):
+                        exe_path = sys.executable
+                    else:
+                        exe_path = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                            "jvman",
+                        )
+
+                    # 创建 .desktop 文件
+                    with open(desktop_file, "w") as f:
+                        f.write(
+                            f"""[Desktop Entry]
+Type=Application
+Name=JVMan
+Exec={exe_path}
+Terminal=false
+Categories=Development;
+"""
+                        )
+                else:
+                    # 删除自启动文件
+                    if os.path.exists(desktop_file):
+                        os.remove(desktop_file)
+
             self.set("auto_start", enabled)
             return True
         except Exception as e:
@@ -413,7 +456,7 @@ class ConfigManager:
 
     def get_auto_start_status(self):
         """获取自启动状态"""
-        if sys.platform == "win32":
+        if platform.system() == "Windows":
             try:
                 key = winreg.OpenKey(
                     winreg.HKEY_CURRENT_USER,
@@ -443,7 +486,7 @@ class ConfigManager:
         if sys.platform == "win32":
             config_dir = os.path.join(os.getenv("APPDATA", user_home), "jvman")
         else:
-            config_dir = os.path.join(user_home, ".config", "jvman")
+            config_dir = os.path.join(user_home, ".jvman")
         os.makedirs(config_dir, exist_ok=True)
         return config_dir
 

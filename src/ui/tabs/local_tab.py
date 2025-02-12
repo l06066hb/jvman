@@ -23,10 +23,12 @@ from utils.system_utils import (
     create_symlink,
     set_environment_variable,
     update_path_variable,
+    get_environment_variable,
 )
 from utils.platform_manager import platform_manager
 from utils.i18n_manager import i18n_manager
 from utils.version_utils import version_utils
+import platform
 
 # 初始化i18n管理器
 _ = i18n_manager.get_text
@@ -86,9 +88,63 @@ class SystemVersionThread(QThread):
     finished = pyqtSignal(str)
 
     def run(self):
+        """运行线程"""
         try:
-            version = version_utils.get_system_java_version()
-            self.finished.emit(version)
+            # 获取 JAVA_HOME
+            java_home = get_environment_variable("JAVA_HOME")
+            if not java_home or java_home == _("settings.env.not_set"):
+                self.finished.emit(_("local.system_version.not_installed"))
+                return
+
+            # 清理路径中的引号
+            java_home = java_home.strip('"').strip("'")
+
+            # 展开环境变量和用户目录
+            java_home = os.path.expandvars(java_home)
+            java_home = os.path.expanduser(java_home)
+            java_home = os.path.realpath(java_home)  # 解析任何符号链接
+
+            logger.debug(f"处理后的JAVA_HOME路径: {java_home}")
+
+            # 检查路径是否存在
+            if not os.path.exists(java_home):
+                logger.error(f"JAVA_HOME路径不存在: {java_home}")
+                self.finished.emit(_("local.system_version.invalid_path"))
+                return
+
+            # 获取 java 可执行文件路径
+            if platform_manager.is_windows:
+                java_exe = os.path.join(java_home, "bin", "java.exe")
+            else:
+                java_exe = os.path.join(java_home, "bin", "java")
+
+            if not os.path.exists(java_exe):
+                logger.error(f"Java可执行文件不存在: {java_exe}")
+                self.finished.emit(_("local.system_version.no_executable"))
+                return
+
+            # 执行 java -version 命令
+            try:
+                result = subprocess.run(
+                    [java_exe, "-version"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                version_output = result.stderr if result.stderr else result.stdout
+
+                if version_output:
+                    # 使用完整的版本输出
+                    self.finished.emit(version_output.strip())
+                else:
+                    logger.error("Java版本命令没有输出")
+                    self.finished.emit(_("local.system_version.parse_failed"))
+
+            except subprocess.CalledProcessError as e:
+                logger.error(f"执行 java -version 命令失败: {str(e)}")
+                self.finished.emit(_("local.system_version.command_failed"))
+
         except Exception as e:
             logger.error(f"{_('log.error.get_system_version_failed')}: {str(e)}")
             self.finished.emit(_("local.system_version.unknown"))
@@ -96,11 +152,16 @@ class SystemVersionThread(QThread):
     def update_system_version(self, version):
         """更新环境变量版本显示"""
         if version:
-            if version == _("local.system_version.not_installed"):
+            if version in [
+                _("local.system_version.not_installed"),
+                _("local.system_version.invalid_path"),
+                _("local.system_version.no_executable"),
+                _("local.system_version.parse_failed"),
+                _("local.system_version.command_failed"),
+                _("local.system_version.unknown"),
+            ]:
                 self.system_version_label.setProperty("status", "not_installed")
-                self.system_version_label.setText(
-                    _("local.system_version.not_installed")
-                )
+                self.system_version_label.setText(version)
             else:
                 self.system_version_label.setProperty("status", "installed")
                 self.system_version_label.setText(
@@ -1463,15 +1524,27 @@ class LocalTab(QWidget):
     def open_jdk_dir(self, jdk_path):
         """打开JDK目录"""
         try:
-            if platform_manager.is_windows:
+            if not os.path.exists(jdk_path):
+                QMessageBox.warning(
+                    self,
+                    _("common.warning"),
+                    _("settings.error.invalid_path").format(path=jdk_path),
+                )
+                return
+
+            # 根据不同操作系统使用不同的打开命令
+            if platform.system() == "Windows":
                 os.startfile(jdk_path)
-            else:
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", jdk_path])
+            else:  # Linux
                 subprocess.run(["xdg-open", jdk_path])
+
         except Exception as e:
             logger.error(f"{_('local.error.open_dir_failed')}: {str(e)}")
             QMessageBox.warning(
                 self,
-                _("local.dialog.error"),
+                _("common.error"),
                 _("local.error.open_dir_failed").format(error=str(e)),
             )
 
@@ -1494,12 +1567,15 @@ class LocalTab(QWidget):
             # 创建自定义成功对话框
             success_dialog = QDialog(self)
             success_dialog.setWindowTitle(_("local.dialog.switch.title"))
-            success_dialog.setFixedSize(340, 160)  # 减小对话框尺寸
+            # 移除固定尺寸，改用最小尺寸
+            success_dialog.setMinimumWidth(340)
+            success_dialog.setMinimumHeight(200)  # 增加最小高度
             success_dialog.setStyleSheet(
                 """
                 QDialog {
                     background-color: white;
                     border-radius: 8px;
+                    min-height: 200px;  /* 设置最小高度 */
                 }
                 QLabel {
                     color: #333333;
@@ -1522,21 +1598,22 @@ class LocalTab(QWidget):
                     color: #202124;
                     font-family: 'Consolas', monospace;
                     background-color: #f8f9fa;
-                    padding: 6px 10px;
+                    padding: 8px 12px;  /* 增加内边距 */
                     border-radius: 4px;
                     border: 1px solid #e8eaed;
-                    margin: 4px 0;
+                    margin: 8px 0;  /* 增加外边距 */
                     line-height: 1.4;
+                    word-wrap: break-word;  /* 允许文字换行 */
                 }
                 QPushButton {
-                    padding: 4px 16px;
+                    padding: 6px 20px;  /* 增加按钮内边距 */
                     border: none;
                     border-radius: 4px;
                     background-color: #1a73e8;
                     color: white;
                     font-size: 13px;
                     font-weight: 500;
-                    min-width: 70px;
+                    min-width: 80px;  /* 设置最小宽度 */
                 }
                 QPushButton:hover {
                     background-color: #1557b0;
@@ -1553,15 +1630,15 @@ class LocalTab(QWidget):
 
             # 创建布局
             layout = QVBoxLayout(success_dialog)
-            layout.setContentsMargins(16, 16, 16, 12)  # 减小边距
-            layout.setSpacing(8)  # 减小间距
+            layout.setContentsMargins(20, 20, 20, 16)  # 增加边距
+            layout.setSpacing(12)  # 增加间距
 
             # 添加图标和标题
             header_layout = QHBoxLayout()
-            header_layout.setSpacing(10)  # 减小图标和标题的间距
+            header_layout.setSpacing(12)  # 增加间距
 
             icon_label = QLabel()
-            icon_label.setStyleSheet("background: transparent;")  # 设置背景透明
+            icon_label.setStyleSheet("background: transparent;")
             icon_path = os.path.join(
                 os.path.dirname(
                     os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -1590,25 +1667,18 @@ class LocalTab(QWidget):
             # 添加消息内容
             content_widget = QWidget()
             content_layout = QVBoxLayout(content_widget)
-            content_layout.setContentsMargins(0, 8, 0, 8)  # 增加内容区域的上下边距
-            content_layout.setSpacing(12)  # 增加内容区域的间距
+            content_layout.setContentsMargins(0, 12, 0, 12)  # 增加内容区域的边距
+            content_layout.setSpacing(16)  # 增加内容区域的间距
 
             if not platform_manager.is_windows:
-                reload_cmd = platform_manager.get_shell_reload_command()
-                message = QLabel(_("local.dialog.switch.success_message_unix"))
+                message = QLabel(_("local.dialog.switch.success_message_windows"))
                 message.setObjectName("messageLabel")
+                message.setWordWrap(True)  # 启用自动换行
                 content_layout.addWidget(message)
-
-                # 添加命令显示
-                cmd_label = QLabel(reload_cmd)
-                cmd_label.setObjectName("commandLabel")
-                cmd_label.setTextInteractionFlags(
-                    Qt.TextInteractionFlag.TextSelectableByMouse
-                )
-                content_layout.addWidget(cmd_label)
             else:
                 message = QLabel(_("local.dialog.switch.success_message_windows"))
                 message.setObjectName("messageLabel")
+                message.setWordWrap(True)  # 启用自动换行
                 content_layout.addWidget(message)
 
             layout.addWidget(content_widget)
@@ -1618,7 +1688,7 @@ class LocalTab(QWidget):
             button_layout = QHBoxLayout()
             button_layout.addStretch()
             ok_button = QPushButton(_("local.dialog.button.ok"))
-            ok_button.setFixedWidth(80)  # 减小按钮宽度
+            ok_button.setFixedWidth(80)
             ok_button.clicked.connect(success_dialog.accept)
             button_layout.addWidget(ok_button)
             layout.addLayout(button_layout)

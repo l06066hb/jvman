@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-02-09
+
+### Added
+- Added environment variable backup management functionality
+- Added backup creation, restoration, and viewing features
+- Added support for automatic and manual backups
+- Added backup limits and automatic cleanup mechanism
+- Added backup content comparison and preview features
+- Added internationalization support for common operation buttons
+
+### Changed
+- Optimized environment variable settings interface layout
+- Improved backup management user interaction experience
+- Enhanced backup list display method
+- Improved backup content presentation format
+- Optimized internationalization text organization
+- Enhanced common button styles and interactions
+
+### Fixed
+- Fixed environment variable setting permission issues
+- Fixed symlink creation issues on macOS
+- Fixed environment variable update issues on Linux
+- Fixed version switching issues on Windows
+- Fixed missing internationalization text issues
+- Fixed status not updating after backup restoration
+
+### Improved
+- Environment variable management stability
+- Cross-platform compatibility support
+- User interface interaction experience
+- Error handling and notification mechanism
+- Internationalization support completeness
+- Configuration file management mechanism
+
 ## [1.0.8] - 2025-02-04
 
 ### Added

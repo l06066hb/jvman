@@ -66,22 +66,23 @@ def setup_subprocess():
             subprocess.Popen.__init__ = new_init
     except Exception as e:
         logger.error(f"[setup_subprocess] 设置子进程创建标志失败: {str(e)}")
-        pass
+    pass
 
 
 def setup_dpi_awareness():
     """设置DPI感知"""
-    try:
-        if platform.system() == "Windows":
-            # 设置进程级别的DPI感知
+    if platform.system() == "Windows":
+        try:
+            # 尝试使用较新的 API
+            ctypes.windll.shcore.SetProcessDpiAwareness(
+                2
+            )  # PROCESS_PER_MONITOR_DPI_AWARE
+        except AttributeError:
             try:
-                ctypes.windll.shcore.SetProcessDpiAwareness(
-                    1
-                )  # PROCESS_SYSTEM_DPI_AWARE
-            except Exception:
+                # 回退到旧版 API
                 ctypes.windll.user32.SetProcessDPIAware()
-    except Exception:
-        pass
+            except AttributeError:
+                logger.warning("无法设置DPI感知")
 
 
 def runtime_hook():

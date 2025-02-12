@@ -16,12 +16,14 @@
         "proxy_port": "Proxy Port",
         "save": "Save",
         "cancel": "Cancel",
-        "reset": "Reset",
+        "reset": "Reset to Default",
         "error": {
             "title": "Settings Error",
             "save_failed": "Failed to save settings: {error}",
             "load_failed": "Failed to load settings: {error}",
-            "invalid_path": "Invalid path: {path}"
+            "invalid_path": "Invalid or inaccessible path: {path}\nPlease check:\n1. If the directory exists\n2. If you have sufficient permissions\n3. If the path contains special characters",
+            "create_dir_failed": "Failed to create directory: {error}",
+            "permission_denied": "Insufficient permissions to access path: {path}"
         },
         "sections": {
             "basic": "Basic Settings",
@@ -60,10 +62,99 @@
             "manual_tip": "Copy the following content to system environment variables:",
             "auto_setup": "Auto Setup",
             "not_set": "Not Set",
-            "no_java_path": "No Java related path found",
-            "synced": "Environment variables synced",
+            "no_java_path": "No Java related paths found",
+            "synced": "Environment variables are synced",
             "change_warning": "⚠️ Basic settings have changed, please click 'Apply Environment Variables' to take effect",
-            "all_paths": "All environment variable paths"
+            "all_paths": "All Environment Variable Paths",
+            "source_success": "Environment variables updated and automatically applied",
+            "source_failed": "Environment variables updated, but auto-apply failed. Please reopen terminal or run source command",
+            "source_running": "Applying environment variables...",
+            "config_files": {
+                "priority": {
+                    "title": "📁 Configuration File Priority:",
+                    "system_profile": "/etc/profile (System Level)",
+                    "system_paths": "/etc/paths (System Paths)",
+                    "user_profile": "~/.bash_profile (User Level, Recommended)",
+                    "user_profile_alt": "~/.profile (User Level, Alternative)"
+                },
+                "status": {
+                    "writable": "✅ Writable",
+                    "readonly": "🔒 Read Only",
+                    "not_exist": "❌ Not Exist"
+                },
+                "current": {
+                    "title": "📌 Current Configuration File",
+                    "not_found": "⚠️ No available configuration file found"
+                }
+            },
+            "variables": {
+                "title": "🔍 Current Environment Variables:",
+                "java_home": {
+                    "set": "   JAVA_HOME = {value}",
+                    "not_set": "   JAVA_HOME = ⚠️ Not Set"
+                },
+                "path": {
+                    "title": "   Java Related Paths in PATH:",
+                    "entry": "      - {path}",
+                    "not_found": "   No Java related paths found in PATH",
+                    "not_set": "   PATH = ⚠️ Not Set"
+                },
+                "classpath": {
+                    "set": "   CLASSPATH = {value}",
+                    "not_set": "   CLASSPATH = ⚠️ Not Set"
+                }
+            },
+            "backup": {
+                "title": "Environment Variables Backup Management",
+                "create": "Create Backup",
+                "restore": "Restore Backup",
+                "view": "View Backup",
+                "time": "Backup Time",
+                "type": "Backup Type",
+                "config_file": "Config File",
+                "auto": "Auto Backup",
+                "manual": "Manual Backup",
+                "unknown_config": "Unknown Config",
+                "success_title": "Success",
+                "error_title": "Error",
+                "warning_title": "Warning",
+                "confirm_title": "Confirm",
+                "success_message": "Backup created successfully",
+                "create_failed": "Failed to create backup",
+                "create_error": "Error creating backup: {error}",
+                "restore_success": "Backup restored successfully",
+                "restore_failed": "Failed to restore backup",
+                "restore_error": "Error restoring backup: {error}",
+                "select_backup": "Please select a backup to restore",
+                "confirm_message": "Are you sure you want to restore the selected backup? Current environment variables will be overwritten.",
+                "limit_warning": "⚠️ Backup limit reached ({count}), new backup will overwrite the oldest one",
+                "limit_hint": "System keeps up to {count} backups (auto + manual), please clean up unnecessary backups regularly",
+                "auto_limit_reached": "Auto backup limit reached ({count}), oldest backup has been automatically deleted",
+                "view_title": "View Backup Content",
+                "read_failed": "Failed to read backup content",
+                "view_failed": "Failed to view backup content: {error}",
+                "info_title": "Backup Information",
+                "backup_content": "Backup Content",
+                "current_content": "Current Content",
+                "config_content": "Configuration File Content",
+                "variable": "Variable Name",
+                "backup_value": "Backup Value",
+                "current_value": "Current Value",
+                "table": {
+                    "header": {
+                        "config_file": "Config File",
+                        "type": "Backup Type",
+                        "time": "Backup Time"
+                    },
+                    "empty": "No backup records"
+                },
+                "button": {
+                    "create": "Create Backup",
+                    "restore": "Restore Backup",
+                    "view": "View Backup",
+                    "close": "Close"
+                }
+            }
         },
         "messages": {
             "restart_required": "Restart Required",
@@ -71,17 +162,20 @@
             "select_jdk_path": "Select JDK Storage Path",
             "select_symlink_path": "Select Symlink Path",
             "select_config_file": "Select Shell Config File",
-            "env_update_success": "Environment Variables Updated",
-            "env_update_unix": "Environment variables have been updated. Please run the following command to apply changes:\n{cmd}",
-            "env_update_error": "Failed to update environment variables: {error}",
-            "env_update_windows": "Environment variables have been updated. Changes will take effect in new command prompts.",
+            "env_update_success": "Environment variables updated successfully",
+            "env_update_windows": "Environment variables updated, will take effect in new command prompts",
+            "env_update_unix": "Environment variables updated, please run the following command to apply changes:\n{cmd}",
             "env_update_partial_failed": "Some environment variables failed to update:\n{errors}",
+            "env_update_error": "Failed to update environment variables: {error}",
             "java_home_failed": "Failed to set JAVA_HOME",
             "path_failed": "Failed to update PATH",
             "classpath_failed": "Failed to set CLASSPATH",
             "reset_close_action": "Close action has been reset, will take effect after restart",
             "path_select_failed": "Path selection failed",
-            "update_check_failed": "Update check failed, please check your network connection and try again"
+            "update_check_failed": "Update check failed, please check your network connection and try again",
+            "reset_confirm": "Are you sure you want to reset to default settings? Current settings will be overwritten.",
+            "reset_success": "Successfully reset to default settings",
+            "reset_failed": "Failed to reset settings: {error}"
         }
     },
     "jdk": {
@@ -116,6 +210,28 @@
         }
     },
     "common": {
+        "close": "Close",
+        "open": "Open",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "remove": "Remove",
+        "refresh": "Refresh",
+        "search": "Search",
+        "filter": "Filter",
+        "sort": "Sort",
+        "settings": "Settings",
+        "help": "Help",
+        "about": "About",
+        "exit": "Exit",
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "start": "Start",
+        "stop": "Stop",
+        "pause": "Pause",
+        "resume": "Resume",
         "confirm": "Confirm",
         "cancel": "Cancel",
         "error": "Error",
@@ -126,9 +242,10 @@
         "loading": "Loading...",
         "processing": "Processing...",
         "please_wait": "Please wait...",
-        "operation_success": "Operation Success",
-        "operation_failed": "Operation Failed",
-        "unknown_error": "Unknown Error"
+        "operation_success": "Operation successful",
+        "operation_failed": "Operation failed",
+        "unknown_error": "Unknown error",
+        "debug": "Debug"
     },
     "install": {
         "confirm": {
@@ -198,6 +315,7 @@
                 },
                 "error": "Error: {message}",
                 "cleaning": "Cleaning up files...",
+                "extracting": "Extracting files...",
                 "manual": {
                     "oracle": "Oracle account login is required to download this version. Click \"Manual Download\" to go to the official download page.",
                     "openjdk": "This version requires manual download from OpenJDK website. Click \"Manual Download\" to go to the download page.",
@@ -329,9 +447,12 @@
             "mirror_remove_failed": "Failed to remove mirror: {error}",
             "path_not_dir": "Specified path is not a directory: {path}",
             "path_not_writable": "Directory is not writable: {path}",
-            "create_dir_failed": "Failed to create directory: {error}",
             "remove_existing_failed": "Failed to remove existing file: {error}",
-            "already_exists": "JDK {vendor} {version} is already installed at:\n{path}\n\nPlease use the existing installation or remove it first."
+            "already_exists": "JDK {vendor} {version} is already installed at:\n{path}\n\nPlease use the existing installation or remove it first.",
+            "admin_rights": {
+                "windows": "Administrator privileges required. Please run the program as administrator.",
+                "unix": "Administrator privileges required. Please enter password to authorize."
+            }
         },
         "cache": {
             "using_cached": "Using cached version list",
@@ -640,7 +761,9 @@
             "hint": "(Java version from system environment variables)",
             "detecting": "Detecting...",
             "not_installed": "System Version: Not Installed",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "invalid_path": "Invalid Java Path",
+            "no_executable": "Java executable not found"
         },
         "jdk": {
             "type": {
@@ -728,8 +851,12 @@
             "jdk_not_found": "JDK information not found"
         },
         "error": {
-            "symlink_failed": "Failed to remove symbolic link: {error}",
-            "open_dir_failed": "Failed to open directory: {error}"
+            "symlink_failed": "Failed to unlink: {error}",
+            "open_dir_failed": "Failed to open directory: {error}",
+            "admin_rights": {
+                "windows": "Administrator privileges required. Please run the program as administrator.",
+                "unix": "Administrator privileges required. Please enter password to authorize."
+            }
         },
         "vendor": {
             "unknown": "Unknown"
@@ -1004,24 +1131,20 @@
         }
     },
     "docs.search.placeholder": "Search documentation...",
-    
     "docs.sections.api": "JDK API Documentation",
     "docs.sections.tutorials": "Java Tutorials & Guides",
     "docs.sections.resources": "Developer Resources",
     "docs.sections.others": "Additional Resources",
-    
     "docs.api.jdk23": "JDK 23",
     "docs.api.jdk21": "JDK 21 (LTS)",
     "docs.api.jdk17": "JDK 17 (LTS)",
     "docs.api.jdk11": "JDK 11 (LTS)",
     "docs.api.jdk8": "JDK 8 (LTS)",
-    
     "docs.tutorials.spec": "Java Language Specification",
     "docs.tutorials.tutorial": "Java Tutorial (Oracle)",
     "docs.tutorials.jvm": "JVM Specification",
     "docs.tutorials.security": "Java Security Coding Guidelines",
     "docs.tutorials.troubleshoot": "Java Troubleshooting Guide",
-    
     "docs.resources.devcenter": "Java Developer Center",
     "docs.resources.openjdk": "OpenJDK Documentation",
     "docs.resources.relnotes": "Java Release Notes",
@@ -1033,7 +1156,6 @@
     "docs.resources.community.jakarta": "Jakarta EE Community",
     "docs.resources.community.reddit": "Java Reddit Community",
     "docs.resources.community.stackoverflow": "Stack Overflow Java",
-    
     "docs.others.alibaba": "Java Development Manual (Alibaba)",
     "docs.others.jvm": "JVM Specification (Chinese)",
     "docs.others.effective": "Effective Java (Chinese)",
@@ -1045,5 +1167,11 @@
     "docs.others.awesome": "Awesome Java Projects Collection",
     "docs.others.tech": "Java Technology Stack Articles",
     "docs.others.concurrent": "Java Concurrency Summary",
-    "docs.others.jvmcore": "JVM Core Principles Analysis"
+    "docs.others.jvmcore": "JVM Core Principles Analysis",
+    "backup": {
+        "error": {
+            "platform_mismatch": "Backup file is not compatible with current system platform",
+            "config_file_not_found": "Configuration file not found"
+        }
+    }
 }

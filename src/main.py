@@ -95,7 +95,9 @@ except Exception as e:
 def setup_logging():
     """设置日志"""
     try:
-        log_path = os.path.join(project_root, "logs")
+        # 使用用户目录下的 .jvman/logs 目录
+        user_home = os.path.expanduser("~")
+        log_path = os.path.join(user_home, ".jvman", "logs")
         os.makedirs(log_path, exist_ok=True)
 
         if isinstance(logger, Logger):
@@ -114,9 +116,12 @@ def setup_logging():
                 rotation="1 MB",
                 retention="7 days",
                 level="DEBUG",  # 设置为DEBUG级别
+                encoding="utf-8",  # 确保正确的编码
             )
+
+        logger.debug(f"日志文件路径: {log_path}")
     except Exception as e:
-        logger.exception("Failed to setup logging")
+        logger.exception("设置日志失败")
 
 
 def get_icon_path(icon_name):

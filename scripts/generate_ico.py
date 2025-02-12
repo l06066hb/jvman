@@ -2,6 +2,7 @@ import os
 from PIL import Image, ImageEnhance
 import sys
 import shutil
+import subprocess
 
 def generate_windows_ico():
     """生成Windows ICO图标"""
@@ -49,8 +50,8 @@ def generate_macos_icns():
     target_icns = os.path.join('resources', 'icons', 'app.icns')
     
     if not os.path.exists(source_png):
-        print(f"Error: Source PNG file not found at {source_png}")
-        return
+        print(f"错误：源PNG文件不存在: {source_png}")
+        return False
         
     try:
         img = Image.open(source_png)
@@ -73,53 +74,82 @@ def generate_macos_icns():
                 resized_2x.save(os.path.join(iconset_dir, f'icon_{size}x{size}@2x.png'))
         
         # 使用系统命令生成icns文件
-        if os.system('iconutil -c icns "{}" -o "{}"'.format(iconset_dir, target_icns)) == 0:
-            print(f"Generated macOS ICNS: {target_icns}")
-        else:
-            print("Failed to generate ICNS file. Make sure you're on macOS with iconutil installed.")
+        try:
+            result = subprocess.run(
+                ['iconutil', '-c', 'icns', iconset_dir, '-o', target_icns],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"已生成macOS ICNS: {target_icns}")
+                return True
+            else:
+                print("生成ICNS文件失败。请确保在macOS上运行并已安装iconutil。")
+                if result.stderr:
+                    print(f"错误信息: {result.stderr}")
+                return False
+        except FileNotFoundError:
+            print("错误：找不到iconutil命令。请确保在macOS上运行。")
+            return False
+        except Exception as e:
+            print(f"执行iconutil命令时出错: {str(e)}")
+            return False
             
+    except Exception as e:
+        print(f"生成ICNS文件时出错: {str(e)}")
+        return False
+    finally:
         # 清理临时文件
         if os.path.exists(iconset_dir):
             shutil.rmtree(iconset_dir)
-            
-    except Exception as e:
-        print(f"Error generating ICNS file: {e}")
+            print("已清理临时文件")
 
 def generate_app_icons():
     """生成所有平台的图标"""
     source_png = os.path.join('resources', 'icons', 'app_large.png')
     
+    # 检查源文件是否存在
     if not os.path.exists(source_png):
-        print(f"Error: Source PNG file not found at {source_png}")
+        print(f"错误：源PNG文件不存在: {source_png}")
+        print("请确保在 resources/icons 目录下存在 app_large.png 文件")
+        print("这个文件应该是一个高分辨率的PNG图像（建议至少1024x1024像素）")
         return
     
-    # 生成PNG图标（所有平台通用）
     try:
+        # 检查图像尺寸和格式
         img = Image.open(source_png)
+        if img.size[0] < 1024 or img.size[1] < 1024:
+            print(f"警告：源图像尺寸较小 ({img.size[0]}x{img.size[1]})，建议使用至少1024x1024像素的图像")
+        
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
         
-        # 生成256x256的主图标
+        # 生成PNG图标（所有平台通用）
         main_icon = img.resize((256, 256), Image.Resampling.LANCZOS)
         main_icon_path = os.path.join('resources', 'icons', 'app_256.png')
         main_icon.save(main_icon_path, 'PNG', optimize=True, quality=100)
-        print(f"Generated main PNG icon: {main_icon_path}")
+        print(f"已生成主PNG图标: {main_icon_path}")
+        
+        # 生成Windows ICO
+        print("\n正在生成Windows ICO图标...")
+        generate_windows_ico()
+        
+        # 在macOS上生成ICNS
+        if sys.platform == 'darwin':
+            print("\n正在生成macOS ICNS图标...")
+            if generate_macos_icns():
+                print("ICNS图标生成成功！")
+            else:
+                print("ICNS图标生成失败，请检查错误信息")
+        
+        print("\n图标生成完成！")
+        print("Windows: 使用 app.ico")
+        print("macOS: 使用 app.icns")
+        print("Linux: 使用 app_256.png")
         
     except Exception as e:
-        print(f"Error generating PNG icon: {e}")
+        print(f"生成图标时发生错误: {str(e)}")
         return
-    
-    # 生成Windows ICO
-    generate_windows_ico()
-    
-    # 在macOS上生成ICNS
-    if sys.platform == 'darwin':
-        generate_macos_icns()
-    
-    print("\nIcon generation completed!")
-    print("Windows: Use app.ico")
-    print("macOS: Use app.icns")
-    print("Linux: Use app_256.png")
 
 if __name__ == '__main__':
     generate_app_icons() 

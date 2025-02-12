@@ -511,10 +511,6 @@ class MainWindow(QMainWindow):
                     version = jdk.get("version", "")
                     vendor = jdk.get("vendor", _("version.vendor.unknown"))
                     arch = jdk.get("arch", "")
-            else:
-                version = jdk.get("version", "")
-                vendor = jdk.get("vendor", _("version.vendor.unknown"))
-                arch = jdk.get("arch", "")
 
             path = jdk.get("path", "")
 
@@ -559,12 +555,6 @@ class MainWindow(QMainWindow):
             jdk = action.data()
             junction_path = self.config.get("junction_path")
 
-            # 检查权限
-            if not platform_manager.check_admin_rights():
-                error_msg = platform_manager.get_error_message("admin_rights")
-                QMessageBox.warning(self, _("dialog.error.title"), error_msg)
-                return
-
             # 创建软链接
             if create_symlink(jdk["path"], junction_path):
                 # 获取基本版本信息
@@ -608,17 +598,33 @@ class MainWindow(QMainWindow):
                         version_text = f"JDK {version}"
 
                     # 显示通知
-                    if not platform_manager.is_windows:
-                        reload_cmd = platform_manager.get_shell_reload_command()
-                        self.tray_icon.showMessage(
-                            _("tray.switch_success"),
-                            _("tray.switch_success_unix").format(
-                                version_text=version_text, reload_cmd=reload_cmd
-                            ),
-                            QSystemTrayIcon.MessageIcon.Information,
-                            3000,
-                        )
-                    else:
+                    if platform_manager.is_windows:
+                        # Windows 特定的环境变量处理
+                        try:
+                            import win32gui
+                            import win32con
+
+                            # 发送环境变量更改的广播消息
+                            win32gui.SendMessageTimeout(
+                                win32con.HWND_BROADCAST,
+                                win32con.WM_SETTINGCHANGE,
+                                0,
+                                "Environment",
+                                win32con.SMTO_ABORTIFHUNG,
+                                5000,
+                            )
+                            # 使用 rundll32 更新环境变量
+                            subprocess.run(
+                                [
+                                    "rundll32",
+                                    "user32.dll,UpdatePerUserSystemParameters",
+                                ],
+                                capture_output=True,
+                                creationflags=subprocess.CREATE_NO_WINDOW,
+                            )
+                        except Exception as e:
+                            logger.warning(f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}")
+
                         self.tray_icon.showMessage(
                             _("tray.switch_success"),
                             _("tray.switch_success_windows").format(
@@ -626,6 +632,46 @@ class MainWindow(QMainWindow):
                             ),
                             QSystemTrayIcon.MessageIcon.Information,
                             2000,
+                        )
+                    else:
+                        # Unix系统（Linux/macOS）的处理
+                        reload_cmd = platform_manager.get_shell_reload_command()
+                        if platform_manager.is_macos or platform_manager.is_linux:
+                            # Unix系统自动执行 source 命令
+                            try:
+                                shell = os.environ.get("SHELL", "/bin/bash")
+                                config_file = platform_manager.get_shell_config_file()
+                                if config_file and os.path.exists(config_file):
+                                    subprocess.run(
+                                        [shell, "-c", f"source {config_file}"],
+                                        check=True,
+                                    )
+                                    reload_cmd = None  # 如果成功执行了source命令，就不需要显示命令提示
+                            except Exception as e:
+                                logger.warning(f"执行 source 命令失败: {str(e)}")
+                                # 如果自动执行失败，设置提示命令
+                                if config_file and os.path.exists(config_file):
+                                    reload_cmd = f"source {config_file}"
+                                else:
+                                    reload_cmd = "source ~/.bashrc"
+
+                        # 显示通知消息
+                        message = (
+                            _("tray.switch_success_unix").format(
+                                version_text=version_text,
+                                reload_cmd=reload_cmd if reload_cmd else "",
+                            )
+                            if reload_cmd
+                            else _("tray.switch_success_windows").format(
+                                version_text=version_text
+                            )
+                        )
+
+                        self.tray_icon.showMessage(
+                            _("tray.switch_success"),
+                            message,
+                            QSystemTrayIcon.MessageIcon.Information,
+                            3000,
                         )
                 except Exception as e:
                     logger.error(f"显示通知失败: {str(e)}")
@@ -640,17 +686,20 @@ class MainWindow(QMainWindow):
                     )
 
                 try:
+                    # 更新配置
+                    self.config.set("current_jdk", jdk)
+                    self.config.save()
                     # 发送版本变更信号
                     self.local_tab.version_changed.emit()
                 except Exception as e:
-                    logger.error(f"发送版本变更信号失败: {str(e)}")
+                    logger.error(f"更新配置失败: {str(e)}")
+
             else:
-                error_msg = platform_manager.get_error_message("symlink_failed")
-                self.tray_icon.showMessage(
-                    _("tray.switch_failed"),
-                    error_msg,
-                    QSystemTrayIcon.MessageIcon.Warning,
-                    3000,
+                # 切换失败
+                QMessageBox.warning(
+                    None,
+                    _("dialog.error.title"),
+                    _("local.dialog.switch.error_message"),
                 )
 
     def on_tray_activated(self, reason):

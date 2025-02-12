@@ -1,7 +1,12 @@
 import os
 import platform
 import subprocess
+import shutil
 from loguru import logger
+from utils.i18n_manager import i18n_manager
+
+# 初始化翻译函数
+_ = i18n_manager.get_text
 
 
 class PlatformManager:
@@ -12,10 +17,10 @@ class PlatformManager:
         self.is_windows = self.system == "Windows"
         self.is_linux = self.system == "Linux"
         self.is_macos = self.system == "Darwin"
-        self.shell = self._detect_shell()
-        self.config = None  # 将在 set_config 中设置
-        self.requires_admin = self.is_windows
+        self.config = None  # 将 config 的初始化移到前面
         self._arch = self._detect_arch()  # 添加架构检测
+        self.shell = self._detect_shell()  # shell 检测移到最后
+        self.requires_admin = self.is_windows
 
     def set_config(self, config):
         """设置配置对象"""
@@ -48,39 +53,27 @@ class PlatformManager:
         if self.is_windows:
             return None
 
-        # 如果配置了自定义配置文件路径，优先使用配置的值
-        if self.config and self.config.get("shell_config_path"):
-            return self.config.get("shell_config_path")
-
+        # 不再使用配置中的自定义路径，而是使用标准路径
         home = os.path.expanduser("~")
-        if self.shell == "zsh":
-            return os.path.join(home, ".zshrc")
-        elif self.shell == "bash":
-            # 优先检查 .bash_profile
-            bash_profile = os.path.join(home, ".bash_profile")
-            if os.path.exists(bash_profile):
-                return bash_profile
-            return os.path.join(home, ".bashrc")
-        elif self.shell == "fish":
-            return os.path.join(home, ".config/fish/config.fish")
-        return os.path.join(home, ".profile")
+
+        # 优先使用 .bash_profile（标准的环境变量配置文件）
+        bash_profile = os.path.join(home, ".bash_profile")
+        if os.path.exists(bash_profile):
+            return bash_profile
+
+        # 如果 .bash_profile 不存在，使用 .profile
+        profile = os.path.join(home, ".profile")
+        return profile
 
     def get_shell_reload_command(self):
-        """获取shell重新加载命令"""
-        if self.is_windows:
-            return None
+        # """获取shell重新加载命令"""
+        # if self.is_windows:
+        #     return None
 
-        if self.shell == "zsh":
-            return "source ~/.zshrc"
-        elif self.shell == "bash":
-            config_file = self.get_shell_config_file()
-            return f"source {config_file}"
-        elif self.shell == "fish":
-            return "source ~/.config/fish/config.fish"
-        else:
-            config_file = self.get_shell_config_file()
-            if config_file:
-                return f"source {config_file}"
+        # # 获取实际使用的配置文件
+        # config_file = self.get_shell_config_file()
+        # if config_file:
+        #     return f"source {config_file}"
         return None
 
     def get_package_manager(self):
@@ -159,24 +152,30 @@ class PlatformManager:
         """获取平台特定的错误消息"""
         messages = {
             "admin_rights": {
-                "windows": "请以管理员身份运行程序以修改系统环境变量。",
-                "unix": "请使用 sudo 运行程序或手动修改环境变量配置文件。",
+                "windows": _("error.admin_rights.windows"),
+                "unix": _("error.admin_rights.unix"),
             },
             "symlink_failed": {
-                "windows": "创建符号链接失败。Windows 10以下版本需要管理员权限。",
-                "unix": "创建符号链接失败，请检查权限和路径是否正确。",
+                "windows": _("error.symlink_failed.windows"),
+                "unix": _("error.symlink_failed.unix"),
             },
             "env_var_failed": {
-                "windows": "修改系统环境变量失败，请确保有管理员权限。",
-                "unix": f"修改环境变量失败，请手动编辑配置文件：{self.get_shell_config_file()}",
+                "windows": _("error.env_var_failed.windows"),
+                "unix": _("error.env_var_failed.unix").format(
+                    config_file=self.get_shell_config_file()
+                ),
             },
         }
 
         platform_type = "windows" if self.is_windows else "unix"
-        base_message = messages.get(error_type, {}).get(platform_type, "操作失败")
+        base_message = messages.get(error_type, {}).get(
+            platform_type, _("error.unknown")
+        )
 
         if kwargs.get("detail"):
-            return f"{base_message}\n详细信息：{kwargs['detail']}"
+            return _("error.with_detail").format(
+                base_message=base_message, detail=kwargs["detail"]
+            )
         return base_message
 
     def format_path(self, path):
@@ -262,18 +261,31 @@ class PlatformManager:
         return ";" if self.is_windows else ":"
 
     def get_env_var_commands(self, name, value):
-        """获取设置环境变量的命令"""
+        """获取设置环境变量的命令
+        Args:
+            name: 环境变量名
+            value: 环境变量值
+        Returns:
+            list: 环境变量设置命令列表
+        """
         if self.is_windows:
             return None
 
-        if self.shell == "fish":
-            commands = [f'set -x {name} "{value}"']
-            if name == "JAVA_HOME":
-                commands.append(f'set -x PATH $PATH "$JAVA_HOME/bin"')
+        # 根据不同的环境变量使用不同的设置方式
+        if name == "JAVA_HOME":
+            # JAVA_HOME 设置
+            commands = [f'export JAVA_HOME="{value}"']
+        elif name == "PATH":
+            # PATH 设置，使用 JAVA_HOME 变量引用
+            commands = ['export PATH="$JAVA_HOME/bin:$PATH"']
+        elif name == "CLASSPATH":
+            # CLASSPATH 设置，使用 JAVA_HOME 变量引用
+            commands = [
+                'export CLASSPATH=".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"'
+            ]
         else:
+            # 其他环境变量的常规设置
             commands = [f'export {name}="{value}"']
-            if name == "JAVA_HOME":
-                commands.append('export PATH="$PATH:$JAVA_HOME/bin"')
 
         return commands
 

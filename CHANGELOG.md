@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-02-09
+
+### Added
+- 添加环境变量备份管理功能
+- 添加备份创建、恢复和查看功能
+- 添加自动备份和手动备份支持
+- 添加备份限制和自动清理机制
+- 添加备份内容比较和预览功能
+- 添加通用操作按钮的国际化支持
+
+### Changed
+- 优化环境变量设置界面布局
+- 改进备份管理的用户交互体验
+- 优化备份列表的显示方式
+- 改进备份内容的展示格式
+- 优化国际化文本的组织结构
+- 改进通用按钮的样式和交互
+
+### Fixed
+- 修复环境变量设置权限问题
+- 修复 macOS 下软链接创建问题
+- 修复 Linux 下环境变量更新问题
+- 修复 Windows 下版本切换问题
+- 修复部分国际化文本缺失问题
+- 修复备份恢复后状态未更新问题
+
+### Improved
+- 环境变量管理的稳定性
+- 跨平台兼容性支持
+- 用户界面交互体验
+- 错误处理和提示机制
+- 国际化支持的完整性
+- 配置文件的管理机制
+
 ## [1.0.8] - 2025-02-04
 
 ### Added
@@ -215,6 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyQt6 界面框架
 - 基础配置系统
 
+[1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9
 [1.0.8]: https://github.com/l06066hb/jvman/releases/tag/v1.0.8
 [1.0.7]: https://github.com/l06066hb/jvman/releases/tag/v1.0.7
 [1.0.6]: https://github.com/l06066hb/jvman/releases/tag/v1.0.6

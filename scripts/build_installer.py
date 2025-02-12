@@ -200,103 +200,116 @@ def build_macos_installer(platform='macos', timestamp=None):
     output_dir = os.path.join(release_dir, output_name)
     os.makedirs(output_dir, exist_ok=True)
     
-    # 使用 create-dmg 工具创建 DMG 文件
-    try:
-        subprocess.run(["create-dmg", "--help"], capture_output=True)
-    except FileNotFoundError:
-        print("\nError: create-dmg not found!")
-        print("\nTo install create-dmg, you can use one of the following methods:")
-        print("1. Using Homebrew (recommended):")
-        print("   brew install create-dmg")
-        print("\n2. Using MacPorts:")
-        print("   sudo port install create-dmg")
-        print("\n3. Manual installation:")
-        print("   git clone https://github.com/create-dmg/create-dmg.git")
-        print("   cd create-dmg")
-        print("   chmod +x create-dmg")
-        print("   sudo make install")
-        print("\nAfter installation, please try building again.")
-        sys.exit(1)
-    
-    # 检查 app 是否存在，并等待一段时间以确保构建完成
+    # 检查 app 是否存在
     app_path = os.path.join(output_dir, "jvman.app")
-    max_retries = 10
-    retry_interval = 1  # 秒
-    
-    for i in range(max_retries):
-        if os.path.exists(app_path) and os.path.exists(os.path.join(app_path, "Contents", "MacOS", "jvman")):
-            break
-        if i < max_retries - 1:
-            print(f"Waiting for app bundle to be ready... ({i + 1}/{max_retries})")
-            time.sleep(retry_interval)
-    else:
-        print(f"Error: {app_path} not found or incomplete!")
+    if not os.path.exists(app_path):
+        print(f"Error: {app_path} not found!")
         print("Please make sure the app was built successfully.")
         sys.exit(1)
     
     # 创建临时目录用于构建 DMG
     dmg_temp = os.path.join(output_dir, "dmg_temp")
-    os.makedirs(dmg_temp, exist_ok=True)
+    if os.path.exists(dmg_temp):
+        shutil.rmtree(dmg_temp)
+    os.makedirs(dmg_temp)
     
-    # 复制 app 到临时目录
+    # 复制 app 到临时目录并设置正确的权限
     temp_app = os.path.join(dmg_temp, "JVMan.app")
     if os.path.exists(temp_app):
         shutil.rmtree(temp_app)
-    shutil.copytree(app_path, temp_app)
+    
+    # 使用 ditto 命令复制，这样可以保留所有元数据和权限
+    subprocess.run(['ditto', app_path, temp_app], check=True)
+    
+    # 创建 Applications 链接
+    subprocess.run(['ln', '-s', '/Applications', os.path.join(dmg_temp, 'Applications')])
     
     # 设置 DMG 文件路径
     dmg_path = os.path.join(output_dir, "JVMan_Installer.dmg")
+    temp_dmg = os.path.join(output_dir, "JVMan_temp.dmg")
     if os.path.exists(dmg_path):
         os.remove(dmg_path)
+    if os.path.exists(temp_dmg):
+        os.remove(temp_dmg)
     
-    # 构建 DMG
     try:
-        # 检查临时目录内容
-        print(f"\nChecking dmg_temp directory contents:")
-        for item in os.listdir(dmg_temp):
-            print(f"- {item}")
+        # 创建临时 DMG
+        subprocess.run([
+            'hdiutil', 'create',
+            '-srcfolder', dmg_temp,
+            '-volname', 'JVMan Installer',
+            '-fs', 'HFS+',
+            '-fsargs', '-c c=64,a=16,e=16',
+            '-format', 'UDRW',
+            temp_dmg
+        ], check=True)
         
-        # 检查图标文件
-        icon_path = os.path.join(root_dir, "resources", "icons", "app.icns")
-        if not os.path.exists(icon_path):
-            print(f"Warning: Volume icon not found at {icon_path}")
-            # 如果图标不存在，移除 volicon 参数
-            volicon_args = []
-        else:
-            volicon_args = ["--volicon", icon_path]
+        # 挂载 DMG
+        mount_output = subprocess.check_output([
+            'hdiutil', 'attach',
+            temp_dmg,
+            '-readwrite',
+            '-noverify',
+            '-noautoopen'
+        ], text=True)
         
-        # 构建命令
-        dmg_cmd = [
-            "create-dmg",
-            "--volname", "JVMan Installer",
-            *volicon_args,
-            "--window-pos", "200", "120",
-            "--window-size", "800", "400",
-            "--icon-size", "100",
-            "--icon", "JVMan.app", "200", "190",
-            "--hide-extension", "JVMan.app",
-            "--app-drop-link", "600", "185",
-            "--no-internet-enable",
-            dmg_path,
-            dmg_temp
-        ]
+        # 获取挂载点
+        mount_point = None
+        device_path = None
+        for line in mount_output.split('\n'):
+            if 'JVMan Installer' in line:
+                parts = line.strip().split('\t')
+                if len(parts) >= 3:
+                    device_path = parts[0].strip()
+                    mount_point = parts[2].strip()
+                    break
         
-        print("\nExecuting create-dmg command:")
-        print(" ".join(dmg_cmd))
+        if mount_point and device_path:
+            try:
+                # 设置卷图标
+                icon_path = os.path.join(root_dir, "resources", "icons", "app.icns")
+                if os.path.exists(icon_path):
+                    icon_base = os.path.join(mount_point, '.VolumeIcon.icns')
+                    shutil.copy2(icon_path, icon_base)
+                    subprocess.run(['SetFile', '-a', 'C', mount_point], check=False)
+                
+                # 设置正确的权限
+                subprocess.run(['chmod', '-R', '755', os.path.join(mount_point, 'JVMan.app')])
+                
+                # 等待文件系统同步
+                time.sleep(2)
+            finally:
+                # 卸载 DMG
+                for _ in range(3):  # 重试3次
+                    try:
+                        subprocess.run(['hdiutil', 'detach', device_path, '-force'], check=True)
+                        break
+                    except subprocess.CalledProcessError:
+                        time.sleep(2)
         
-        # 运行命令并捕获输出
-        result = subprocess.run(dmg_cmd, capture_output=True, text=True)
-        
-        # 打印命令输出
-        if result.stdout:
-            print("\nCommand stdout:")
-            print(result.stdout)
-        if result.stderr:
-            print("\nCommand stderr:")
-            print(result.stderr)
-            
-        # 检查返回码
-        result.check_returncode()
+        # 转换为压缩格式
+        subprocess.run([
+                'hdiutil', 'convert',
+                temp_dmg,
+                '-format', 'UDZO',
+                '-imagekey', 'zlib-level=9',
+                '-o', dmg_path
+        ], check=True)
+    
+        # 签名 DMG
+        try:
+            subprocess.run([
+                'codesign',
+                '--force',
+                '--sign', '-',
+                '--timestamp',
+                '--deep',
+                '--options', 'runtime',
+                '--entitlements', os.path.join(root_dir, "resources", "entitlements.plist"),
+                dmg_path
+            ], check=True)
+        except Exception as e:
+            print(f"Warning: DMG signing failed: {e}")
         
         print(f"\nInstaller build completed!")
         print(f"Output directory: {output_dir}")
@@ -306,33 +319,22 @@ def build_macos_installer(platform='macos', timestamp=None):
         
     except subprocess.CalledProcessError as e:
         print(f"\nError creating DMG: {e}")
-        print("\nDetailed error information:")
         if e.stdout:
             print("\nCommand stdout:")
             print(e.stdout)
         if e.stderr:
             print("\nCommand stderr:")
             print(e.stderr)
-        
-        # 检查目录和文件权限
-        print("\nChecking file permissions:")
-        print(f"dmg_temp directory: {os.stat(dmg_temp).st_mode & 0o777:o}")
-        print(f"app bundle: {os.stat(temp_app).st_mode & 0o777:o}")
-        
         sys.exit(1)
     except Exception as e:
         print(f"\nUnexpected error: {e}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
     finally:
-        # 清理临时目录
+        # 清理临时文件
         if os.path.exists(dmg_temp):
-            try:
                 shutil.rmtree(dmg_temp)
-                print("\nCleaned up temporary directory")
-            except Exception as e:
-                print(f"\nWarning: Failed to clean up temporary directory: {e}")
+        if os.path.exists(temp_dmg):
+            os.remove(temp_dmg)
 
 def build_linux_installer(platform='linux', timestamp=None):
     """构建 Linux 安装包"""
@@ -458,8 +460,8 @@ exit 0
         hash_value = calculate_file_hash(deb_file)
         if hash_value:
             generate_hash_file(deb_file, hash_value)
-        
-        # 清理临时文件
+    
+    # 清理临时文件
         shutil.rmtree(deb_root)
         return True
         

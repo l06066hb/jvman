@@ -1,6 +1,6 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-[![Version](https://img.shields.io/badge/version-1.0.8-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.9-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -190,15 +190,16 @@ python scripts/build.py --platform windows --type all
 
 ## 最新版本
 
-v1.0.8 的主要更新：
-- ✨ [Added] Microsoft OpenJDK 的完整支持
-- ✨ [Added] JDK 版本特性的详细说明
-- ✨ [Added] - 添加各发行商的特性和支持策略说明
-- ✨ [Added] LTS/STS 版本的区分标识
-- ✨ [Added] - 添加版本信息的国际化支持
-- ✨ [Added] - 添加版本详情的样式优化
+v1.0.9 的主要更新：
+- ✨ [Added] - 添加环境变量备份管理功能
+- ✨ [Added] - 添加备份创建、恢复和查看功能
+- ✨ [Added] - 添加自动备份和手动备份支持
+- ✨ [Added] - 添加备份限制和自动清理机制
+- ✨ [Added] - 添加备份内容比较和预览功能
+- ✨ [Added] - 添加通用操作按钮的国际化支持
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 
 

@@ -25,6 +25,7 @@ import logging
 from datetime import datetime
 import requests
 from utils.version_cache import VersionCache
+import platform
 
 # 获取logger
 logger = logging.getLogger(__name__)
@@ -1050,15 +1051,67 @@ class DownloadTab(QWidget):
         """下载完成回调"""
         try:
             if success:
-                # 获取下载的zip文件路径
-                zip_file = os.path.join(self.target_dir, f"jdk-{self.version}.zip")
-                if os.path.exists(zip_file):
+                # 检查可能的文件名（同时支持 .zip 和 .tar.gz）
+                possible_files = [
+                    os.path.join(self.target_dir, f"jdk-{self.version}.zip"),
+                    os.path.join(self.target_dir, f"jdk-{self.version}.tar.gz"),
+                ]
+
+                # 查找实际存在的文件
+                file_path = None
+                for possible_file in possible_files:
+                    if os.path.exists(possible_file):
+                        file_path = possible_file
+                        break
+
+                if file_path:
+                    logger.debug(f"找到下载文件: {file_path}")
+                    # 验证文件格式
+                    try:
+                        with open(file_path, "rb") as f:
+                            magic_bytes = f.read(4)
+
+                            # 检查文件格式
+                            is_zip = magic_bytes.startswith(b"PK\x03\x04")
+                            is_gzip = magic_bytes.startswith(b"\x1f\x8b\x08")
+
+                            if not (is_zip or is_gzip):
+                                logger.error(f"文件格式无效: {file_path}")
+                                self.progress_dialog.show_error(
+                                    _("download.error.invalid_format")
+                                )
+                                # 删除无效文件
+                                try:
+                                    os.remove(file_path)
+                                except Exception as e:
+                                    logger.error(f"删除无效文件失败: {str(e)}")
+                                return
+
+                            # 确保文件扩展名与实际格式匹配
+                            expected_ext = ".zip" if is_zip else ".tar.gz"
+                            if not file_path.endswith(expected_ext):
+                                new_path = os.path.splitext(file_path)[0] + expected_ext
+                                try:
+                                    os.rename(file_path, new_path)
+                                    file_path = new_path
+                                    logger.debug(f"重命名文件为: {new_path}")
+                                except Exception as e:
+                                    logger.error(f"重命名文件失败: {str(e)}")
+                                    return
+
+                    except Exception as e:
+                        logger.error(f"验证文件格式失败: {str(e)}")
+                        self.progress_dialog.show_error(
+                            _("download.error.verify_failed")
+                        )
+                        return
+
                     # 显示安装确认对话框
-                    confirm_dialog = ConfirmDialog(zip_file, self)
+                    confirm_dialog = ConfirmDialog(file_path, self)
                     if confirm_dialog.exec() == QDialog.DialogCode.Accepted:
                         # 用户确认安装，开始安装过程
                         self.progress_dialog.set_complete(True, True)
-                        self.start_install(zip_file)
+                        self.start_install(file_path)
                     else:
                         # 用户取消安装，但保留下载的文件
                         self.progress_dialog.close()
@@ -1068,7 +1121,9 @@ class DownloadTab(QWidget):
                             _("download.complete.message").format(version=self.version),
                         )
                 else:
-                    # zip文件不存在，显示错误
+                    # 记录更详细的调试信息
+                    logger.error(f"未找到下载文件，检查的路径: {possible_files}")
+                    logger.error(f"目标目录内容: {os.listdir(self.target_dir)}")
                     self.progress_dialog.show_error(_("download.error.file_not_found"))
             else:
                 # 如果消息中包含手动下载的指导，显示手动下载提示
@@ -1090,6 +1145,7 @@ class DownloadTab(QWidget):
                         self.version_combo.currentData(),
                     )
         except Exception as e:
+            logger.error(f"处理下载完成回调失败: {str(e)}")
             self.progress_dialog.show_error(
                 _("download.error.process_failed").format(error=str(e))
             )
@@ -1097,31 +1153,90 @@ class DownloadTab(QWidget):
             # 重置下载状态
             self.is_downloading = False
 
-    def start_install(self, zip_file):
+    def start_install(self, file_path):
         """开始安装程序"""
         try:
             # 验证文件是否存在
-            if not os.path.exists(zip_file):
+            if not os.path.exists(file_path):
+                logger.error(f"安装文件不存在: {file_path}")
                 raise Exception(_("install.error.file_not_found"))
 
-            # 验证是否是有效的 ZIP 文件
-            import zipfile
+            # 验证文件大小
+            file_size = os.path.getsize(file_path)
+            if file_size == 0:
+                logger.error("安装文件大小为0")
+                raise Exception(_("install.error.empty_file"))
 
-            try:
-                with zipfile.ZipFile(zip_file, "r") as zf:
-                    # 验证 ZIP 文件的完整性
-                    if zf.testzip() is not None:
-                        raise Exception(_("install.error.zip_corrupted"))
-            except zipfile.BadZipFile:
-                raise Exception(_("install.error.invalid_zip"))
+            # 检查文件格式
+            with open(file_path, "rb") as f:
+                magic_bytes = f.read(4)
+                is_zip = magic_bytes.startswith(b"PK\x03\x04")
+                is_gzip = magic_bytes.startswith(b"\x1f\x8b\x08")
+                logger.debug(f"文件格式检查 - is_zip: {is_zip}, is_gzip: {is_gzip}")
+
+            # 根据实际文件格式处理
+            if is_zip:
+                logger.debug("处理ZIP格式文件...")
+                try:
+                    with zipfile.ZipFile(file_path, "r") as zf:
+                        # 检查文件列表
+                        file_list = zf.namelist()
+                        if not file_list:
+                            logger.error("ZIP文件内容为空")
+                            raise Exception(_("install.error.empty_zip"))
+
+                        # 检查是否包含JDK目录结构
+                        has_jdk_structure = self._check_jdk_structure(file_list)
+                        if not has_jdk_structure:
+                            logger.error("ZIP文件不包含有效的JDK目录结构")
+                            logger.debug(f"文件列表前10个条目: {file_list[:10]}")
+                            raise Exception(_("install.error.invalid_jdk_structure"))
+
+                        # 验证ZIP文件完整性
+                        logger.debug("开始验证ZIP文件完整性...")
+                        bad_file = zf.testzip()
+                        if bad_file:
+                            logger.error(f"ZIP文件损坏，问题文件: {bad_file}")
+                            raise Exception(_("install.error.zip_corrupted"))
+                        logger.debug("ZIP文件完整性验证通过")
+
+                except zipfile.BadZipFile as e:
+                    logger.error(f"无效的ZIP文件: {str(e)}")
+                    raise Exception(_("install.error.invalid_zip"))
+
+            elif is_gzip:
+                logger.debug("处理TAR.GZ格式文件...")
+                try:
+                    import tarfile
+
+                    with tarfile.open(file_path, "r:gz") as tf:
+                        # 检查文件列表
+                        file_list = tf.getnames()
+                        if not file_list:
+                            logger.error("TAR.GZ文件内容为空")
+                            raise Exception(_("install.error.empty_archive"))
+
+                        # 检查是否包含JDK目录结构
+                        has_jdk_structure = self._check_jdk_structure(file_list)
+                        if not has_jdk_structure:
+                            logger.error("TAR.GZ文件不包含有效的JDK目录结构")
+                            logger.debug(f"文件列表前10个条目: {file_list[:10]}")
+                            raise Exception(_("install.error.invalid_jdk_structure"))
+
+                except tarfile.TarError as e:
+                    logger.error(f"无效的TAR.GZ文件: {str(e)}")
+                    raise Exception(_("install.error.invalid_archive"))
+            else:
+                logger.error(f"不支持的文件格式: {file_path}")
+                raise Exception(_("install.error.unsupported_format"))
 
             # 保存当前选择的版本信息
             self.current_version = self.version_combo.currentData()
             if not self.current_version:
-                self.current_version = self.version  # 使用类成员变量中保存的版本
+                self.current_version = self.version
 
             # 创建安装线程
-            self.install_thread = InstallThread(zip_file, self.target_dir, self.vendor)
+            self.install_thread = InstallThread(file_path, self.target_dir, self.vendor)
             self.install_thread.progress.connect(self.update_install_progress)
             self.install_thread.finished.connect(self.on_install_complete)
 
@@ -1136,8 +1251,9 @@ class DownloadTab(QWidget):
 
             # 启动安装线程
             self.install_thread.start()
+
         except Exception as e:
-            logger.error(_("log.error.install_failed").format(error=str(e)))
+            logger.error(f"开始安装失败: {str(e)}")
             self.progress_dialog.status_label.setText(
                 _("progress.dialog.status.install.failed")
             )
@@ -1146,6 +1262,22 @@ class DownloadTab(QWidget):
             )
             self.progress_dialog.cancel_button.setText(_("common.close"))
             self.progress_dialog.cancel_button.setEnabled(True)
+
+    def _check_jdk_structure(self, file_list):
+        """检查是否包含JDK目录结构"""
+        java_executables = [
+            "/bin/java",  # Unix-like systems
+            "/bin/java.exe",  # Windows
+            "bin/java",  # Alternative Unix path
+            "bin/java.exe",  # Alternative Windows path
+            "/Contents/Home/bin/java",  # macOS
+            "Contents/Home/bin/java",  # Alternative macOS path
+        ]
+
+        return any(
+            any(name.lower().endswith(exe.lower()) for exe in java_executables)
+            for name in file_list
+        )
 
     def on_install_complete(self, success, message, install_time, import_time):
         """安装完成回调"""
@@ -1173,23 +1305,57 @@ class DownloadTab(QWidget):
 
                 # 构建发行商目录路径
                 vendor_dir = os.path.join(install_dir, vendor_dir_name)
+                logger.debug(f"查找JDK目录: {vendor_dir}")
 
                 # 获取正确的 JDK 路径（安装目录下的具体版本目录）
                 jdk_name = None
+                jdk_candidates = []
+
+                # 遍历目录查找可能的JDK目录
                 for item in os.listdir(vendor_dir):
                     item_path = os.path.join(vendor_dir, item)
-                    if os.path.isdir(item_path) and "jdk" in item.lower():
-                        # 检查是否是最新创建的目录
-                        if not jdk_name or os.path.getctime(
-                            item_path
-                        ) > os.path.getctime(os.path.join(vendor_dir, jdk_name)):
-                            jdk_name = item
+                    if not os.path.isdir(item_path):
+                        continue
+
+                    # 检查是否是JDK目录
+                    is_jdk = False
+                    if "jdk" in item.lower():
+                        is_jdk = True
+                    else:
+                        # 检查是否包含bin/java
+                        java_paths = [
+                            os.path.join(item_path, "bin", "java"),
+                            os.path.join(item_path, "bin", "java.exe"),
+                            os.path.join(
+                                item_path, "Contents", "Home", "bin", "java"
+                            ),  # macOS路径
+                        ]
+                        if any(os.path.exists(p) for p in java_paths):
+                            is_jdk = True
+
+                    if is_jdk:
+                        jdk_candidates.append((item, os.path.getctime(item_path)))
+
+                # 按创建时间排序，选择最新的
+                if jdk_candidates:
+                    jdk_candidates.sort(key=lambda x: x[1], reverse=True)
+                    jdk_name = jdk_candidates[0][0]
+                    logger.debug(f"找到JDK目录: {jdk_name}")
 
                 if not jdk_name:
+                    # 记录目录内容以便调试
+                    logger.error(f"目录内容: {os.listdir(vendor_dir)}")
                     raise Exception(_("install.status.jdk_not_found"))
 
                 jdk_path = os.path.join(vendor_dir, jdk_name)
                 logger.debug(_("install.status.found_jdk").format(path=jdk_path))
+
+                # 对于macOS，检查并调整路径
+                if platform.system() == "Darwin" and os.path.exists(
+                    os.path.join(jdk_path, "Contents", "Home")
+                ):
+                    jdk_path = os.path.join(jdk_path, "Contents", "Home")
+                    logger.debug(f"macOS JDK路径调整为: {jdk_path}")
 
                 if not os.path.exists(jdk_path):
                     raise Exception(
@@ -1798,10 +1964,10 @@ class InstallThread(QThread):
     progress = pyqtSignal(int, int)  # 当前文件数，总文件数
     finished = pyqtSignal(bool, str, str, str)  # 成功标志，消息，安装时间，导入时间
 
-    def __init__(self, zip_file, target_dir, vendor):
+    def __init__(self, file_path, target_dir, vendor):
         super().__init__()
-        self.zip_file = zip_file
-        self.target_dir = target_dir  # 这个是 jdk 目录
+        self.file_path = file_path
+        self.target_dir = target_dir
         self.vendor = vendor
         self.is_cancelled = False
 
@@ -1823,23 +1989,54 @@ class InstallThread(QThread):
             vendor_dir = os.path.join(self.target_dir, vendor_dir_name)
             os.makedirs(vendor_dir, exist_ok=True)
 
-            with zipfile.ZipFile(self.zip_file, "r") as zip_ref:
-                # 获取所有文件列表
-                file_list = zip_ref.namelist()
-                total_files = len(file_list)
+            # 检查文件格式
+            with open(self.file_path, "rb") as f:
+                magic_bytes = f.read(4)
+                is_zip = magic_bytes.startswith(b"PK\x03\x04")
+                is_gzip = magic_bytes.startswith(b"\x1f\x8b\x08")
+                logger.debug(
+                    f"InstallThread - 文件格式检查 - is_zip: {is_zip}, is_gzip: {is_gzip}"
+                )
 
-                # 获取根目录名称
-                root_dir = file_list[0].split("/")[0]
+            if is_zip:
+                # 处理ZIP文件
+                with zipfile.ZipFile(self.file_path, "r") as zf:
+                    file_list = zf.namelist()
+                    total_files = len(file_list)
 
-                # 解压所有文件
-                for index, member in enumerate(file_list, 1):
-                    if self.is_cancelled:
-                        self.finished.emit(False, _("install.status.cancelled"), "", "")
-                        return
+                    # 获取根目录名称
+                    root_dir = file_list[0].split("/")[0]
 
-                    # 解压到发行商目录下
-                    zip_ref.extract(member, vendor_dir)
-                    self.progress.emit(index, total_files)
+                    # 解压所有文件
+                    for index, member in enumerate(file_list, 1):
+                        if self.is_cancelled:
+                            return
+
+                        # 解压到发行商目录下
+                        zf.extract(member, vendor_dir)
+                        self.progress.emit(index, total_files)
+
+            elif is_gzip:
+                # 处理TAR.GZ文件
+                import tarfile
+
+                with tarfile.open(self.file_path, "r:gz") as tf:
+                    file_list = tf.getmembers()
+                    total_files = len(file_list)
+
+                    # 获取根目录名称
+                    root_dir = file_list[0].name.split("/")[0]
+
+                    # 解压所有文件
+                    for index, member in enumerate(file_list, 1):
+                        if self.is_cancelled:
+                            return
+
+                        # 解压到发行商目录下
+                        tf.extract(member, vendor_dir)
+                        self.progress.emit(index, total_files)
+            else:
+                raise Exception(_("install.error.unsupported_format"))
 
             # 计算安装时间
             install_time = start_time.msecsTo(QDateTime.currentDateTime()) / 1000.0
@@ -1848,22 +2045,19 @@ class InstallThread(QThread):
             )
             import_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
 
-            # 删除zip文件
-            os.remove(self.zip_file)
-
-            # 获取完整的JDK路径（使用解压后的原始目录名）
-            jdk_path = os.path.join(vendor_dir, root_dir)
-
-            # 获取版本号（从zip文件名中提取）
-            version = (
-                os.path.basename(self.zip_file).replace("jdk-", "").replace(".zip", "")
-            )
+            # 删除安装包
+            try:
+                os.remove(self.file_path)
+                logger.debug("安装包删除成功")
+            except Exception as e:
+                logger.error(f"删除安装包失败: {str(e)}")
 
             self.finished.emit(
                 True, _("install.status.success"), install_time_str, import_time
             )
 
         except Exception as e:
+            logger.error(f"安装失败: {str(e)}")
             self.finished.emit(False, str(e), "", "")
 
     def cancel(self):
