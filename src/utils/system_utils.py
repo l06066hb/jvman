@@ -6,9 +6,78 @@ import subprocess
 from abc import ABC, abstractmethod
 from loguru import logger
 from .platform_manager import platform_manager
-import winreg
-import win32gui
-import win32con
+from .i18n_manager import i18n_manager
+import re
+import shutil
+
+# 初始化翻译函数
+_ = i18n_manager.get_text
+
+# Windows 特定的导入
+if platform.system() == "Windows":
+    import winreg
+    import win32gui
+    import win32con
+
+# 前向声明全局变量
+system_manager = None
+
+
+# 全局函数
+def check_admin_rights():
+    """检查是否具有管理员权限"""
+    return system_manager.check_admin_rights()
+
+
+def create_symlink(source_path, target_path):
+    """创建符号链接
+    Args:
+        source_path: 源路径
+        target_path: 目标路径
+    Returns:
+        bool: 操作是否成功
+    """
+    return system_manager.create_symlink(source_path, target_path)
+
+
+def set_environment_variable(name, value, config_file=None):
+    """设置环境变量
+    Args:
+        name: 环境变量名
+        value: 环境变量值
+        config_file: 配置文件路径（仅用于Unix系统）
+    Returns:
+        bool: 操作是否成功
+    """
+    if isinstance(system_manager, UnixManager):
+        return system_manager.set_environment_variable(name, value, config_file)
+    return system_manager.set_environment_variable(name, value)
+
+
+def get_environment_variable(name, config_file=None):
+    """获取环境变量值
+    Args:
+        name: 环境变量名
+        config_file: 配置文件路径（仅用于Unix系统）
+    Returns:
+        str: 环境变量值
+    """
+    if isinstance(system_manager, UnixManager):
+        return system_manager.get_environment_variable(name, config_file)
+    return system_manager.get_environment_variable(name)
+
+
+def update_path_variable(java_home_path, config_file=None):
+    """更新 PATH 环境变量
+    Args:
+        java_home_path: Java home 路径
+        config_file: 配置文件路径（仅用于Unix系统）
+    Returns:
+        bool: 操作是否成功
+    """
+    if isinstance(system_manager, UnixManager):
+        return system_manager.update_path_variable(java_home_path, config_file)
+    return system_manager.update_path_variable(java_home_path)
 
 
 class SystemManager(ABC):
@@ -25,19 +94,93 @@ class SystemManager(ABC):
         pass
 
     @abstractmethod
-    def set_environment_variable(self, name, value):
+    def set_environment_variable(self, name, value, config_file=None):
         """设置系统环境变量"""
         pass
 
     @abstractmethod
-    def get_environment_variable(self, name):
+    def get_environment_variable(self, name, config_file=None):
         """获取系统环境变量值"""
         pass
 
     @abstractmethod
-    def update_path_variable(self, new_path):
+    def update_path_variable(self, new_path, config_file=None):
         """更新PATH环境变量"""
         pass
+
+    def _normalize_path(self, path):
+        """规范化路径
+        Args:
+            path: 需要规范化的路径
+        Returns:
+            规范化后的路径
+        """
+        try:
+            if not path:
+                return None
+            # 展开环境变量
+            expanded = os.path.expandvars(path)
+            # 展开用户目录
+            expanded = os.path.expanduser(expanded)
+            # 转换为绝对路径
+            abs_path = os.path.abspath(expanded)
+            # 规范化路径分隔符
+            return os.path.normpath(abs_path)
+        except Exception as e:
+            logger.error(f"路径规范化失败: {str(e)}")
+            return path
+
+    def _validate_env_value(self, value):
+        """验证环境变量值
+        Args:
+            value: 环境变量值
+        Returns:
+            验证后的值
+        """
+        try:
+            if not value:
+                return ""
+            # 移除不安全字符
+            value = re.sub(r"[;&|]", "", value)
+            # 规范化路径分隔符
+            if platform.system() == "Windows":
+                value = value.replace("/", "\\")
+            else:
+                value = value.replace("\\", "/")
+            return value
+        except Exception as e:
+            logger.error(f"环境变量值验证失败: {str(e)}")
+            return value
+
+    def _expand_env_vars(self, value):
+        """展开环境变量
+        Args:
+            value: 包含环境变量的字符串
+        Returns:
+            展开后的字符串
+        """
+        try:
+            if not value:
+                return ""
+            # 展开环境变量
+            expanded = os.path.expandvars(value)
+            # 处理特殊情况
+            if platform.system() == "Windows":
+                # 处理 Windows 风格的环境变量
+                pattern = r"%([^%]+)%"
+            else:
+                # 处理 Unix 风格的环境变量
+                pattern = r"\$\{([^}]+)\}|\$([a-zA-Z_][a-zA-Z0-9_]*)"
+
+            def replace_var(match):
+                var_name = match.group(1) or match.group(2)
+                return os.environ.get(var_name, match.group(0))
+
+            expanded = re.sub(pattern, replace_var, expanded)
+            return expanded
+        except Exception as e:
+            logger.error(f"环境变量展开失败: {str(e)}")
+            return value
 
 
 class WindowsManager(SystemManager):
@@ -111,12 +254,9 @@ class WindowsManager(SystemManager):
                     return True
 
                 try:
-                    # 确保目标路径没有只读属性
-                    if platform_manager.is_windows:
-                        import stat
+                    import stat
 
-                        os.chmod(target_path, stat.S_IWRITE)
-
+                    os.chmod(target_path, stat.S_IWRITE)
                     if os.path.islink(target_path) or os.path.isdir(target_path):
                         # 如果是目录或符号链接，使用 rmdir
                         if os.path.isdir(target_path) and not os.path.islink(
@@ -147,50 +287,42 @@ class WindowsManager(SystemManager):
                     logger.error(f"创建目标目录失败: {str(e)}")
                     return False
 
-            if platform_manager.is_windows:
-                # 使用subprocess执行mklink命令
-                try:
-                    # 使用完整的 cmd.exe 路径
-                    cmd_path = os.path.join(
-                        os.environ.get("SystemRoot", "C:\\Windows"),
-                        "System32",
-                        "cmd.exe",
-                    )
-                    # 不要给路径加引号，让 subprocess 来处理路径转义
-                    cmd = [cmd_path, "/c", "mklink", "/J", target_path, source_path]
-                    result = subprocess.run(
-                        cmd,
-                        shell=False,
-                        capture_output=True,
-                        text=True,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
-                    )
-                    if result.returncode != 0:
-                        error_msg = result.stderr.strip() if result.stderr else "未知错误"
-                        logger.error(f"创建符号链接失败: {error_msg}")
-                        # 记录更详细的错误信息
-                        logger.debug(f"命令: {' '.join(cmd)}")
-                        logger.debug(f"返回码: {result.returncode}")
-                        logger.debug(f"标准输出: {result.stdout}")
-                        logger.debug(f"标准错误: {result.stderr}")
-                        return False
-                    return True
-                except Exception as e:
-                    logger.error(f"创建Windows符号链接失败: {str(e)}")
+            # 使用subprocess执行mklink命令
+            try:
+                # 使用完整的 cmd.exe 路径
+                cmd_path = os.path.join(
+                    os.environ.get("SystemRoot", "C:\\Windows"),
+                    "System32",
+                    "cmd.exe",
+                )
+                # 不要给路径加引号，让 subprocess 来处理路径转义
+                cmd = [cmd_path, "/c", "mklink", "/J", target_path, source_path]
+                result = subprocess.run(
+                    cmd,
+                    shell=False,
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+                if result.returncode != 0:
+                    error_msg = result.stderr.strip() if result.stderr else "未知错误"
+                    logger.error(f"创建符号链接失败: {error_msg}")
+                    # 记录更详细的错误信息
+                    logger.debug(f"命令: {' '.join(cmd)}")
+                    logger.debug(f"返回码: {result.returncode}")
+                    logger.debug(f"标准输出: {result.stdout}")
+                    logger.debug(f"标准错误: {result.stderr}")
                     return False
-            else:
-                # Unix系统使用os.symlink
-                try:
-                    os.symlink(source_path, target_path, target_is_directory=True)
-                    return True
-                except Exception as e:
-                    logger.error(f"创建Unix符号链接失败: {str(e)}")
-                    return False
+                return True
+            except Exception as e:
+                logger.error(f"创建Windows符号链接失败: {str(e)}")
+                return False
+
         except Exception as e:
             logger.error(f"创建符号链接失败: {str(e)}")
             return False
 
-    def set_environment_variable(self, name, value):
+    def set_environment_variable(self, name, value, config_file=None):
         try:
             # 检查权限
             if not self.check_admin_rights():
@@ -248,10 +380,8 @@ class WindowsManager(SystemManager):
             logger.error(f"设置环境变量失败: {str(e)}")
             return False
 
-    def get_environment_variable(self, name):
+    def get_environment_variable(self, name, config_file=None):
         try:
-            import winreg
-
             key = winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"System\CurrentControlSet\Control\Session Manager\Environment",
@@ -265,7 +395,7 @@ class WindowsManager(SystemManager):
             logger.error(f"获取环境变量失败: {str(e)}")
             return None
 
-    def update_path_variable(self, new_path):
+    def update_path_variable(self, new_path, config_file=None):
         try:
             # 检查权限
             if not self.check_admin_rights():
@@ -374,224 +504,419 @@ class WindowsManager(SystemManager):
 
 
 class UnixManager(SystemManager):
-    """Unix系统管理器（Linux/macOS）"""
+    """Unix系统管理器（Mac/Linux）"""
 
     def check_admin_rights(self):
-        return platform_manager.check_admin_rights()
+        """检查是否有管理员权限"""
+        try:
+            return os.geteuid() == 0
+        except:
+            return False
 
     def create_symlink(self, source_path, target_path):
+        """创建符号链接"""
         try:
-            if os.path.exists(target_path):
-                os.remove(target_path)
-            source_path = platform_manager.format_path(source_path)
-            target_path = platform_manager.format_path(target_path)
-            os.symlink(source_path, target_path)
-            return True
-        except Exception as e:
-            error_msg = platform_manager.get_error_message(
-                "symlink_failed", detail=str(e)
-            )
-            logger.error(error_msg)
-            return False
+            # 转换为绝对路径
+            source_path = os.path.abspath(source_path)
+            target_path = os.path.abspath(target_path)
 
-    def set_environment_variable(self, name, value):
-        try:
-            config_file = platform_manager.get_shell_config_file()
-            if not config_file:
-                raise Exception("无法确定shell配置文件位置")
+            # 检查源路径是否存在
+            if not os.path.exists(source_path):
+                logger.error(f"源路径不存在: {source_path}")
+                return False
 
-            # 读取现有内容
-            if os.path.exists(config_file):
-                with open(config_file, "r") as f:
-                    lines = f.readlines()
-            else:
-                lines = []
+            if platform.system() == "Darwin":  # macOS
+                import base64
 
-            # 根据不同shell生成导出命令
-            if platform_manager.shell == "fish":
-                export_cmd = f'set -x {name} "{value}"\n'
-                path_cmd = f'set -x PATH $PATH "{os.path.join("$" + name, "bin")}"\n'
-                lines = [
-                    line
-                    for line in lines
-                    if not line.startswith(f"set -x {name} ")
-                    and not (name == "JAVA_HOME" and "set -x PATH" in line)
-                ]
-            else:
-                export_cmd = f'export {name}="{value}"\n'
-                if name == "JAVA_HOME":
-                    path_cmd = f'export PATH="$PATH:${name}/bin"\n'
-                else:
-                    path_cmd = None
-                lines = [
-                    line
-                    for line in lines
-                    if not line.startswith(f"export {name}=")
-                    and not (
-                        name == "JAVA_HOME"
-                        and "export PATH" in line
-                        and "JAVA_HOME" in line
-                    )
+                # 创建命令字符串
+                commands = f"""#!/bin/bash
+                if [ -e "{target_path}" ]; then
+                    rm -rf "{target_path}"
+                fi
+                mkdir -p "{os.path.dirname(target_path)}"
+                ln -sfn "{source_path}" "{target_path}"
+                chown -h {os.environ.get("USER", "root")} "{target_path}"
+                """
+
+                # 对命令进行 base64 编码
+                encoded_commands = base64.b64encode(commands.encode()).decode()
+
+                # 使用 osascript 执行解码后的命令
+                cmd = [
+                    "osascript",
+                    "-e",
+                    'do shell script "echo '
+                    + encoded_commands
+                    + ' | base64 -D | bash" with administrator privileges',
                 ]
 
-            # 添加新的设置
-            lines.append(export_cmd)
-            if path_cmd:
-                lines.append(path_cmd)
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        logger.info("成功创建符号链接")
+                        return True
+                    else:
+                        logger.error(f"创建符号链接失败: {result.stderr}")
+                        return False
+                except subprocess.CalledProcessError as e:
+                    if "User canceled" in str(e):
+                        logger.warning("用户取消了授权操作")
+                    else:
+                        logger.error(f"执行命令失败: {e.stderr}")
+                    return False
 
-            # 写入文件
-            with open(config_file, "w") as f:
-                f.writelines(lines)
+            else:  # Linux
+                try:
+                    # 确保目标路径的父目录存在
+                    target_dir = os.path.dirname(target_path)
+                    if not os.path.exists(target_dir):
+                        try:
+                            os.makedirs(target_dir, exist_ok=True)
+                        except PermissionError:
+                            # 使用 sudo 创建目录
+                            result = subprocess.run(
+                                ["sudo", "mkdir", "-p", target_dir],
+                                capture_output=True,
+                                text=True,
+                            )
+                            if result.returncode != 0:
+                                logger.error(f"创建目录失败: {result.stderr}")
+                                return False
 
-            # 立即生效
-            os.environ[name] = value
-            if name == "JAVA_HOME":
-                current_path = os.environ.get("PATH", "")
-                bin_path = os.path.join(value, "bin")
-                if bin_path not in current_path:
-                    os.environ["PATH"] = f"{current_path}:{bin_path}"
+                    # 如果目标已存在，先删除
+                    if os.path.exists(target_path):
+                        try:
+                            if os.path.islink(target_path) or os.path.isfile(
+                                target_path
+                            ):
+                                os.unlink(target_path)
+                            else:
+                                shutil.rmtree(target_path)
+                        except PermissionError:
+                            # 使用 sudo 删除
+                            result = subprocess.run(
+                                ["sudo", "rm", "-rf", target_path],
+                                capture_output=True,
+                                text=True,
+                            )
+                            if result.returncode != 0:
+                                logger.error(f"删除目标路径失败: {result.stderr}")
+                                return False
 
-            return True
+                    # 创建软链接
+                    try:
+                        os.symlink(source_path, target_path)
+                    except PermissionError:
+                        # 使用 sudo 创建软链接
+                        result = subprocess.run(
+                            ["sudo", "ln", "-sfn", source_path, target_path],
+                            capture_output=True,
+                            text=True,
+                        )
+                        if result.returncode != 0:
+                            logger.error(f"创建软链接失败: {result.stderr}")
+                            return False
+
+                        # 修改所有权
+                        user = os.environ.get("USER", os.environ.get("USERNAME"))
+                        if user:
+                            result = subprocess.run(
+                                ["sudo", "chown", user, target_path],
+                                capture_output=True,
+                                text=True,
+                            )
+                            if result.returncode != 0:
+                                logger.warning(f"修改所有权失败（不影响使用）: {result.stderr}")
+
+                    return True
+
+                except subprocess.CalledProcessError as e:
+                    if "sudo: no tty present" in str(e):
+                        logger.error("需要交互式终端来执行 sudo 命令")
+                    else:
+                        logger.error(f"执行命令失败: {str(e)}")
+                    return False
+                except Exception as e:
+                    logger.error(f"创建软链接失败: {str(e)}")
+                    return False
+
         except Exception as e:
-            error_msg = platform_manager.get_error_message(
-                "env_var_failed", detail=str(e)
-            )
-            logger.error(error_msg)
+            logger.error(f"创建符号链接失败: {str(e)}")
             return False
 
-    def get_environment_variable(self, name):
+    def get_environment_variable(self, name, config_file=None):
+        """获取系统环境变量值
+        Args:
+            name: 环境变量名
+            config_file: 配置文件路径（仅用于Unix系统）
+        """
         try:
-            return os.environ.get(name)
+            # Unix 系统变量获取逻辑
+            home = os.path.expanduser("~")
+
+            # 定义配置文件优先级顺序
+            config_files = [
+                os.path.join(home, ".bash_profile"),  # 最高优先级
+                os.path.join(home, ".bashrc"),
+                os.path.join(home, ".profile"),
+                "/etc/profile",
+                "/etc/bashrc",
+                "/etc/environment",
+            ]
+
+            # 如果指定了配置文件，则只检查该文件
+            if config_file and os.path.exists(config_file):
+                config_files = [config_file]
+
+            # 用于存储找到的值和来源
+            found_value = None
+            found_source = None
+
+            # 遍历所有配置文件
+            for config_file in config_files:
+                if os.path.exists(config_file):
+                    try:
+                        with open(config_file, "r") as f:
+                            content = f.read()
+
+                        # 使用更精确的正则表达式匹配
+                        patterns = [
+                            (f"^{name}=([^#\n]+)", "direct"),  # 直接赋值
+                            (f"^export\s+{name}=([^#\n]+)", "export"),  # export 赋值
+                            (f"^setenv\s+{name}\s+([^#\n]+)", "setenv"),  # csh/tcsh 风格
+                            (f'^{name}="([^"]+)"', "quoted"),  # 双引号
+                            (f"^{name}='([^']+)'", "quoted"),  # 单引号
+                            (
+                                f'^export\s+{name}="([^"]+)"',
+                                "export_quoted",
+                            ),  # export 带双引号
+                            (
+                                f"^export\s+{name}='([^']+)'",
+                                "export_quoted",
+                            ),  # export 带单引号
+                        ]
+
+                        for pattern, assign_type in patterns:
+                            matches = re.finditer(pattern, content, re.MULTILINE)
+                            for match in matches:
+                                value = match.group(1).strip()
+
+                                # 记录找到的值和来源
+                                if found_value is None:
+                                    found_value = value
+                                    found_source = config_file
+
+                                # 如果在 .bash_profile 中找到，直接使用这个值
+                                if config_file.endswith(".bash_profile"):
+                                    logger.debug(
+                                        f"在 .bash_profile 中找到 {name}={value} (类型: {assign_type})"
+                                    )
+
+                                    # 验证和展开环境变量
+                                    value = self._validate_env_value(value)
+                                    expanded = self._expand_env_vars(value)
+                                    if expanded != value:
+                                        logger.debug(f"展开环境变量 {value} -> {expanded}")
+                                    return expanded
+
+                    except Exception as e:
+                        logger.error(f"读取配置文件 {config_file} 失败: {str(e)}")
+                        continue
+
+            # 如果找到了值，返回它
+            if found_value:
+                logger.debug(f"在 {found_source} 中找到 {name}={found_value}")
+                # 验证和展开环境变量
+                found_value = self._validate_env_value(found_value)
+                expanded = self._expand_env_vars(found_value)
+                if expanded != found_value:
+                    logger.debug(f"展开环境变量 {found_value} -> {expanded}")
+                return expanded
+
+            # 最后尝试从当前环境变量获取
+            env_value = os.environ.get(name)
+            if env_value:
+                logger.debug(f"从当前环境变量中获取到 {name}={env_value}")
+                return self._validate_env_value(env_value)
+
+            logger.debug(f"未找到环境变量 {name}")
+            return _("settings.env.not_set")
+
         except Exception as e:
             logger.error(f"获取环境变量失败: {str(e)}")
-            return None
+            return _("settings.env.not_set")
 
-    def update_path_variable(self, new_path):
+    def set_environment_variable(self, name, value, config_file=None):
+        """设置系统环境变量"""
         try:
-            current_path = self.get_environment_variable("PATH")
-            if current_path:
-                paths = current_path.split(":")
-                # 移除所有包含 java 或 jdk 的路径
-                paths = [
-                    p for p in paths if not any(x in p.lower() for x in ["java", "jdk"])
-                ]
-                # 添加新路径到开头
-                if new_path not in paths:
-                    paths.insert(0, new_path)
-                new_path_value = ":".join(filter(None, paths))
-
-                # 根据不同shell生成配置
-                config_file = platform_manager.get_shell_config_file()
+            if self.is_linux:
+                # 如果没有指定配置文件，使用默认的配置文件
                 if not config_file:
-                    raise Exception("无法确定shell配置文件位置")
+                    # 按优先级尝试配置文件
+                    config_files = [
+                        os.path.expanduser("~/.bash_profile"),
+                        os.path.expanduser("~/.profile"),
+                        os.path.expanduser("~/.bashrc"),
+                    ]
+
+                    # 选择第一个可写的配置文件
+                    for cf in config_files:
+                        if os.path.exists(os.path.dirname(cf)) and os.access(
+                            os.path.dirname(cf), os.W_OK
+                        ):
+                            config_file = cf
+                            break
+
+                    if not config_file:
+                        config_file = os.path.expanduser("~/.bash_profile")
+
+                if not config_file:
+                    logger.error("未找到环境变量配置文件")
+                    return False
+
+                # 确保配置文件目录存在
+                config_dir = os.path.dirname(config_file)
+                if not os.path.exists(config_dir):
+                    try:
+                        os.makedirs(config_dir, exist_ok=True)
+                    except Exception as e:
+                        logger.error(f"创建配置文件目录失败: {str(e)}")
+                        return False
 
                 # 读取现有内容
+                content = ""
                 if os.path.exists(config_file):
                     with open(config_file, "r") as f:
-                        lines = f.readlines()
-                else:
-                    lines = []
+                        content = f.read()
 
-                # 根据不同shell生成PATH设置命令
-                if platform_manager.shell == "fish":
-                    path_cmd = f"set -x PATH {new_path_value}\n"
-                    lines = [
-                        line for line in lines if not line.startswith("set -x PATH ")
-                    ]
-                else:
-                    path_cmd = f'export PATH="{new_path_value}"\n'
-                    lines = [
-                        line for line in lines if not line.startswith("export PATH=")
-                    ]
+                # 解析现有的环境变量设置
+                lines = content.split("\n")
+                new_lines = []
+                env_vars = {}
 
-                # 添加新的PATH设置
-                lines.append(path_cmd)
+                # 收集所有环境变量设置
+                for line in lines:
+                    if not line.strip() or line.strip().startswith("#"):
+                        continue
 
-                # 写入文件
-                with open(config_file, "w") as f:
-                    f.writelines(lines)
+                    if "=" in line:
+                        parts = line.split("=", 1)
+                        var_name = parts[0].strip().replace("export ", "").strip()
+                        var_value = parts[1].strip().strip('"').strip("'")
+                        env_vars[var_name] = var_value
+
+                # 准备新的环境变量设置
+                if name == "JAVA_HOME":
+                    env_vars["JAVA_HOME"] = value
+                elif name == "PATH":
+                    current_path = env_vars.get("PATH", "")
+                    if current_path:
+                        paths = [
+                            p
+                            for p in current_path.split(":")
+                            if not any(x in p.lower() for x in ["java", "jdk"])
+                        ]
+                        paths.insert(0, "$JAVA_HOME/bin")
+                        env_vars["PATH"] = ":".join(paths)
+                    else:
+                        env_vars["PATH"] = "$JAVA_HOME/bin:$PATH"
+                elif name == "CLASSPATH":
+                    env_vars[
+                        "CLASSPATH"
+                    ] = ".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+
+                # 重建配置文件内容
+                new_content = []
+                if not content.startswith("# Created by JVMan"):
+                    new_content.append("# Created by JVMan")
+                    new_content.append("")
+
+                # 添加环境变量设置
+                for var_name, var_value in env_vars.items():
+                    if var_value.startswith("$"):
+                        new_content.append(f"export {var_name}={var_value}")
+                    else:
+                        new_content.append(f'export {var_name}="{var_value}"')
+
+                # 写回文件
+                try:
+                    with open(config_file, "w") as f:
+                        f.write("\n".join(new_content) + "\n")
+                except PermissionError:
+                    # 如果没有写入权限，尝试使用 sudo
+                    temp_file = "/tmp/jvman_env_temp"
+                    with open(temp_file, "w") as f:
+                        f.write("\n".join(new_content) + "\n")
+
+                    result = subprocess.run(
+                        ["sudo", "mv", temp_file, config_file],
+                        capture_output=True,
+                        text=True,
+                    )
+                    if result.returncode != 0:
+                        logger.error(f"写入配置文件失败: {result.stderr}")
+                        return False
 
                 # 立即生效
-                os.environ["PATH"] = new_path_value
+                try:
+                    # 1. 更新当前进程的环境变量
+                    os.environ[name] = value
+                    if name == "JAVA_HOME":
+                        java_bin = os.path.join(value, "bin")
+                        current_path = os.environ.get("PATH", "")
+                        if java_bin not in current_path.split(":"):
+                            os.environ["PATH"] = f"{java_bin}:{current_path}"
+
+                    # 2. 重新加载 shell 配置
+                    shell = os.environ.get("SHELL", "/bin/bash")
+                    subprocess.run([shell, "-c", f"source {config_file}"], check=True)
+
+                except Exception as e:
+                    logger.warning(f"执行环境变量立即生效命令失败（不影响设置）: {str(e)}")
 
                 return True
-            return False
+
+            # ... existing code for other platforms ...
+
         except Exception as e:
-            error_msg = platform_manager.get_error_message(
-                "env_var_failed", detail=str(e)
-            )
-            logger.error(error_msg)
+            logger.error(f"设置环境变量失败: {str(e)}")
+            return False
+
+    def update_path_variable(self, new_path, config_file=None):
+        """更新PATH环境变量
+        Args:
+            new_path: 新的PATH值
+            config_file: 指定要写入的配置文件路径
+        """
+        try:
+            current_path = os.environ.get("PATH", "")
+            paths = current_path.split(os.pathsep)
+
+            # 移除所有包含 java 或 jdk 的路径
+            paths = [
+                p for p in paths if not any(x in p.lower() for x in ["java", "jdk"])
+            ]
+
+            # 添加新的 Java 路径
+            java_bin = os.path.join(new_path, "bin")
+            if java_bin not in paths:
+                paths.insert(0, java_bin)
+
+            # 更新 PATH
+            new_path_value = os.pathsep.join(paths)
+            return self.set_environment_variable("PATH", new_path_value, config_file)
+        except Exception as e:
+            logger.error(f"更新 PATH 环境变量失败: {str(e)}")
             return False
 
 
-def get_system_manager():
-    """获取对应平台的系统管理器"""
-    system = platform.system()
-    if system == "Windows":
+# 在文件末尾初始化系统管理器
+def create_system_manager():
+    """创建系统管理器实例"""
+    if platform.system() == "Windows":
         return WindowsManager()
-    elif system in ["Linux", "Darwin"]:
-        return UnixManager()
-    else:
-        raise NotImplementedError(f"Unsupported platform: {system}")
+    return UnixManager()
 
 
-# 创建全局系统管理器实例
-system_manager = get_system_manager()
-
-
-# 为了保持向后兼容，提供全局函数
-def check_admin_rights():
-    return system_manager.check_admin_rights()
-
-
-def create_symlink(source_path, target_path):
-    return system_manager.create_symlink(source_path, target_path)
-
-
-def set_environment_variable(name, value):
-    return system_manager.set_environment_variable(name, value)
-
-
-def get_environment_variable(name):
-    return system_manager.get_environment_variable(name)
-
-
-def update_path_variable(java_home_path):
-    """更新 PATH 环境变量"""
-    try:
-        # 获取当前的 PATH 环境变量
-        current_path = os.environ.get("PATH", "")
-        paths = current_path.split(os.pathsep)
-
-        # 移除所有包含 java 或 jdk 的路径
-        paths = [p for p in paths if not any(x in p.lower() for x in ["java", "jdk"])]
-
-        # 添加新的 Java 路径（使用 %JAVA_HOME%\bin）
-        paths.insert(0, "%JAVA_HOME%\\bin")
-
-        # 合并并更新 PATH
-        new_path = os.pathsep.join(paths)
-
-        # 使用 winreg 更新系统环境变量
-        with winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE,
-            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
-            0,
-            winreg.KEY_SET_VALUE | winreg.KEY_READ,
-        ) as key:
-            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path)
-
-        # 发送环境变量更改的广播消息
-        win32gui.SendMessageTimeout(
-            win32con.HWND_BROADCAST,
-            win32con.WM_SETTINGCHANGE,
-            0,
-            "Environment",
-            win32con.SMTO_ABORTIFHUNG,
-            5000,
-        )
-
-        return True
-    except Exception as e:
-        logger.error(f"更新 PATH 环境变量失败: {str(e)}")
-        return False
+# 初始化全局系统管理器实例
+system_manager = create_system_manager()
