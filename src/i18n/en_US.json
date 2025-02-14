@@ -85,7 +85,12 @@
                 "current": {
                     "title": "📌 Current Configuration File",
                     "not_found": "⚠️ No available configuration file found"
-                }
+                },
+                "system": "System Level",
+                "user": "User Level",
+                "not_found": "No available config file found",
+                "writable": "Writable",
+                "readonly": "Read Only"
             },
             "variables": {
                 "title": "🔍 Current Environment Variables:",
@@ -165,13 +170,6 @@
                 "sync_status": "Sync Status",
                 "synced": "Synced",
                 "not_synced": "Not Synced"
-            },
-            "config_files": {
-                "system": "System Level",
-                "user": "User Level",
-                "not_found": "No available config file found",
-                "writable": "Writable",
-                "readonly": "Read Only"
             }
         },
         "messages": {
@@ -869,12 +867,16 @@
             "jdk_not_found": "JDK information not found"
         },
         "error": {
-            "symlink_failed": "Failed to unlink: {error}",
-            "open_dir_failed": "Failed to open directory: {error}",
-            "admin_rights": {
-                "windows": "Administrator privileges required. Please run the program as administrator.",
-                "unix": "Administrator privileges required. Please enter password to authorize."
-            }
+            "symlink_failed": {
+                "windows": "Failed to create symlink, please make sure to run as administrator.",
+                "unix": "Failed to create symlink, please make sure you have sufficient permissions."
+            },
+            "env_var_failed": {
+                "windows": "Failed to set environment variables, please make sure to run as administrator.",
+                "unix": "Failed to set environment variables, please make sure you have permission to modify config file: {config_file}"
+            },
+            "with_detail": "{base_message}\nDetail: {detail}",
+            "unknown": "Unknown error"
         },
         "vendor": {
             "unknown": "Unknown"
@@ -1191,6 +1193,30 @@
         "error": {
             "platform_mismatch": "Backup file is not compatible with current system platform",
             "config_file_not_found": "Configuration file not found"
+        }
+    },
+    "menu": {
+        "about": "About JDK Version Manager",
+        "about.description": "A simple and easy-to-use JDK version management tool",
+        "preferences": "Preferences",
+        "quit": "Quit",
+        "show": "Show Window",
+        "hide": "Hide Window"
+    },
+    "app": {
+        "window": {
+            "show": "Show Window",
+            "hide": "Hide Window",
+            "minimize": "Minimize",
+            "zoom": "Zoom",
+            "bring_to_front": "Bring All to Front"
+        },
+        "dock": {
+            "show": "Show Main Window",
+            "menu": {
+                "show": "Show Window",
+                "quit": "Quit"
+            }
         }
     }
 }

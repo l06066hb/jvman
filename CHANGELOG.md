@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2025-02-16
+
+### Added
+- 添加 macOS 原生菜单栏支持
+- 添加 macOS Dock 菜单支持
+- 添加应用程序标准快捷键支持
+- 添加窗口管理相关的国际化支持
+
+### Changed
+- 优化 macOS 平台下的窗口行为
+- 改进托盘图标的交互方式
+- 优化应用程序菜单结构
+- 改进窗口显示和隐藏逻辑
+
+### Fixed
+- 修复 macOS 下托盘菜单重复显示问题
+- 修复窗口激活状态管理问题
+- 修复 Dock 图标点击响应问题
+- 修复窗口状态同步问题
+
+### Improved
+- macOS 平台兼容性
+- 应用程序菜单体验
+- 窗口管理机制
+- 用户交互流畅度
+
 ## [1.0.10] - 2025-02-15
 
 ### Added
@@ -279,6 +305,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyQt6 界面框架
 - 基础配置系统
 
+[1.0.11]: https://github.com/l06066hb/jvman/releases/tag/v1.0.11
 [1.0.10]: https://github.com/l06066hb/jvman/releases/tag/v1.0.10
 [1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9
 [1.0.8]: https://github.com/l06066hb/jvman/releases/tag/v1.0.8

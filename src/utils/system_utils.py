@@ -526,48 +526,110 @@ class UnixManager(SystemManager):
                 return False
 
             if platform.system() == "Darwin":  # macOS
-                import base64
-
-                # 创建命令字符串
-                commands = f"""#!/bin/bash
-                if [ -e "{target_path}" ]; then
-                    rm -rf "{target_path}"
-                fi
-                mkdir -p "{os.path.dirname(target_path)}"
-                ln -sfn "{source_path}" "{target_path}"
-                chown -h {os.environ.get("USER", "root")} "{target_path}"
-                """
-
-                # 对命令进行 base64 编码
-                encoded_commands = base64.b64encode(commands.encode()).decode()
-
-                # 使用 osascript 执行解码后的命令
-                cmd = [
-                    "osascript",
-                    "-e",
-                    'do shell script "echo '
-                    + encoded_commands
-                    + ' | base64 -D | bash" with administrator privileges',
-                ]
-
                 try:
-                    result = subprocess.run(cmd, capture_output=True, text=True)
-                    if result.returncode == 0:
-                        logger.info("成功创建符号链接")
+                    # 确保目标路径的父目录存在
+                    target_dir = os.path.dirname(target_path)
+                    if not os.path.exists(target_dir):
+                        try:
+                            os.makedirs(target_dir, exist_ok=True)
+                        except PermissionError:
+                            # 如果创建目录失败，尝试在用户目录下创建
+                            user_home = os.path.expanduser("~")
+                            target_dir = os.path.join(user_home, ".jvman", "current")
+                            os.makedirs(target_dir, exist_ok=True)
+                            target_path = os.path.join(target_dir, os.path.basename(target_path))
+
+                    # 如果目标已存在，先删除
+                    if os.path.exists(target_path):
+                        try:
+                            if os.path.islink(target_path) or os.path.isfile(target_path):
+                                os.unlink(target_path)
+                            else:
+                                shutil.rmtree(target_path)
+                        except PermissionError:
+                            # 如果删除失败，尝试在用户目录下重新创建
+                            user_home = os.path.expanduser("~")
+                            target_dir = os.path.join(user_home, ".jvman", "current")
+                            os.makedirs(target_dir, exist_ok=True)
+                            target_path = os.path.join(target_dir, os.path.basename(target_path))
+                            if os.path.exists(target_path):
+                                if os.path.islink(target_path) or os.path.isfile(target_path):
+                                    os.unlink(target_path)
+                                else:
+                                    shutil.rmtree(target_path)
+
+                    # 创建软链接
+                    try:
+                        os.symlink(source_path, target_path)
+                        logger.info(f"成功创建软链接: {target_path} -> {source_path}")
                         return True
-                    else:
-                        logger.error(f"创建符号链接失败: {result.stderr}")
+                    except PermissionError:
+                        # 如果在原位置创建失败，尝试在用户目录下创建
+                        user_home = os.path.expanduser("~")
+                        target_dir = os.path.join(user_home, ".jvman", "current")
+                        os.makedirs(target_dir, exist_ok=True)
+                        target_path = os.path.join(target_dir, os.path.basename(target_path))
+                        os.symlink(source_path, target_path)
+                        logger.info(f"成功在用户目录下创建软链接: {target_path} -> {source_path}")
+                        return True
+
+                except Exception as e:
+                    logger.error(f"创建软链接失败: {str(e)}")
+                    # 如果所有尝试都失败了，才使用 sudo
+                    try:
+                        import base64
+                        # 创建命令字符串
+                        commands = f"""#!/bin/bash
+                        if [ -e "{target_path}" ]; then
+                            rm -rf "{target_path}"
+                        fi
+                        mkdir -p "{os.path.dirname(target_path)}"
+                        ln -sfn "{source_path}" "{target_path}"
+                        chown -h {os.environ.get('USER', 'root')} "{target_path}"
+                        """
+                        # 对命令进行 base64 编码
+                        encoded_commands = base64.b64encode(commands.encode()).decode()
+                        # 使用 osascript 执行解码后的命令
+                        cmd = [
+                            "osascript",
+                            "-e",
+                            'do shell script "echo ' + encoded_commands + ' | base64 -D | bash" with administrator privileges',
+                        ]
+                        result = subprocess.run(cmd, capture_output=True, text=True)
+                        if result.returncode == 0:
+                            logger.info("使用管理员权限成功创建软链接")
+                            return True
+                        else:
+                            logger.error(f"使用管理员权限创建软链接失败: {result.stderr}")
+                            return False
+                    except Exception as e:
+                        logger.error(f"使用管理员权限创建软链接失败: {str(e)}")
                         return False
-                except subprocess.CalledProcessError as e:
-                    if "User canceled" in str(e):
-                        logger.warning("用户取消了授权操作")
-                    else:
-                        logger.error(f"执行命令失败: {e.stderr}")
-                    return False
 
             else:  # Linux
                 try:
-                    # 确保目标路径的父目录存在
+                    # 首先尝试在用户目录下创建
+                    user_home = os.path.expanduser("~")
+                    target_dir = os.path.join(user_home, ".jvman", "current")
+                    try:
+                        os.makedirs(target_dir, exist_ok=True)
+                        user_target_path = os.path.join(target_dir, os.path.basename(target_path))
+                        
+                        # 如果目标已存在，先删除
+                        if os.path.exists(user_target_path):
+                            if os.path.islink(user_target_path) or os.path.isfile(user_target_path):
+                                os.unlink(user_target_path)
+                            else:
+                                shutil.rmtree(user_target_path)
+                        
+                        # 创建软链接
+                        os.symlink(source_path, user_target_path)
+                        logger.info(f"成功在用户目录下创建软链接: {user_target_path} -> {source_path}")
+                        return True
+                    except Exception as e:
+                        logger.warning(f"在用户目录下创建软链接失败，尝试在原目标位置创建: {str(e)}")
+
+                    # 如果在用户目录下创建失败，尝试在原目标位置创建
                     target_dir = os.path.dirname(target_path)
                     if not os.path.exists(target_dir):
                         try:
@@ -586,9 +648,7 @@ class UnixManager(SystemManager):
                     # 如果目标已存在，先删除
                     if os.path.exists(target_path):
                         try:
-                            if os.path.islink(target_path) or os.path.isfile(
-                                target_path
-                            ):
+                            if os.path.islink(target_path) or os.path.isfile(target_path):
                                 os.unlink(target_path)
                             else:
                                 shutil.rmtree(target_path)
@@ -606,6 +666,8 @@ class UnixManager(SystemManager):
                     # 创建软链接
                     try:
                         os.symlink(source_path, target_path)
+                        logger.info(f"成功创建软链接: {target_path} -> {source_path}")
+                        return True
                     except PermissionError:
                         # 使用 sudo 创建软链接
                         result = subprocess.run(
@@ -621,14 +683,14 @@ class UnixManager(SystemManager):
                         user = os.environ.get("USER", os.environ.get("USERNAME"))
                         if user:
                             result = subprocess.run(
-                                ["sudo", "chown", user, target_path],
+                                ["sudo", "chown", "-h", user, target_path],
                                 capture_output=True,
                                 text=True,
                             )
                             if result.returncode != 0:
                                 logger.warning(f"修改所有权失败（不影响使用）: {result.stderr}")
 
-                    return True
+                        return True
 
                 except subprocess.CalledProcessError as e:
                     if "sudo: no tty present" in str(e):
