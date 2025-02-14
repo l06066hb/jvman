@@ -34,9 +34,15 @@ class BackupManager:
             self.backup_dir = os.path.join(
                 self.config_manager.get_config_dir(), "backups", "env"
             )
+            # 确保目录存在
+            try:
+                os.makedirs(self.backup_dir, exist_ok=True)
+                logger.info(f"备份目录: {self.backup_dir}")
+            except Exception as e:
+                logger.error(f"创建备份目录失败: {str(e)}")
+
             # 最大备份数量限制
             self.max_backups = 5  # 保留最近5个备份
-            os.makedirs(self.backup_dir, exist_ok=True)
             self.initialized = True
 
     def create_backup(self, backup_type="auto"):
@@ -57,6 +63,10 @@ class BackupManager:
             backup_name = f"env_backup_{backup_type}_{timestamp}"
             backup_path = os.path.join(self.backup_dir, backup_name)
 
+            logger.info(f"正在创建备份: {backup_path}")
+            logger.debug(f"备份目录: {self.backup_dir}")
+            logger.debug(f"备份类型: {backup_type}")
+
             # 获取当前环境变量值
             java_home = os.environ.get("JAVA_HOME", "")
             classpath = os.environ.get("CLASSPATH", "")
@@ -67,8 +77,8 @@ class BackupManager:
                 "timestamp": timestamp,
                 "type": backup_type,
                 "platform": platform.system(),
-                "env_vars": {},
                 "current_values": {
+                    "env_vars": {},
                     "JAVA_HOME": java_home,
                     "CLASSPATH": classpath,
                     "PATH": path,
@@ -89,13 +99,15 @@ class BackupManager:
                     backup_info["config_type"] = "Unknown"
 
             # 保存备份文件
-            with open(f"{backup_path}.json", "w", encoding="utf-8") as f:
+            backup_file = f"{backup_path}.json"
+            with open(backup_file, "w", encoding="utf-8") as f:
                 json.dump(backup_info, f, indent=4, ensure_ascii=False)
+
+            logger.info(f"备份文件已保存: {backup_file}")
 
             # 清理旧备份
             self._cleanup_old_backups()
 
-            logger.info(f"创建备份成功: {backup_path}")
             return True
 
         except Exception as e:
@@ -148,7 +160,9 @@ class BackupManager:
                         # 获取配置文件路径
                         config_files = []
                         if platform_manager.is_windows:
-                            config_files.append("Windows Registry")
+                            config_files.append(
+                                _("settings.env.backup.system_registry")
+                            )  # 修改为更友好的显示名称
                         else:
                             for config_file, file_info in info.get(
                                 "env_vars", {}
@@ -165,7 +179,7 @@ class BackupManager:
                                 "timestamp": info["timestamp"],
                                 "type": info["type"],
                                 "platform": info["platform"],
-                                "config_files": config_files,  # 添加配置文件列表
+                                "config_files": config_files,
                                 "current_values": info.get("current_values", {}),
                             }
                         )
@@ -179,24 +193,30 @@ class BackupManager:
             return []
 
     def _backup_windows_env(self):
-        """备份Windows环境变量
-        Returns:
-            dict: 环境变量信息
-        """
+        """备份Windows环境变量"""
         env_vars = {}
         try:
+            # 只备份系统环境变量
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"System\CurrentControlSet\Control\Session Manager\Environment",
                 0,
                 winreg.KEY_READ,
             ) as key:
-                # 获取所有环境变量
                 i = 0
                 while True:
                     try:
                         name, value, type = winreg.EnumValue(key, i)
-                        env_vars[name] = {"value": value, "type": type}
+                        upper_name = name.upper()
+                        if (
+                            upper_name in ["JAVA_HOME", "CLASSPATH"]
+                            or upper_name == "PATH"
+                        ):
+                            env_vars[name] = {
+                                "value": value,
+                                "type": type,
+                                "scope": "system",
+                            }
                         i += 1
                     except WindowsError:
                         break
@@ -238,14 +258,29 @@ class BackupManager:
             env_vars: 环境变量信息
         """
         try:
+            # 分离系统和用户环境变量
+            system_vars = {
+                k: v for k, v in env_vars.items() if not k.startswith("USER_")
+            }
+            user_vars = {k[5:]: v for k, v in env_vars.items() if k.startswith("USER_")}
+
+            # 恢复系统环境变量
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"System\CurrentControlSet\Control\Session Manager\Environment",
                 0,
                 winreg.KEY_SET_VALUE,
             ) as key:
-                for name, info in env_vars.items():
+                for name, info in system_vars.items():
                     winreg.SetValueEx(key, name, 0, info["type"], info["value"])
+
+            # 如果有用户环境变量需要恢复
+            if user_vars:
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_SET_VALUE
+                ) as key:
+                    for name, info in user_vars.items():
+                        winreg.SetValueEx(key, name, 0, info["type"], info["value"])
 
             # 发送环境变量更改通知
             win32gui.SendMessageTimeout(

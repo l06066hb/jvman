@@ -153,7 +153,25 @@
                     "restore": "Restore Backup",
                     "view": "View Backup",
                     "close": "Close"
-                }
+                },
+                "system_registry": "System Environment Variables"
+            },
+            "preview": {
+                "title": "Environment Variables Preview",
+                "java_paths": "Java Related Paths",
+                "not_set": "Not Set",
+                "current_values": "Current Environment Values",
+                "new_values": "New Environment Values",
+                "sync_status": "Sync Status",
+                "synced": "Synced",
+                "not_synced": "Not Synced"
+            },
+            "config_files": {
+                "system": "System Level",
+                "user": "User Level",
+                "not_found": "No available config file found",
+                "writable": "Writable",
+                "readonly": "Read Only"
             }
         },
         "messages": {
@@ -163,7 +181,7 @@
             "select_symlink_path": "Select Symlink Path",
             "select_config_file": "Select Shell Config File",
             "env_update_success": "Environment variables updated successfully",
-            "env_update_windows": "Environment variables updated, will take effect in new command prompts",
+            "env_update_windows": "Environment variables updated",
             "env_update_unix": "Environment variables updated, please run the following command to apply changes:\n{cmd}",
             "env_update_partial_failed": "Some environment variables failed to update:\n{errors}",
             "env_update_error": "Failed to update environment variables: {error}",

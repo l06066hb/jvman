@@ -151,7 +151,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment variable setting reliability and stability
 - Cross-platform compatibility of symlink paths
 
+## [1.0.10] - 2025-02-15
 
+### Added
+- Added official API support for Microsoft OpenJDK
+- Added diff comparison for environment variable backup content
+- Added formatted display for backup content
+- Added copy functionality for backup content
+- Added more internationalization support and translation improvements
+
+### Changed
+- Optimized Microsoft OpenJDK version fetching logic
+- Improved environment variable backup presentation
+- Enhanced backup content comparison interface
+- Improved internationalization text organization
+- Optimized button and label style consistency
+
+### Fixed
+- Fixed Microsoft OpenJDK version list fetch failure
+- Fixed environment variable backup content display formatting
+- Fixed difference display issues in backup comparison
+- Fixed non-internationalized interface text issues
+- Fixed text not updating after language switch
+
+### Improved
+- JDK version fetching stability
+- Backup management feature user experience
+- Internationalization support completeness
+- Interface interaction smoothness
+- Error notification friendliness
+
+[1.0.10]: https://github.com/l06066hb/jvman/releases/tag/v1.0.10
+[1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9
 [1.0.8]: https://github.com/l06066hb/jvman/releases/tag/v1.0.8
 [1.0.7]: https://github.com/l06066hb/jvman/releases/tag/v1.0.7
 [1.0.6]: https://github.com/l06066hb/jvman/releases/tag/v1.0.6
+[1.0.5]: https://github.com/l06066hb/jvman/releases/tag/v1.0.5
+[1.0.4]: https://github.com/l06066hb/jvman/releases/tag/v1.0.4
+[1.0.3]: https://github.com/l06066hb/jvman/releases/tag/v1.0.3
+[1.0.2]: https://github.com/l06066hb/jvman/releases/tag/v1.0.2
+[1.0.1]: https://github.com/l06066hb/jvman/releases/tag/v1.0.1
+[1.0.0]: https://github.com/l06066hb/jvman/releases/tag/v1.0.0

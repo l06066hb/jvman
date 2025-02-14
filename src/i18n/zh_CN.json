@@ -63,34 +63,39 @@
             "source_running": "正在使环境变量生效...",
             "no_changes_needed": "环境变量已经正确设置，无需更新",
             "update_failed": "更新环境变量显示失败",
+            "preview": {
+                "title": "环境变量预览",
+                "java_paths": "Java 相关路径",
+                "not_set": "未设置",
+                "current_values": "当前环境变量值",
+                "new_values": "新的环境变量值",
+                "sync_status": "同步状态",
+                "synced": "已同步",
+                "not_synced": "未同步"
+            },
             "config_files": {
                 "system": "系统级配置",
                 "user": "用户级配置",
                 "not_found": "未找到可用的配置文件",
                 "writable": "可写",
-                "readonly": "只读",
-                "priority": {
-                    "title": "📁 配置文件优先级:",
-                    "system_profile": "/etc/profile (系统级配置)",
-                    "system_paths": "/etc/paths (系统路径)",
-                    "user_profile": "~/.bash_profile (用户级配置，推荐)",
-                    "user_profile_alt": "~/.profile (用户级配置，备选)"
-                },
-                "status": {
-                    "writable": "✅ 可写",
-                    "readonly": "🔒 只读",
-                    "not_exist": "❌ 不存在"
-                },
-                "current": {
-                    "title": "📌 当前使用的配置文件",
-                    "not_found": "⚠️ 未找到可用的配置文件"
-                }
+                "readonly": "只读"
             },
-            "preview": {
-                "title": "环境变量预览",
-                "java_paths": "Java 相关路径",
-                "not_set": "未设置",
-                "current_values": "当前环境变量值"
+            "variables": {
+                "title": "🔍 当前环境变量:",
+                "java_home": {
+                    "set": "   JAVA_HOME = {value}",
+                    "not_set": "   JAVA_HOME = ⚠️ 未设置"
+                },
+                "path": {
+                    "title": "   PATH 中的 Java 相关路径:",
+                    "entry": "      - {path}",
+                    "not_found": "   PATH 中未找到 Java 相关路径",
+                    "not_set": "   PATH = ⚠️ 未设置"
+                },
+                "classpath": {
+                    "set": "   CLASSPATH = {value}",
+                    "not_set": "   CLASSPATH = ⚠️ 未设置"
+                }
             },
             "backup": {
                 "title": "环境变量备份管理",
@@ -141,7 +146,8 @@
                     "restore": "恢复备份",
                     "view": "查看备份",
                     "close": "关闭"
-                }
+                },
+                "system_registry": "系统环境变量"
             }
         },
         "messages": {
@@ -151,7 +157,7 @@
             "select_symlink_path": "选择软链接路径",
             "path_select_failed": "路径选择失败",
             "env_update_success": "环境变量更新成功",
-            "env_update_windows": "环境变量已更新，重新打开命令行窗口后生效",
+            "env_update_windows": "环境变量已更新",
             "env_update_unix": "环境变量已更新，请运行以下命令使其生效：\n{cmd}",
             "env_update_partial_failed": "部分环境变量更新失败：\n{errors}",
             "env_update_error": "环境变量更新失败：{error}",

@@ -246,6 +246,60 @@ class SettingsTab(QWidget):
                         label.setText(
                             f"{_(status_key)} {file_path} ({_(i18n_key)}){current_text}"
                         )
+
+            # 更新备份管理部分
+            if hasattr(self, "backup_group"):
+                self.backup_group.setTitle(_("settings.env.backup.title"))
+
+            if hasattr(self, "backup_table"):
+                # 更新表格头
+                self.backup_table.setHorizontalHeaderLabels(
+                    [
+                        _("settings.env.backup.table.header.config_file"),
+                        _("settings.env.backup.table.header.type"),
+                        _("settings.env.backup.table.header.time"),
+                    ]
+                )
+
+                # 更新表格内容
+                for row in range(self.backup_table.rowCount()):
+                    # 更新备份类型文本
+                    type_item = self.backup_table.item(row, 1)
+                    if type_item:
+                        backup_type = type_item.data(Qt.ItemDataRole.UserRole)
+                        if backup_type:
+                            type_text = (
+                                _("settings.env.backup.auto")
+                                if backup_type == "auto"
+                                else _("settings.env.backup.manual")
+                            )
+                            type_item.setText(type_text)
+
+            # 更新备份管理按钮
+            if hasattr(self, "create_button"):
+                self.create_button.setText(_("settings.env.backup.create"))
+            if hasattr(self, "restore_button"):
+                self.restore_button.setText(_("settings.env.backup.restore"))
+            if hasattr(self, "view_button"):
+                self.view_button.setText(_("settings.env.backup.view"))
+
+            # 刷新备份列表以更新所有文本
+            self.refresh_backup_list()
+
+            # 更新备份限制提示
+            if hasattr(self, "limit_label"):
+                self.limit_label.setText(
+                    _("settings.env.backup.limit_hint").format(
+                        count=self.backup_manager.max_backups
+                    )
+                )
+
+            # 更新更新设置组标题
+            if hasattr(self, "update_group"):
+                self.update_group.setTitle(_("settings.sections.update"))
+
+        except Exception as e:
+            logger.error(f"更新界面文本失败: {str(e)}")
         finally:
             self._is_updating = False
 
@@ -1341,9 +1395,9 @@ class SettingsTab(QWidget):
         layout.addWidget(env_group)
 
         # 更新设置组
-        update_group = QGroupBox(_("settings.sections.update"))
-        update_group.setObjectName("update_group")
-        update_group.setStyleSheet(
+        self.update_group = QGroupBox(_("settings.sections.update"))  # 保存为类属性
+        self.update_group.setObjectName("update_group")
+        self.update_group.setStyleSheet(
             """
             QGroupBox {
                 font-weight: bold;
@@ -1359,7 +1413,7 @@ class SettingsTab(QWidget):
             }
         """
         )
-        update_layout = QVBoxLayout(update_group)
+        update_layout = QVBoxLayout(self.update_group)
         update_layout.setSpacing(10)
         update_layout.setContentsMargins(15, 5, 15, 15)
 
@@ -1454,7 +1508,7 @@ class SettingsTab(QWidget):
         update_layout.addLayout(check_update_layout)
 
         # 添加更新设置组到主布局
-        layout.addWidget(update_group)
+        layout.addWidget(self.update_group)
 
         # 添加弹性空间
         layout.addStretch()
@@ -2196,15 +2250,8 @@ class SettingsTab(QWidget):
                 current_java_home = current_java_home.lower()
                 new_java_home = new_java_home.lower()
 
-            # 比较路径
-            try:
-                return os.path.samefile(current_java_home, new_java_home)
-            except FileNotFoundError:
-                # 如果文件不存在，直接比较字符串
-                return current_java_home == new_java_home
-            except OSError:
-                # 其他 OS 错误，返回字符串比较结果
-                return current_java_home == new_java_home
+            # 直接比较路径字符串
+            return current_java_home == new_java_home
 
         except Exception as e:
             logger.error(f"比较 JAVA_HOME 路径失败: {str(e)}")
@@ -2468,14 +2515,34 @@ class SettingsTab(QWidget):
                 # 存储完整的备份信息
                 self.backup_table.item(row, 0).setData(Qt.ItemDataRole.UserRole, backup)
 
+            # 调整列宽以适应内容
             self.backup_table.resizeColumnsToContents()
+
+            # 确保表格能显示所有内容
+            total_width = 0
+            for i in range(self.backup_table.columnCount()):
+                total_width += self.backup_table.columnWidth(i)
+
+            # 如果总宽度小于表格宽度，则平均分配剩余空间
+            if total_width < self.backup_table.width():
+                remaining_width = self.backup_table.width() - total_width
+                per_column = int(
+                    remaining_width / self.backup_table.columnCount()
+                )  # 转换为整数
+                for i in range(self.backup_table.columnCount()):
+                    current_width = self.backup_table.columnWidth(i)
+                    self.backup_table.setColumnWidth(i, current_width + per_column)
+
+            # 更新表格
+            self.backup_table.update()
 
         except Exception as e:
             logger.error(f"刷新备份列表失败: {str(e)}")
 
     def setup_backup_ui(self):
         """设置备份管理UI"""
-        backup_group = QGroupBox(_("settings.env.backup.title"))
+        # 创建分组框并保存为类属性
+        self.backup_group = QGroupBox(_("settings.env.backup.title"))
         backup_layout = QVBoxLayout()
 
         # 创建按钮布局
@@ -2483,10 +2550,10 @@ class SettingsTab(QWidget):
         button_layout.addStretch()  # 在最左侧添加弹性空间，使按钮右对齐
 
         # 创建备份按钮
-        create_button = QPushButton(_("settings.env.backup.button.create"))
-        create_button.setIcon(QIcon(os.path.join(self.icons_dir, "backup.png")))
-        create_button.clicked.connect(self.create_backup)
-        create_button.setStyleSheet(
+        self.create_button = QPushButton(_("settings.env.backup.create"))
+        self.create_button.setIcon(QIcon(os.path.join(self.icons_dir, "backup.png")))
+        self.create_button.clicked.connect(self.create_backup)
+        self.create_button.setStyleSheet(
             """
             QPushButton {
                 padding: 8px 16px;
@@ -2505,13 +2572,13 @@ class SettingsTab(QWidget):
             }
         """
         )
-        button_layout.addWidget(create_button)
+        button_layout.addWidget(self.create_button)
 
         # 恢复备份按钮
-        restore_button = QPushButton(_("settings.env.backup.button.restore"))
-        restore_button.setIcon(QIcon(os.path.join(self.icons_dir, "restore.png")))
-        restore_button.clicked.connect(self.restore_backup)
-        restore_button.setStyleSheet(
+        self.restore_button = QPushButton(_("settings.env.backup.restore"))
+        self.restore_button.setIcon(QIcon(os.path.join(self.icons_dir, "restore.png")))
+        self.restore_button.clicked.connect(self.restore_backup)
+        self.restore_button.setStyleSheet(
             """
             QPushButton {
                 padding: 8px 16px;
@@ -2530,13 +2597,13 @@ class SettingsTab(QWidget):
             }
         """
         )
-        button_layout.addWidget(restore_button)
+        button_layout.addWidget(self.restore_button)
 
         # 查看备份按钮
-        view_button = QPushButton(_("settings.env.backup.button.view"))
-        view_button.setIcon(QIcon(os.path.join(self.icons_dir, "view.png")))
-        view_button.clicked.connect(self.view_backup)
-        view_button.setStyleSheet(
+        self.view_button = QPushButton(_("settings.env.backup.view"))
+        self.view_button.setIcon(QIcon(os.path.join(self.icons_dir, "view.png")))
+        self.view_button.clicked.connect(self.view_backup)
+        self.view_button.setStyleSheet(
             """
             QPushButton {
                 padding: 8px 16px;
@@ -2559,7 +2626,7 @@ class SettingsTab(QWidget):
             }
         """
         )
-        button_layout.addWidget(view_button)
+        button_layout.addWidget(self.view_button)
 
         # 设置按钮之间的间距
         button_layout.setSpacing(10)
@@ -2591,6 +2658,7 @@ class SettingsTab(QWidget):
         self.backup_table.setSelectionBehavior(
             QTableWidget.SelectionBehavior.SelectRows
         )
+        self.backup_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.backup_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.backup_table.verticalHeader().setVisible(False)
         self.backup_table.setStyleSheet(
@@ -2620,16 +2688,16 @@ class SettingsTab(QWidget):
         backup_layout.addWidget(self.backup_table)
 
         # 添加备份数量限制提示
-        limit_label = QLabel(
+        self.limit_label = QLabel(
             _("settings.env.backup.limit_hint").format(
                 count=self.backup_manager.max_backups
             )
         )
-        limit_label.setStyleSheet("color: #666666; font-size: 11px;")
-        backup_layout.addWidget(limit_label)
+        self.limit_label.setStyleSheet("color: #666666; font-size: 11px;")
+        backup_layout.addWidget(self.limit_label)
 
-        backup_group.setLayout(backup_layout)
-        return backup_group
+        self.backup_group.setLayout(backup_layout)
+        return self.backup_group
 
     def view_backup(self):
         """查看备份内容"""
@@ -2837,21 +2905,74 @@ class SettingsTab(QWidget):
 
             # 获取备份的环境变量内容
             if platform_manager.is_windows:
+                backup_lines = []
+                # 处理系统环境变量
+                backup_lines.append("# System Environment Variables")
+                system_vars = {}
+
+                # 从备份内容中提取系统环境变量，保持原始名称和值
                 for name, info in backup_content.get("env_vars", {}).items():
-                    if name in ["JAVA_HOME", "PATH", "CLASSPATH"]:
-                        backup_lines.append(f"{name}={info['value']}")
+                    if not name.startswith("USER_"):
+                        system_vars[name] = info["value"]
+
+                # 按固定顺序添加系统变量，保持原始内容
+                for var_name in ["JAVA_HOME", "CLASSPATH", "PATH"]:
+                    for name, value in system_vars.items():
+                        if name.upper() == var_name:
+                            if var_name == "PATH":
+                                backup_lines.append(f"{name}=")
+                                paths = [
+                                    p for p in value.split(";") if p
+                                ]  # 只过滤空值，保持原始内容
+                                for path in paths:
+                                    backup_lines.append(f"    {path}")
+                            else:
+                                backup_lines.append(f"{name}={value}")
+
+                # 处理用户环境变量
+                user_vars = {}
+                for name, info in backup_content.get("env_vars", {}).items():
+                    if name.startswith("USER_"):
+                        real_name = name[5:]  # 移除 USER_ 前缀
+                        user_vars[real_name] = info["value"]
+
+                if user_vars:
+                    backup_lines.append("")  # 空行分隔
+                    backup_lines.append("# User Environment Variables")
+                    # 按相同顺序添加用户变量，保持原始内容
+                    for var_name in ["JAVA_HOME", "CLASSPATH", "PATH"]:
+                        for name, value in user_vars.items():
+                            if name.upper() == var_name:
+                                if var_name == "PATH":
+                                    backup_lines.append(f"{name}=")
+                                    paths = [
+                                        p for p in value.split(";") if p
+                                    ]  # 只过滤空值，保持原始内容
+                                    for path in paths:
+                                        backup_lines.append(f"    {path}")
+                                else:
+                                    backup_lines.append(f"{name}={value}")
             else:
+                # 保持原有的 Unix 系统逻辑不变
+                backup_lines = []
                 for config_file, info in backup_content.get("env_vars", {}).items():
                     backup_lines.extend(info.get("content", "").splitlines())
 
-            # 获取当前的环境变量内容
-            current_lines = current_content.splitlines()
+            # 计算差异前确保内容格式一致
+            backup_text = "\n".join(backup_lines)
+            current_text = (
+                self._get_windows_env_content()
+                if platform_manager.is_windows
+                else current_content
+            )
 
             # 计算差异
             import difflib
 
             differ = difflib.Differ()
-            diff = list(differ.compare(backup_lines, current_lines))
+            diff = list(
+                differ.compare(backup_text.splitlines(), current_text.splitlines())
+            )
 
             # 构建备份内容HTML
             backup_html = ['<pre style="margin: 0; padding: 0;">']
@@ -3003,21 +3124,42 @@ class SettingsTab(QWidget):
         """获取Windows环境变量内容"""
         try:
             content = []
+
+            # 只获取系统环境变量
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"System\CurrentControlSet\Control\Session Manager\Environment",
                 0,
                 winreg.KEY_READ,
             ) as key:
+                content.append("# System Environment Variables")
                 i = 0
+                system_vars = {}
                 while True:
                     try:
                         name, value, _ = winreg.EnumValue(key, i)
-                        if name in ["JAVA_HOME", "PATH", "CLASSPATH"]:
-                            content.append(f"{name}={value}")
+                        upper_name = name.upper()
+                        if (
+                            upper_name in ["JAVA_HOME", "CLASSPATH"]
+                            or upper_name == "PATH"
+                        ):
+                            system_vars[name] = value  # 保持原始名称
                         i += 1
                     except WindowsError:
                         break
+
+                # 按固定顺序显示变量
+                for var_name in ["JAVA_HOME", "CLASSPATH", "PATH"]:
+                    for name, value in system_vars.items():
+                        if name.upper() == var_name:
+                            if var_name == "PATH":
+                                content.append(f"{name}=")
+                                paths = [p for p in value.split(";") if p]  # 只过滤空值
+                                for path in paths:
+                                    content.append(f"    {path}")
+                            else:
+                                content.append(f"{name}={value}")
+
             return "\n".join(content)
         except Exception as e:
             logger.error(f"获取Windows环境变量内容失败: {str(e)}")
@@ -3076,6 +3218,40 @@ class SettingsTab(QWidget):
 
         except Exception as e:
             logger.error(f"重置基本设置失败: {str(e)}")
+            QMessageBox.critical(
+                self,
+                _("common.error"),
+                _("settings.messages.reset_failed").format(error=str(e)),
+            )
+
+    def reset_settings(self):
+        """恢复默认设置"""
+        try:
+            if (
+                QMessageBox.question(
+                    self,
+                    _("common.confirm"),
+                    _("settings.messages.reset_confirm"),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                == QMessageBox.StandardButton.Yes
+            ):
+                # 恢复默认设置
+                self.config_manager.reset_to_default()
+                # 重新加载设置到界面
+                self.load_settings()
+                # 先更新环境变量预览
+                self.update_env_preview()
+                # 再更新环境变量同步状态
+                self.env_manager.check_env_sync_status()  # 先检查同步状态
+                self.update_env_sync_status()  # 然后更新显示
+                # 显示成功提示
+                QMessageBox.information(
+                    self,
+                    _("common.success"),
+                    _("settings.messages.reset_success"),
+                )
+        except Exception as e:
             QMessageBox.critical(
                 self,
                 _("common.error"),
