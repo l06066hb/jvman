@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://github.com/l06066hb/jvman)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
-[![Open Collective](https://img.shields.io/opencollective/all/jvman?logo=opencollective)](https://opencollective.com/jvman)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
 
 A user-friendly JDK version management tool supporting Windows, macOS, and Linux platforms.
 
@@ -200,25 +200,6 @@ v1.0.10 Major Updates:
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Contributing
 
 We welcome Issues and Pull Requests to help improve this project.
@@ -326,4 +307,4 @@ If this project has been helpful to you, you can:
 - 💬 Help answer other users' questions
 - 💝 [Support the developer](docs/sponsor.md)
 
-Thank you to everyone who supports this project!
+Your support helps maintain and improve the project. Thank you to everyone who contributes!

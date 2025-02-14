@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
-[![Open Collective](https://img.shields.io/opencollective/all/jvman?logo=opencollective)](https://opencollective.com/jvman)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
 
 一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
 
@@ -200,25 +200,6 @@ v1.0.10 的主要更新：
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## 贡献指南
 
 欢迎提交 Issue 和 Pull Request 来帮助改进这个项目。
@@ -283,7 +264,6 @@ git push origin feature/your-feature-name
     - ci: 持续集成相关（比如修改 GitHub Actions）
     - chore: 其他修改（比如更新依赖）
 
-
 ## 项目结构
 ```
 jvman/
@@ -327,4 +307,4 @@ A: 检查是否有足够的权限，确保目标 JDK 目录存在且完整。
 - 💬 帮助解答其他用户的问题
 - 💝 [打赏开发者](docs/sponsor.md)
 
-感谢所有支持这个项目的朋友！
+你的支持将帮助项目持续维护和改进。感谢每一位贡献者！

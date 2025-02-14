@@ -25,7 +25,7 @@ JDK 版本管理工具是一个完全开源的项目，我们致力于：
    - 📝 完善文档和翻译
 
 2. 赞助支持
-   - [Open Collective](https://opencollective.com/jvman)
+   - [Ko-fi](https://ko-fi.com/l06066hb)
 
 ## Support the Project
 
@@ -50,4 +50,4 @@ You can support the project in several ways:
    - 📝 Improve documentation and translations
 
 2. Sponsorship
-   - [Open Collective](https://opencollective.com/jvman) 
+   - [Ko-fi](https://ko-fi.com/l06066hb) (One-time small donations) 

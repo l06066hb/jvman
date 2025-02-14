@@ -782,7 +782,8 @@
             "download_issues": "下载问题",
             "env_issues": "环境变量问题",
             "usage_issues": "使用问题",
-            "ide_issues": "IDE 相关问题"
+            "ide_issues": "IDE 相关问题",
+            "backup_management": "备份管理"
         }
     },
     "tabs": {
