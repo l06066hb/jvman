@@ -940,7 +940,8 @@
             "download_issues": "Download Issues",
             "env_issues": "Environment Variable Issues",
             "usage_issues": "Usage Issues",
-            "ide_issues": "IDE Related Issues"
+            "ide_issues": "IDE Related Issues",
+            "backup_management": "Backup Management"
         }
     },
     "tabs": {
