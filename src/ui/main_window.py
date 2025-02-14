@@ -106,14 +106,14 @@ class MainWindow(QMainWindow):
             # 设置应用程序属性
             app = QApplication.instance()
             app.setQuitOnLastWindowClosed(False)
-            
+
             # 设置窗口属性
             self.setAttribute(Qt.WidgetAttribute.WA_MacAlwaysShowToolWindow)
             self.setUnifiedTitleAndToolBarOnMac(True)
-            
+
             # 注册应用程序事件过滤器
             app.installEventFilter(self)
-            
+
             # 创建 macOS 标准应用程序菜单
             self.create_mac_app_menu()
 
@@ -132,38 +132,44 @@ class MainWindow(QMainWindow):
     def create_mac_app_menu(self):
         """创建 macOS 标准应用程序菜单"""
         menubar = self.menuBar()
-        
+
         # 应用程序菜单（显示为应用程序名称）
         app_menu = menubar.addMenu(self.windowTitle())
-        
+
         # 关于操作
         about_action = QAction(_("menu.about"), self)
-        about_action.triggered.connect(lambda: QMessageBox.about(self, 
-            _("menu.about"), 
-            f"JDK Version Manager v{version_manager.get_version()}\n\n{_('menu.about.description')}"))
+        about_action.triggered.connect(
+            lambda: QMessageBox.about(
+                self,
+                _("menu.about"),
+                f"JDK Version Manager v{version_manager.get_version()}\n\n{_('menu.about.description')}",
+            )
+        )
         app_menu.addAction(about_action)
-        
+
         app_menu.addSeparator()
-        
+
         # 偏好设置
         preferences_action = QAction(_("menu.preferences"), self)
         preferences_action.setShortcut("Cmd+,")
-        preferences_action.triggered.connect(lambda: self.tab_widget.setCurrentWidget(self.settings_tab))
+        preferences_action.triggered.connect(
+            lambda: self.tab_widget.setCurrentWidget(self.settings_tab)
+        )
         app_menu.addAction(preferences_action)
-        
+
         app_menu.addSeparator()
-        
+
         # 隐藏/显示窗口
         show_action = QAction(_("menu.show"), self)
         show_action.triggered.connect(self.show)
         app_menu.addAction(show_action)
-        
+
         hide_action = QAction(_("menu.hide"), self)
         hide_action.triggered.connect(self.hide)
         app_menu.addAction(hide_action)
-        
+
         app_menu.addSeparator()
-        
+
         # 退出操作
         quit_action = QAction(_("menu.quit"), self)
         quit_action.setShortcut("Cmd+Q")
@@ -775,7 +781,11 @@ class MainWindow(QMainWindow):
                 cursor_pos = QCursor.pos()
                 # 将菜单显示在鼠标位置上方20像素处
                 menu = self.tray_icon.contextMenu()
-                menu.popup(QPoint(cursor_pos.x(), cursor_pos.y() - menu.sizeHint().height() - 20))
+                menu.popup(
+                    QPoint(
+                        cursor_pos.x(), cursor_pos.y() - menu.sizeHint().height() - 20
+                    )
+                )
 
     def closeEvent(self, event):
         """处理窗口关闭事件"""
@@ -906,13 +916,13 @@ class MainWindow(QMainWindow):
             # macOS 特定处理
             if platform.system() == "Darwin":
                 # 恢复之前的标签页
-                if hasattr(self, 'last_tab_index'):
+                if hasattr(self, "last_tab_index"):
                     self.tab_widget.setCurrentIndex(self.last_tab_index)
                     # 刷新当前标签页
                     current_tab = self.tab_widget.currentWidget()
-                    if current_tab and hasattr(current_tab, 'refresh'):
+                    if current_tab and hasattr(current_tab, "refresh"):
                         current_tab.refresh()
-                
+
                 # 显示并激活窗口
                 self.show()
                 self.raise_()
@@ -935,21 +945,23 @@ class MainWindow(QMainWindow):
         if platform.system() == "Darwin":
             # 确保窗口不是最小化状态
             if self.isMinimized():
-                self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
+                self.setWindowState(
+                    self.windowState() & ~Qt.WindowState.WindowMinimized
+                )
                 self.showNormal()  # 使用 showNormal
-            
+
             # 确保窗口在最前面
             self.raise_()
             self.activateWindow()
-            
+
             # 恢复之前的标签页
-            if hasattr(self, 'last_tab_index'):
+            if hasattr(self, "last_tab_index"):
                 self.tab_widget.setCurrentIndex(self.last_tab_index)
                 # 刷新当前标签页
                 current_tab = self.tab_widget.currentWidget()
-                if current_tab and hasattr(current_tab, 'refresh'):
+                if current_tab and hasattr(current_tab, "refresh"):
                     current_tab.refresh()
-            
+
             # 强制重绘
             self.repaint()
             self.update()

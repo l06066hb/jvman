@@ -537,12 +537,16 @@ class UnixManager(SystemManager):
                             user_home = os.path.expanduser("~")
                             target_dir = os.path.join(user_home, ".jvman", "current")
                             os.makedirs(target_dir, exist_ok=True)
-                            target_path = os.path.join(target_dir, os.path.basename(target_path))
+                            target_path = os.path.join(
+                                target_dir, os.path.basename(target_path)
+                            )
 
                     # 如果目标已存在，先删除
                     if os.path.exists(target_path):
                         try:
-                            if os.path.islink(target_path) or os.path.isfile(target_path):
+                            if os.path.islink(target_path) or os.path.isfile(
+                                target_path
+                            ):
                                 os.unlink(target_path)
                             else:
                                 shutil.rmtree(target_path)
@@ -551,9 +555,13 @@ class UnixManager(SystemManager):
                             user_home = os.path.expanduser("~")
                             target_dir = os.path.join(user_home, ".jvman", "current")
                             os.makedirs(target_dir, exist_ok=True)
-                            target_path = os.path.join(target_dir, os.path.basename(target_path))
+                            target_path = os.path.join(
+                                target_dir, os.path.basename(target_path)
+                            )
                             if os.path.exists(target_path):
-                                if os.path.islink(target_path) or os.path.isfile(target_path):
+                                if os.path.islink(target_path) or os.path.isfile(
+                                    target_path
+                                ):
                                     os.unlink(target_path)
                                 else:
                                     shutil.rmtree(target_path)
@@ -568,7 +576,9 @@ class UnixManager(SystemManager):
                         user_home = os.path.expanduser("~")
                         target_dir = os.path.join(user_home, ".jvman", "current")
                         os.makedirs(target_dir, exist_ok=True)
-                        target_path = os.path.join(target_dir, os.path.basename(target_path))
+                        target_path = os.path.join(
+                            target_dir, os.path.basename(target_path)
+                        )
                         os.symlink(source_path, target_path)
                         logger.info(f"成功在用户目录下创建软链接: {target_path} -> {source_path}")
                         return True
@@ -578,6 +588,7 @@ class UnixManager(SystemManager):
                     # 如果所有尝试都失败了，才使用 sudo
                     try:
                         import base64
+
                         # 创建命令字符串
                         commands = f"""#!/bin/bash
                         if [ -e "{target_path}" ]; then
@@ -593,7 +604,9 @@ class UnixManager(SystemManager):
                         cmd = [
                             "osascript",
                             "-e",
-                            'do shell script "echo ' + encoded_commands + ' | base64 -D | bash" with administrator privileges',
+                            'do shell script "echo '
+                            + encoded_commands
+                            + ' | base64 -D | bash" with administrator privileges',
                         ]
                         result = subprocess.run(cmd, capture_output=True, text=True)
                         if result.returncode == 0:
@@ -613,18 +626,24 @@ class UnixManager(SystemManager):
                     target_dir = os.path.join(user_home, ".jvman", "current")
                     try:
                         os.makedirs(target_dir, exist_ok=True)
-                        user_target_path = os.path.join(target_dir, os.path.basename(target_path))
-                        
+                        user_target_path = os.path.join(
+                            target_dir, os.path.basename(target_path)
+                        )
+
                         # 如果目标已存在，先删除
                         if os.path.exists(user_target_path):
-                            if os.path.islink(user_target_path) or os.path.isfile(user_target_path):
+                            if os.path.islink(user_target_path) or os.path.isfile(
+                                user_target_path
+                            ):
                                 os.unlink(user_target_path)
                             else:
                                 shutil.rmtree(user_target_path)
-                        
+
                         # 创建软链接
                         os.symlink(source_path, user_target_path)
-                        logger.info(f"成功在用户目录下创建软链接: {user_target_path} -> {source_path}")
+                        logger.info(
+                            f"成功在用户目录下创建软链接: {user_target_path} -> {source_path}"
+                        )
                         return True
                     except Exception as e:
                         logger.warning(f"在用户目录下创建软链接失败，尝试在原目标位置创建: {str(e)}")
@@ -648,7 +667,9 @@ class UnixManager(SystemManager):
                     # 如果目标已存在，先删除
                     if os.path.exists(target_path):
                         try:
-                            if os.path.islink(target_path) or os.path.isfile(target_path):
+                            if os.path.islink(target_path) or os.path.isfile(
+                                target_path
+                            ):
                                 os.unlink(target_path)
                             else:
                                 shutil.rmtree(target_path)

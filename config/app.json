@@ -1,6 +1,6 @@
 {
     "name": "JDK Version Manager",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "description": "JDK版本管理工具，支持在线下载和本地映射，提供中英文国际化支持",
     "author": "l06066hb",
     "homepage": "https://gitee.com/l06066hb/jvman",
