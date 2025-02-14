@@ -61,7 +61,7 @@ A user-friendly JDK version management tool supporting Windows, macOS, and Linux
    - Extract to any directory
    - Run jvman.exe
 
-### macOS（testing）
+### macOS
 1. Download the latest DMG file
 2. Open DMG and drag the app to Applications folder
 3. Admin password required for first run
