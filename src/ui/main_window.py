@@ -1,4 +1,5 @@
 import os
+import platform
 from loguru import logger
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -16,7 +17,13 @@ from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
 )
-from PyQt6.QtCore import Qt, QSize, QPoint, QTimer
+from PyQt6.QtCore import (
+    Qt,
+    QSize,
+    QPoint,
+    QTimer,
+    QEvent,
+)
 from PyQt6.QtGui import QIcon, QAction, QFont, QCursor
 
 from ui.tabs.download_tab import DownloadTab
@@ -94,6 +101,22 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"JDK Version Manager v{version_manager.get_version()}")
         self.setMinimumSize(800, 600)
 
+        # macOS 特定设置
+        if platform.system() == "Darwin":
+            # 设置应用程序属性
+            app = QApplication.instance()
+            app.setQuitOnLastWindowClosed(False)
+            
+            # 设置窗口属性
+            self.setAttribute(Qt.WidgetAttribute.WA_MacAlwaysShowToolWindow)
+            self.setUnifiedTitleAndToolBarOnMac(True)
+            
+            # 注册应用程序事件过滤器
+            app.installEventFilter(self)
+            
+            # 创建 macOS 标准应用程序菜单
+            self.create_mac_app_menu()
+
         # 初始化UI
         self.setup_ui()
 
@@ -105,6 +128,47 @@ class MainWindow(QMainWindow):
 
         # 延迟检查更新
         QTimer.singleShot(1000, self.delayed_update_check)
+
+    def create_mac_app_menu(self):
+        """创建 macOS 标准应用程序菜单"""
+        menubar = self.menuBar()
+        
+        # 应用程序菜单（显示为应用程序名称）
+        app_menu = menubar.addMenu(self.windowTitle())
+        
+        # 关于操作
+        about_action = QAction(_("menu.about"), self)
+        about_action.triggered.connect(lambda: QMessageBox.about(self, 
+            _("menu.about"), 
+            f"JDK Version Manager v{version_manager.get_version()}\n\n{_('menu.about.description')}"))
+        app_menu.addAction(about_action)
+        
+        app_menu.addSeparator()
+        
+        # 偏好设置
+        preferences_action = QAction(_("menu.preferences"), self)
+        preferences_action.setShortcut("Cmd+,")
+        preferences_action.triggered.connect(lambda: self.tab_widget.setCurrentWidget(self.settings_tab))
+        app_menu.addAction(preferences_action)
+        
+        app_menu.addSeparator()
+        
+        # 隐藏/显示窗口
+        show_action = QAction(_("menu.show"), self)
+        show_action.triggered.connect(self.show)
+        app_menu.addAction(show_action)
+        
+        hide_action = QAction(_("menu.hide"), self)
+        hide_action.triggered.connect(self.hide)
+        app_menu.addAction(hide_action)
+        
+        app_menu.addSeparator()
+        
+        # 退出操作
+        quit_action = QAction(_("menu.quit"), self)
+        quit_action.setShortcut("Cmd+Q")
+        quit_action.triggered.connect(self.quit_application)
+        app_menu.addAction(quit_action)
 
     def setup_ui(self):
         """初始化界面"""
@@ -195,7 +259,7 @@ class MainWindow(QMainWindow):
         """设置系统托盘"""
         self.tray_icon = QSystemTrayIcon(self)
 
-        # 设置图标（使用绝对路径）
+        # 设置图标
         icon_path = get_icon_path("app.ico")
         if icon_path:
             icon = QIcon(icon_path)
@@ -246,14 +310,13 @@ class MainWindow(QMainWindow):
         """
         )
 
-        # 添加当前版本显示（禁用状态用于显示信息）
+        # 添加当前版本显示
         version_text = self.get_formatted_version_text()
         self.current_version_action = QAction(version_text, self)
         self.current_version_action.setIcon(QIcon(get_icon_path("java-version.png")))
         self.current_version_action.setEnabled(False)
         tray_menu.addAction(self.current_version_action)
 
-        # 添加分隔符
         tray_menu.addSeparator()
 
         # 添加JDK切换子菜单
@@ -263,20 +326,24 @@ class MainWindow(QMainWindow):
         self.update_jdk_menu()
         tray_menu.addMenu(self.jdk_menu)
 
-        # 添加分隔符
         tray_menu.addSeparator()
 
-        # 添加显示/隐藏动作
-        show_action = QAction(_("tray.show_window"), self)
+        # 添加显示/隐藏窗口动作
+        if platform.system() == "Darwin":
+            show_action = QAction(_("app.window.show"), self)
+        else:
+            show_action = QAction(_("tray.show_window"), self)
         show_action.setIcon(QIcon(get_icon_path("window.png")))
         show_action.triggered.connect(self.toggle_window)
         tray_menu.addAction(show_action)
 
-        # 添加分隔符
         tray_menu.addSeparator()
 
         # 添加退出动作
-        quit_action = QAction(_("tray.exit"), self)
+        if platform.system() == "Darwin":
+            quit_action = QAction(_("menu.quit"), self)
+        else:
+            quit_action = QAction(_("tray.exit"), self)
         quit_action.setIcon(QIcon(get_icon_path("exit.png")))
         quit_action.triggered.connect(self.quit_application)
         tray_menu.addAction(quit_action)
@@ -416,10 +483,6 @@ class MainWindow(QMainWindow):
                         version = current_jdk.get("version", "")
                         vendor = current_jdk.get("vendor", _("version.vendor.unknown"))
                         arch = current_jdk.get("arch", "")
-                else:
-                    version = current_jdk.get("version", "")
-                    vendor = current_jdk.get("vendor", _("version.vendor.unknown"))
-                    arch = current_jdk.get("arch", "")
 
                 path = current_jdk.get("path", "")
                 tooltip = _("tray.tooltip.current").format(
@@ -446,10 +509,6 @@ class MainWindow(QMainWindow):
                         version = current_jdk.get("version", "")
                         vendor = current_jdk.get("vendor", _("version.vendor.unknown"))
                         arch = current_jdk.get("arch", "")
-                else:
-                    version = current_jdk.get("version", "")
-                    vendor = current_jdk.get("vendor", _("version.vendor.unknown"))
-                    arch = current_jdk.get("arch", "")
 
                 path = current_jdk.get("path", "")
                 tooltip = _("tray.tooltip.app_info").format(
@@ -704,70 +763,79 @@ class MainWindow(QMainWindow):
 
     def on_tray_activated(self, reason):
         """处理托盘图标激活事件"""
-        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-            self.toggle_window()
-        elif reason == QSystemTrayIcon.ActivationReason.Context:
-            # 获取鼠标当前位置
-            cursor_pos = QCursor.pos()
-            # 将菜单显示在鼠标位置上方20像素处
-            menu = self.tray_icon.contextMenu()
-            menu.popup(
-                QPoint(cursor_pos.x(), cursor_pos.y() - menu.sizeHint().height() - 20)
-            )
+        if platform.system() == "Darwin":  # macOS
+            # macOS 上不需要处理托盘图标的点击事件
+            # 系统会自动处理右键菜单
+            return
+        else:  # Windows/Linux
+            if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+                self.toggle_window()
+            elif reason == QSystemTrayIcon.ActivationReason.Context:
+                # 获取鼠标当前位置
+                cursor_pos = QCursor.pos()
+                # 将菜单显示在鼠标位置上方20像素处
+                menu = self.tray_icon.contextMenu()
+                menu.popup(QPoint(cursor_pos.x(), cursor_pos.y() - menu.sizeHint().height() - 20))
 
     def closeEvent(self, event):
         """处理窗口关闭事件"""
-        if self.tray_icon.isVisible():
-            # 获取关闭行为配置
-            close_action = self.config.get("close_action", None)
-
-            if close_action is None:
-                # 创建消息框
-                msg_box = QMessageBox(self)
-                msg_box.setWindowTitle(_("dialog.close.title"))
-                msg_box.setText(_("dialog.close.message"))
-                msg_box.setIcon(QMessageBox.Icon.Question)
-
-                # 添加按钮
-                minimize_btn = msg_box.addButton(
-                    _("dialog.close.minimize"), QMessageBox.ButtonRole.AcceptRole
-                )
-                exit_btn = msg_box.addButton(
-                    _("dialog.close.exit"), QMessageBox.ButtonRole.RejectRole
-                )
-                msg_box.setDefaultButton(minimize_btn)
-
-                # 添加"不再提示"复选框
-                checkbox = QCheckBox(_("dialog.close.remember"), msg_box)
-                msg_box.setCheckBox(checkbox)
-
-                # 显示对话框
-                msg_box.exec()
-
-                # 处理用户选择
-                clicked_button = msg_box.clickedButton()
-                remember_choice = checkbox.isChecked()
-
-                if clicked_button == minimize_btn:
-                    if remember_choice:
-                        self.config.set("close_action", "minimize")
-                        self.config.save()
-                    self.hide()
-                    event.ignore()
-                else:  # exit_btn
-                    if remember_choice:
-                        self.config.set("close_action", "exit")
-                        self.config.save()
-                    self.quit_application()
-            else:
-                # 使用保存的选择
-                if close_action == "minimize":
-                    self.hide()
-                    event.ignore()
-                else:  # 'exit'
-                    self.quit_application()
+        if platform.system() == "Darwin":  # macOS
+            # 在 macOS 上，点击关闭按钮只隐藏窗口，符合 macOS 标准行为
+            self.hide()
+            event.ignore()
         else:
-            self.quit_application()
+            # Windows/Linux 保持原有行为
+            if self.tray_icon.isVisible():
+                # 获取关闭行为配置
+                close_action = self.config.get("close_action", None)
+
+                if close_action is None:
+                    # 创建消息框
+                    msg_box = QMessageBox(self)
+                    msg_box.setWindowTitle(_("dialog.close.title"))
+                    msg_box.setText(_("dialog.close.message"))
+                    msg_box.setIcon(QMessageBox.Icon.Question)
+
+                    # 添加按钮
+                    minimize_btn = msg_box.addButton(
+                        _("dialog.close.minimize"), QMessageBox.ButtonRole.AcceptRole
+                    )
+                    exit_btn = msg_box.addButton(
+                        _("dialog.close.exit"), QMessageBox.ButtonRole.RejectRole
+                    )
+                    msg_box.setDefaultButton(minimize_btn)
+
+                    # 添加"不再提示"复选框
+                    checkbox = QCheckBox(_("dialog.close.remember"), msg_box)
+                    msg_box.setCheckBox(checkbox)
+
+                    # 显示对话框
+                    msg_box.exec()
+
+                    # 处理用户选择
+                    clicked_button = msg_box.clickedButton()
+                    remember_choice = checkbox.isChecked()
+
+                    if clicked_button == minimize_btn:
+                        if remember_choice:
+                            self.config.set("close_action", "minimize")
+                            self.config.save()
+                        self.hide()
+                        event.ignore()
+                    else:  # exit_btn
+                        if remember_choice:
+                            self.config.set("close_action", "exit")
+                            self.config.save()
+                        self.quit_application()
+                else:
+                    # 使用保存的选择
+                    if close_action == "minimize":
+                        self.hide()
+                        event.ignore()
+                    else:  # 'exit'
+                        self.quit_application()
+            else:
+                self.quit_application()
 
     def on_jdk_downloaded(self, version, path):
         """处理JDK下载完成事件"""
@@ -834,11 +902,57 @@ class MainWindow(QMainWindow):
 
     def toggle_window(self):
         """切换窗口显示状态"""
-        if self.isHidden():
-            self.show()
-            self.activateWindow()  # 激活窗口（置顶）
+        if self.isHidden() or self.isMinimized():
+            # macOS 特定处理
+            if platform.system() == "Darwin":
+                # 恢复之前的标签页
+                if hasattr(self, 'last_tab_index'):
+                    self.tab_widget.setCurrentIndex(self.last_tab_index)
+                    # 刷新当前标签页
+                    current_tab = self.tab_widget.currentWidget()
+                    if current_tab and hasattr(current_tab, 'refresh'):
+                        current_tab.refresh()
+                
+                # 显示并激活窗口
+                self.show()
+                self.raise_()
+                self.activateWindow()
+            else:
+                # Windows/Linux 处理
+                self.show()
+                self.setWindowState(Qt.WindowState.WindowActive)
+                self.raise_()
+                self.activateWindow()
         else:
+            if platform.system() == "Darwin":
+                # 保存当前标签页索引
+                self.last_tab_index = self.tab_widget.currentIndex()
             self.hide()
+
+    def showEvent(self, event):
+        """窗口显示事件"""
+        super().showEvent(event)
+        if platform.system() == "Darwin":
+            # 确保窗口不是最小化状态
+            if self.isMinimized():
+                self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
+                self.showNormal()  # 使用 showNormal
+            
+            # 确保窗口在最前面
+            self.raise_()
+            self.activateWindow()
+            
+            # 恢复之前的标签页
+            if hasattr(self, 'last_tab_index'):
+                self.tab_widget.setCurrentIndex(self.last_tab_index)
+                # 刷新当前标签页
+                current_tab = self.tab_widget.currentWidget()
+                if current_tab and hasattr(current_tab, 'refresh'):
+                    current_tab.refresh()
+            
+            # 强制重绘
+            self.repaint()
+            self.update()
 
     def on_language_changed(self):
         """当语言改变时更新界面文本"""
@@ -880,3 +994,27 @@ class MainWindow(QMainWindow):
         """延迟检查更新"""
         if self.update_manager.should_check_updates():
             self.update_manager.check_for_updates()
+
+    def eventFilter(self, obj, event):
+        """应用程序级别的事件过滤器"""
+        if platform.system() == "Darwin":
+            # 处理应用程序激活事件（包括 Dock 图标点击）
+            if event.type() == QEvent.Type.ApplicationActivate:
+                if self.isHidden():
+                    self.show()
+                    self.raise_()
+                    self.activateWindow()
+                    return True
+        return super().eventFilter(obj, event)
+
+    def event(self, event):
+        """窗口级别的事件处理"""
+        if platform.system() == "Darwin":
+            # 处理窗口激活事件
+            if event.type() == QEvent.Type.WindowActivate:
+                if self.isHidden():
+                    self.show()
+                    self.raise_()
+                    self.activateWindow()
+                    return True
+        return super().event(event)

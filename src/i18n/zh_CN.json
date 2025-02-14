@@ -74,6 +74,22 @@
                 "not_synced": "未同步"
             },
             "config_files": {
+                "priority": {
+                    "title": "📁 配置文件优先级：",
+                    "system_profile": "/etc/profile (系统级)",
+                    "system_paths": "/etc/paths (系统路径)",
+                    "user_profile": "~/.bash_profile (用户级，推荐)",
+                    "user_profile_alt": "~/.profile (用户级，备选)"
+                },
+                "status": {
+                    "writable": "✅ 可写",
+                    "readonly": "🔒 只读",
+                    "not_exist": "❌ 不存在"
+                },
+                "current": {
+                    "title": "📌 当前配置文件",
+                    "not_found": "⚠️ 未找到可用的配置文件"
+                },
                 "system": "系统级配置",
                 "user": "用户级配置",
                 "not_found": "未找到可用的配置文件",
@@ -1162,7 +1178,13 @@
     },
     "menu": {
         "help": "帮助",
-        "help.about": "关于"
+        "help.about": "关于",
+        "about": "关于 JDK Version Manager",
+        "about.description": "一个简单易用的 JDK 版本管理工具",
+        "preferences": "偏好设置",
+        "quit": "退出",
+        "show": "显示窗口",
+        "hide": "隐藏窗口"
     },
     "about": {
         "title": "关于 JDK 版本管理工具",
@@ -1220,5 +1242,21 @@
         "variable": "变量名",
         "backup_value": "备份值",
         "current_value": "当前值"
+    },
+    "app": {
+        "window": {
+            "show": "显示窗口",
+            "hide": "隐藏窗口",
+            "minimize": "最小化",
+            "zoom": "缩放",
+            "bring_to_front": "前置所有窗口"
+        },
+        "dock": {
+            "show": "显示主窗口",
+            "menu": {
+                "show": "显示窗口",
+                "quit": "退出"
+            }
+        }
     }
 }

@@ -425,9 +425,7 @@ class UpdateManager(QObject):
                     # 如果距离上次检查时间不足间隔时间，则不检查
                     if datetime.now() - last_check < timedelta(hours=interval):
                         logger.debug(
-                            _("log.debug.check_interval_not_reached").format(
-                                hours=interval
-                            )
+                            "Less than {} hours since last check".format(interval)
                         )
                         return False
                 except ValueError:
