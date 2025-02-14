@@ -1591,21 +1591,24 @@ class JDKDownloader(QObject):
 
             # 如果没有镜像源，使用官方源
             if not url:
-                url = "https://aka.ms/download-jdk/versions.json"
+                # 使用 Microsoft OpenJDK 的 API
+                url = "https://aka.ms/microsoft-jdk/versions"
+                response = self.session.get(url, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    versions = []
+                    for version in data.get("versions", []):
+                        major_version = version.get("major")
+                        if (
+                            major_version
+                            and str(major_version) not in versions
+                            and int(major_version) >= 8
+                        ):
+                            versions.append(str(major_version))
+                    versions.sort(key=lambda x: int(x), reverse=True)
+                    return versions
 
-            response = self.session.get(url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                versions = []
-                for v in data.get("versions", []):
-                    version = v.get("version")
-                    if version and version not in versions:
-                        versions.append(version)
-                # 按版本号排序（降序）
-                versions.sort(
-                    key=lambda x: [int(i) for i in x.split(".")], reverse=True
-                )
-                return versions
+            # 如果获取失败，返回基础版本列表
             return self.base_versions["Microsoft OpenJDK"]
         except Exception as e:
             logger.error(

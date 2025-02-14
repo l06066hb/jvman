@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2025-02-15
+
+### Added
+- 添加 Microsoft OpenJDK 的官方 API 支持
+- 添加环境变量备份内容的差异对比功能
+- 添加备份内容的格式化显示功能
+- 添加备份内容的复制功能
+- 添加更多的国际化支持和翻译完善
+
+### Changed
+- 优化 Microsoft OpenJDK 版本获取逻辑
+- 改进环境变量备份的展示方式
+- 优化备份内容的对比界面
+- 改进国际化文本的组织结构
+- 优化按钮和标签的样式统一性
+
+### Fixed
+- 修复 Microsoft OpenJDK 版本列表获取失败问题
+- 修复环境变量备份内容显示格式问题
+- 修复备份对比时的差异显示问题
+- 修复部分界面文本未国际化的问题
+- 修复语言切换后部分文本未更新的问题
+
+### Improved
+- JDK 版本获取的稳定性
+- 备份管理功能的用户体验
+- 国际化支持的完整性
+- 界面交互的流畅性
+- 错误提示的友好性
+
 ## [1.0.9] - 2025-02-09
 
 ### Added
@@ -249,6 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyQt6 界面框架
 - 基础配置系统
 
+[1.0.10]: https://github.com/l06066hb/jvman/releases/tag/v1.0.10
 [1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9
 [1.0.8]: https://github.com/l06066hb/jvman/releases/tag/v1.0.8
 [1.0.7]: https://github.com/l06066hb/jvman/releases/tag/v1.0.7
