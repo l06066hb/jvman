@@ -1,6 +1,6 @@
 # JDK 版本管理工具 (JDK Version Manager)
 
-[![Version](https://img.shields.io/badge/version-1.0.10-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.11-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -190,15 +190,16 @@ python scripts/build.py --platform windows --type all
 
 ## 最新版本
 
-v1.0.10 的主要更新：
-- ✨ [Added] Microsoft OpenJDK 的官方 API 支持
-- ✨ [Added] - 添加环境变量备份内容的差异对比功能
-- ✨ [Added] - 添加备份内容的格式化显示功能
-- ✨ [Added] - 添加备份内容的复制功能
-- ✨ [Added] - 添加更多的国际化支持和翻译完善
-- 🔄 [Changed] Microsoft OpenJDK 版本获取逻辑
+v1.0.11 的主要更新：
+- ✨ [Added] macOS 原生菜单栏支持
+- ✨ [Added] macOS Dock 菜单支持
+- ✨ [Added] - 添加应用程序标准快捷键支持
+- ✨ [Added] - 添加窗口管理相关的国际化支持
+- 🔄 [Changed] macOS 平台下的窗口行为
+- 🔄 [Changed] - 改进托盘图标的交互方式
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 ## 贡献指南
 
