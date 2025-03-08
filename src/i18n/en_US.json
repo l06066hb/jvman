@@ -1002,7 +1002,11 @@
             "invalid_urls": "Invalid update URLs",
             "invalid_api_url": "Invalid API URL",
             "no_release": "No release version found",
-            "request_failed": "Request failed (HTTP {status})"
+            "request_failed": "Request failed (HTTP {status})",
+            "invalid_release_json": "Invalid release information format",
+            "process_release_failed": "Failed to process release information: {error}",
+            "no_release_json": "Could not get release.json (HTTP {status}), continuing update process",
+            "get_release_json_failed": "Failed to get release.json: {error}, continuing update process"
         },
         "changes": {
             "no_details": "No update details available",
@@ -1020,6 +1024,15 @@
             "prompt": "Would you like to update now?",
             "update_now": "Update Now",
             "remind_later": "Remind Me Later"
+        },
+        "package_type": {
+            "installer": "Installer",
+            "portable": "Portable"
+        },
+        "status": {
+            "latest_version": "Current version is up to date",
+            "check_failed": "Update check failed: {error}",
+            "process_failed": "Update check process failed: {error}"
         }
     },
     "ide": {

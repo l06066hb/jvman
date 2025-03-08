@@ -33,3 +33,4 @@ wheel>=0.40.0
 # 开发辅助
 python-dotenv>=1.0.0  # 环境变量管理
 pre-commit>=3.3.0  # Git hooks管理 
+markdown>=3.4.0 

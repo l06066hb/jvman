@@ -111,7 +111,7 @@ class SettingsTab(QWidget):
 
         # 获取更新管理器实例
         self.update_manager = UpdateManager()
-        self.update_manager.check_update_complete.connect(self.on_check_update_complete)
+        #self.update_manager.check_update_complete.connect(self.on_check_update_complete)
 
         # 添加保存延迟计时器
         self.save_timer = QTimer()
@@ -2219,16 +2219,6 @@ class SettingsTab(QWidget):
         self.check_update_button.setEnabled(True)
         self.check_update_button.setText(_("settings.buttons.check_update"))
         self._is_manual_check = False
-
-    def on_check_update_complete(self, success, message):
-        """更新检查完成回调"""
-        # 如果不是手动检查，直接重置状态并返回
-        if not self._is_manual_check:
-            self._reset_update_button()
-            return
-
-        # 重置按钮状态
-        self._reset_update_button()
 
     def compare_java_home_paths(self):
         """比较当前 JAVA_HOME 和软链接路径是否一致"""

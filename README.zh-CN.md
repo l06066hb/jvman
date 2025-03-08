@@ -156,9 +156,7 @@ python src/main.py
 
 ### 注意事项
 - 建议使用 ZIP 版本的 JDK，避免与已安装版本的环境变量冲突
-- 首次使用时需要管理员/sudo 权限以配置环境变量
 - 如遇下载失败，可尝试使用手动下载功能
-- Unix 系统（macOS/Linux）需要重新加载 shell 配置文件使环境变量生效
 
 ### 下载源
 - Oracle JDK: https://www.oracle.com/java/technologies/downloads/

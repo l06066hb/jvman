@@ -162,8 +162,12 @@ class I18nManager(QObject):
         """获取可用的语言列表"""
         return list(self.translations.keys())
 
+    def get_current_locale(self):
+        """获取当前语言代码"""
+        return self.current_lang
+
     def get_current_language(self):
-        """获取当前语言"""
+        """获取当前语言（兼容旧方法）"""
         return self.current_lang
 
     def format_text(self, key, **kwargs):

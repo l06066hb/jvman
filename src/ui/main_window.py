@@ -44,6 +44,7 @@ from utils.update_manager import UpdateManager
 from utils.i18n_manager import i18n_manager
 from ui.dialogs.update_dialog import UpdateNotificationDialog
 
+
 import sys
 
 
@@ -88,14 +89,21 @@ class MainWindow(QMainWindow):
     def __init__(self, config):
         """初始化主窗口"""
         super().__init__()
-
         # 保存配置对象
         self.config = config
-
-        # 初始化更新管理器
+        self.config_manager = ConfigManager()
         self.update_manager = UpdateManager()
+        self.update_dialog = None
+        self.tray_icon = None
+        self.last_close_time = None
+        self.last_version = None
+        self.is_closing = False
+        self.is_restarting = False
+
+        # 连接更新管理器的信号
         self.update_manager.update_available.connect(self.show_update_notification)
         self.update_manager.check_update_complete.connect(self.show_check_result)
+        self.update_manager.show_error.connect(self.show_error_message)  # 添加错误消息信号连接
 
         # 设置窗口标题和大小
         self.setWindowTitle(f"JDK Version Manager v{version_manager.get_version()}")
@@ -883,15 +891,51 @@ class MainWindow(QMainWindow):
 
     def show_update_notification(self, update_info):
         """显示更新通知"""
-        dialog = UpdateNotificationDialog(update_info, self)
-        dialog.exec()
+        # 如果已经有更新对话框在显示，就不要再显示新的
+        if self.update_dialog is not None and not self.update_dialog.isHidden():
+            return
+
+        # 如果不是手动检查且不是自动检查的第一次通知，则不显示
+        if not self.update_manager.is_manual_check and self.update_manager.update_notification_shown:
+            return
+
+        # 创建新的对话框前，确保旧的对话框被正确清理
+        if self.update_dialog is not None:
+            self.update_dialog.close()
+            self.update_dialog = None
+
+        self.update_dialog = UpdateNotificationDialog(update_info, self)
+        self.update_dialog.finished.connect(self.on_update_dialog_closed)
+        self.update_dialog.show()
+
+    def on_update_dialog_closed(self):
+        """更新对话框关闭处理"""
+        if self.update_dialog is not None:
+            # 重置更新管理器的通知标志位
+            self.update_manager.reset_check_state()  # 先重置状态
+            self.update_dialog.deleteLater()  # 确保对话框被正确清理
+            self.update_dialog = None  # 最后清除引用
+            
+            # 重置设置页面的更新按钮状态
+            if hasattr(self, "settings_tab"):
+                self.settings_tab._reset_update_button()
 
     def show_check_result(self, success, message):
-        """显示检查结果"""
-        if success and not message.startswith(_("update.new_version.found")):
-            QMessageBox.information(self, _("update.check.title"), message)
-        elif not success:
-            QMessageBox.warning(self, _("update.check.title"), message)
+        """显示检查结果
+        
+        Args:
+            success (bool): 检查是否成功
+            message (str): 提示消息
+        """
+        # 只在手动检查更新且成功时显示"当前已是最新版本"的提示
+        if hasattr(self.update_manager, "is_manual_check") and self.update_manager.is_manual_check:
+            if success and message == _("update.status.latest_version"):
+                QMessageBox.information(self, _("update.dialog.title"), message)
+                # 重置手动检查标志
+                self.update_manager.is_manual_check = False
+            
+                 # 使用 QTimer.singleShot 延迟执行按钮重置
+                QTimer.singleShot(0, self.settings_tab._reset_update_button)
 
     def manual_check_update(self):
         """手动检查更新"""
@@ -908,7 +952,11 @@ class MainWindow(QMainWindow):
             # 开始下载
             self.update_manager.download_update(download_url, save_path)
         except Exception as e:
-            QMessageBox.warning(self, "更新错误", f"开始更新时发生错误：{str(e)}")
+            QMessageBox.warning(
+                self,
+                _("dialog.error.title"),
+                _("update.error.general").format(error=str(e))
+            )
 
     def toggle_window(self):
         """切换窗口显示状态"""
@@ -1005,7 +1053,7 @@ class MainWindow(QMainWindow):
     def delayed_update_check(self):
         """延迟检查更新"""
         if self.update_manager.should_check_updates():
-            self.update_manager.check_for_updates()
+            self.update_manager.auto_check_update()
 
     def eventFilter(self, obj, event):
         """应用程序级别的事件过滤器"""
@@ -1030,3 +1078,7 @@ class MainWindow(QMainWindow):
                     self.activateWindow()
                     return True
         return super().event(event)
+
+    def show_error_message(self, title, message):
+        """显示错误消息"""
+        QMessageBox.warning(self, title, message)
