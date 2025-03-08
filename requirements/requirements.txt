@@ -18,4 +18,5 @@ winshell>=0.6; platform_system == "Windows"
 pyinstaller>=5.13.0
 
 # 其他依赖
-packaging>=20.0 
+packaging>=20.0
+markdown>=3.4.0 

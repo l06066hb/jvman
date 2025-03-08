@@ -843,9 +843,7 @@
         "error": {
             "connection_failed": "连接服务器失败",
             "timeout": "连接超时",
-            "request_failed": "请求失败：{error}",
             "json_decode_failed": "解析服务器响应失败",
-            "download_failed": "下载失败：HTTP {status}",
             "download_error": "下载错误：{error}",
             "no_permission": "更新目录没有写入权限",
             "get_update_path_failed": "获取更新保存路径失败",
@@ -854,24 +852,95 @@
             "invalid_urls": "无效的更新地址",
             "invalid_api_url": "无效的 API 地址",
             "no_release": "未找到发布版本",
-            "request_failed": "请求失败（HTTP {status}）"
+            "request_failed": "请求失败（HTTP {status}）",
+            "download_failed": "下载失败（HTTP {status}）",
+            "no_size": "无法从 {url} 获取文件大小",
+            "invalid_release_json": "发布信息格式无效",
+            "process_release_failed": "处理发布信息失败：{error}",
+            "no_release_json": "无法获取 release.json（HTTP {status}），继续更新流程",
+            "get_release_json_failed": "获取 release.json 失败：{error}，继续更新流程"
         },
         "changes": {
             "no_details": "暂无更新说明",
             "parse_failed": "解析更新说明失败",
             "list": "更新内容：\n{changes}"
         },
+        "package_type": {
+            "installer": "安装版",
+            "portable": "便携版"
+        },
         "no_update": "当前已是最新版本",
         "check_failed": "更新检查失败: {error}",
         "check": {
-            "title": "检查更新"
+            "title": "检查更新",
+            "checking": "正在检查更新...",
+            "success": "检查完成",
+            "failed": "检查失败"
         },
         "new_version": {
             "title": "发现新版本",
             "found": "发现新版本 {version}",
             "prompt": "是否现在更新？",
             "update_now": "立即更新",
-            "remind_later": "稍后提醒"
+            "remind_later": "稍后提醒",
+            "ignore": "忽略此版本",
+            "download": {
+                "title": "下载更新",
+                "preparing": "准备下载...",
+                "progress": "正在下载：{percent}%",
+                "speed": "下载速度：{speed}/s",
+                "remaining": "剩余时间：{time}",
+                "complete": "下载完成",
+                "failed": "下载失败：{error}"
+            }
+        },
+        "dialog": {
+            "title": "软件更新",
+            "new_version": "新版本",
+            "current_version": "当前版本：{version}",
+            "release_notes": "更新说明",
+            "package_info": "安装包信息",
+            "package_type": "安装包类型：{type}",
+            "file_size": "文件大小：{size}",
+            "alternative": "可选安装包：{type}",
+            "buttons": {
+                "download": "下载更新",
+                "view_changelog": "查看更新日志",
+                "cancel": "取消",
+                "install": "立即安装",
+                "later": "稍后安装"
+            },
+            "install": {
+                "title": "安装更新",
+                "confirm": "下载完成，是否立即安装 {version} ({type})？\n\n注意：安装过程中程序将自动关闭。",
+                "portable_info": "便携版已下载完成，请解压到以下目录：\n{path}\n\n解压后程序将自动关闭以完成更新。",
+                "preparing": "正在准备安装...",
+                "extracting": "正在解压文件...",
+                "success": "更新文件已准备就绪，程序将重新启动以完成安装。",
+                "error": {
+                    "title": "安装错误",
+                    "message": "启动安装程序失败：{error}\n\n您可以手动安装下载的更新文件。",
+                    "file_not_found": "安装文件不存在：{path}",
+                    "no_permission": "没有足够的权限执行安装",
+                    "in_use": "程序正在使用中，请关闭所有相关程序后重试"
+                }
+            },
+            "download": {
+                "title": "下载更新",
+                "complete": "下载完成",
+                "complete_info": "更新已下载到：\n{path}\n\n您可以稍后手动安装此更新。",
+                "open_folder": "打开文件夹",
+                "install_now": "立即安装"
+            },
+            "cancel": {
+                "title": "取消下载",
+                "download_confirm": "正在下载更新，确定要取消下载吗？"
+            }
+        },
+        "status": {
+            "latest_version": "当前已是最新版本",
+            "check_failed": "检查更新失败：{error}",
+            "process_failed": "更新检查过程失败：{error}"
         }
     },
     "ide": {

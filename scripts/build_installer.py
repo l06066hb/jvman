@@ -101,27 +101,12 @@ def build_windows_installer(platform='windows', timestamp=None):
     icon_file = os.path.join(root_dir, "resources", "icons", "app.ico").replace("\\", "/")
     # 使用新构建的便携版目录
     dist_dir = os.path.join(output_dir, "jvman").replace("\\", "/")
+    installer_marker_path = os.path.join(root_dir, "scripts", ".installer").replace("\\", "/")
     
-    # 确保资源目录存在
-    resources_dir = os.path.join(dist_dir, "resources")
-    icons_dir = os.path.join(resources_dir, "icons")
-    os.makedirs(icons_dir, exist_ok=True)
-    
-    # 复制所有图标文件
-    src_icons_dir = os.path.join(root_dir, "resources", "icons")
-    if os.path.exists(src_icons_dir):
-        for icon_name in os.listdir(src_icons_dir):
-            src_icon = os.path.join(src_icons_dir, icon_name)
-            dst_icon = os.path.join(icons_dir, icon_name)
-            if os.path.isfile(src_icon):
-                shutil.copy2(src_icon, dst_icon)
-    
-    # 删除bin目录下的resources目录，避免重复
-    bin_resources = os.path.join(dist_dir, "bin", "resources")
-    if os.path.exists(bin_resources):
-        shutil.rmtree(bin_resources)
-        print(f"Removed duplicate resources directory: {bin_resources}")
-    
+    # 创建空的 .installer 文件
+    with open(installer_marker_path, 'w') as f:
+        f.write(f"Created by installer build process - {datetime.now().isoformat()}")
+
     with open(installer_script, "w", encoding="utf-8") as f:
         f.write(f"""#define MyAppName "JVMan"
 #define MyAppVersion "{version}"
@@ -158,7 +143,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{{cm:CreateDesktopIcon}}"; GroupDescription: "{{cm:AdditionalIcons}}"; Flags: unchecked
 
 [Files]
-Source: "{dist_dir}\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{dist_dir}/*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; 添加安装标记文件
+Source: "{installer_marker_path}"; DestDir: "{{app}}"; Flags: ignoreversion
 
 [Icons]
 Name: "{{group}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}"; Parameters: "--admin"
@@ -167,6 +154,26 @@ Name: "{{commondesktop}}\\{{#MyAppName}}"; Filename: "{{app}}\\{{#MyAppExeName}}
 [Run]
 Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 """)
+    
+    # 确保资源目录存在
+    resources_dir = os.path.join(dist_dir, "resources")
+    icons_dir = os.path.join(resources_dir, "icons")
+    os.makedirs(icons_dir, exist_ok=True)
+    
+    # 复制所有图标文件
+    src_icons_dir = os.path.join(root_dir, "resources", "icons")
+    if os.path.exists(src_icons_dir):
+        for icon_name in os.listdir(src_icons_dir):
+            src_icon = os.path.join(src_icons_dir, icon_name)
+            dst_icon = os.path.join(icons_dir, icon_name)
+            if os.path.isfile(src_icon):
+                shutil.copy2(src_icon, dst_icon)
+    
+    # 删除bin目录下的resources目录，避免重复
+    bin_resources = os.path.join(dist_dir, "bin", "resources")
+    if os.path.exists(bin_resources):
+        shutil.rmtree(bin_resources)
+        print(f"Removed duplicate resources directory: {bin_resources}")
     
     if not has_chinese:
         print("Warning: Chinese language file not found. The installer will be English only.")
@@ -206,6 +213,11 @@ def build_macos_installer(platform='macos', timestamp=None):
         print(f"Error: {app_path} not found!")
         print("Please make sure the app was built successfully.")
         sys.exit(1)
+    
+    # 创建 .installer 文件
+    installer_marker = os.path.join(app_path, 'Contents', 'MacOS', '.installer')
+    with open(installer_marker, 'w') as f:
+        f.write(f"Created by installer build process - {datetime.now().isoformat()}")
     
     # 创建临时目录用于构建 DMG
     dmg_temp = os.path.join(output_dir, "dmg_temp")
@@ -367,6 +379,11 @@ def build_linux_installer(platform='linux', timestamp=None):
     
     # 复制应用程序文件
     shutil.copytree(dist_dir, deb_dirs['usr_share_jvman'], dirs_exist_ok=True)
+    
+    # 创建 .installer 文件
+    installer_marker = os.path.join(deb_dirs['usr_share_jvman'], '.installer')
+    with open(installer_marker, 'w') as f:
+        f.write(f"Created by installer build process - {datetime.now().isoformat()}")
     
     # 创建启动脚本
     launcher_script = os.path.join(deb_dirs['usr_bin'], 'jvman')
