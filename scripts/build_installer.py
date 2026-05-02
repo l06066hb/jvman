@@ -64,17 +64,39 @@ def find_iscc():
     print("Or add Inno Setup installation directory to PATH")
     sys.exit(1)
 
-def build_windows_installer(platform='windows', timestamp=None):
+def _detect_arch():
+    """检测当前机器架构，归一化为 x64 / arm64"""
+    import platform as _plat
+    machine = (_plat.machine() or '').lower()
+    if machine in ('x86_64', 'amd64', 'x64'):
+        return 'x64'
+    if machine in ('arm64', 'aarch64'):
+        return 'arm64'
+    return machine or 'unknown'
+
+
+def _deb_architecture(arch):
+    """将通用架构名映射到 Debian 架构名"""
+    mapping = {
+        'x64': 'amd64',
+        'arm64': 'arm64',
+    }
+    return mapping.get(arch, arch)
+
+
+def build_windows_installer(platform='windows', timestamp=None, arch=None):
     """构建Windows安装包"""
     print("Building Windows installer...")
     root_dir = get_project_root()
     version = get_version()
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    if arch is None:
+        arch = _detect_arch()
     
     # 首先构建便携版
     from build_portable import build_portable
-    build_portable(platform=platform, timestamp=timestamp)
+    build_portable(platform=platform, timestamp=timestamp, arch=arch)
     
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
@@ -127,7 +149,7 @@ DefaultGroupName={{#MyAppName}}
 AllowNoIcons=yes
 LicenseFile="{license_file}"
 OutputDir="{output_dir}"
-OutputBaseFilename=JVMan_Setup
+OutputBaseFilename=jvman-{version}-{platform}-{arch}-setup
 SetupIconFile="{icon_file}"
 Compression=lzma
 SolidCompression=yes
@@ -186,17 +208,19 @@ Filename: "{{app}}\\{{#MyAppExeName}}"; Description: "{{cm:LaunchProgram,{{#Stri
     print(f"Version: {version}")
     print(f"Timestamp: {timestamp}")
 
-def build_macos_installer(platform='macos', timestamp=None):
+def build_macos_installer(platform='macos', timestamp=None, arch=None):
     """构建macOS安装包"""
     print("Building macOS installer...")
     root_dir = get_project_root()
     version = get_version()
     if timestamp is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    if arch is None:
+        arch = _detect_arch()
     
     # 首先构建便携版
     from build_portable import build_portable
-    build_portable(platform=platform, timestamp=timestamp)
+    build_portable(platform=platform, timestamp=timestamp, arch=arch)
     
     # 创建release目录
     release_dir = os.path.join(root_dir, 'release')
@@ -236,8 +260,9 @@ def build_macos_installer(platform='macos', timestamp=None):
     # 创建 Applications 链接
     subprocess.run(['ln', '-s', '/Applications', os.path.join(dmg_temp, 'Applications')])
     
-    # 设置 DMG 文件路径
-    dmg_path = os.path.join(output_dir, "JVMan_Installer.dmg")
+    # 设置 DMG 文件路径（带版本与架构后缀，便于 CI 上传区分）
+    dmg_name = f"jvman-{version}-{platform}-{arch}-setup.dmg"
+    dmg_path = os.path.join(output_dir, dmg_name)
     temp_dmg = os.path.join(output_dir, "JVMan_temp.dmg")
     if os.path.exists(dmg_path):
         os.remove(dmg_path)
@@ -348,12 +373,23 @@ def build_macos_installer(platform='macos', timestamp=None):
         if os.path.exists(temp_dmg):
             os.remove(temp_dmg)
 
-def build_linux_installer(platform='linux', timestamp=None):
+def build_linux_installer(platform='linux', timestamp=None, arch=None):
     """构建 Linux 安装包"""
     print("Building Linux installer...")
     root_dir = get_project_root()
     version = get_version()
-    
+    if timestamp is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    if arch is None:
+        arch = _detect_arch()
+    deb_arch = _deb_architecture(arch)
+
+    # 维护者信息：优先读环境变量，避免硬编码邮箱泄露
+    maintainer = os.environ.get(
+        'JVMAN_DEB_MAINTAINER',
+        'JVMan Maintainers <noreply@users.noreply.github.com>'
+    )
+
     # 获取构建目录
     release_dir = os.path.join(root_dir, 'release')
     output_name = f"jvman_{version}_{platform}_{timestamp}"
@@ -416,8 +452,8 @@ Keywords=Java;JDK;Development;
     with open(control_file, 'w') as f:
         f.write(f"""Package: jvman
 Version: {version}
-Architecture: amd64
-Maintainer: l06066hb <l06066hb@gmail.com>
+Architecture: {deb_arch}
+Maintainer: {maintainer}
 Description: JDK Version Manager
  A tool for managing multiple JDK versions.
  Supports downloading, installing, and switching between different JDK versions.
@@ -465,8 +501,8 @@ exit 0
 """)
     os.chmod(prerm_file, 0o755)
     
-    # 构建 DEB 包
-    deb_name = f"jvman-{version}-linux-setup.deb"
+    # 构建 DEB 包（文件名带版本与架构后缀）
+    deb_name = f"jvman-{version}-{platform}-{arch}-setup.deb"
     deb_file = os.path.join(output_dir, deb_name)
     
     try:
@@ -486,14 +522,14 @@ exit 0
         print(f"Failed to create DEB package: {str(e)}")
         return False
 
-def build_installer(platform='windows', timestamp=None):
+def build_installer(platform='windows', timestamp=None, arch=None):
     """构建安装包"""
     if platform == 'windows':
-        build_windows_installer(platform, timestamp)
+        build_windows_installer(platform, timestamp, arch=arch)
     elif platform == 'macos':
-        build_macos_installer(platform, timestamp)
+        build_macos_installer(platform, timestamp, arch=arch)
     elif platform == 'linux':
-        build_linux_installer(platform, timestamp)
+        build_linux_installer(platform, timestamp, arch=arch)
     else:
         print(f"Error: Unsupported platform: {platform}")
         sys.exit(1)
@@ -524,12 +560,13 @@ def generate_hash_file(file_path, hash_value):
 
 if __name__ == '__main__':
     # 构建当前平台的安装包
-    if len(sys.argv) != 3:
-        print("Usage: python build_installer.py <platform> <timestamp>")
+    if len(sys.argv) not in (3, 4):
+        print("Usage: python build_installer.py <platform> <timestamp> [arch]")
         sys.exit(1)
-        
+
     platform = sys.argv[1]
     timestamp = sys.argv[2]
-    
-    build_installer(platform, timestamp)
-    sys.exit(0) 
+    arch = sys.argv[3] if len(sys.argv) == 4 else None
+
+    build_installer(platform, timestamp, arch=arch)
+    sys.exit(0)

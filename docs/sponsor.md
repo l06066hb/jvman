@@ -25,7 +25,8 @@ JDK 版本管理工具是一个完全开源的项目，我们致力于：
    - 📝 完善文档和翻译
 
 2. 赞助支持
-   - [Ko-fi](https://ko-fi.com/l06066hb)
+   - **国内** — [爱发电](https://afdian.com/a/l06066hb) (微信 / 支付宝)
+   - **国际** — [Ko-fi](https://ko-fi.com/l06066hb) (Visa / PayPal)
 
 ## Support the Project
 
@@ -50,4 +51,5 @@ You can support the project in several ways:
    - 📝 Improve documentation and translations
 
 2. Sponsorship
-   - [Ko-fi](https://ko-fi.com/l06066hb) (One-time small donations) 
+   - **China** — [Afdian / 爱发电](https://afdian.com/a/l06066hb) (WeChat Pay / Alipay)
+   - **International** — [Ko-fi](https://ko-fi.com/l06066hb) (Visa / PayPal)

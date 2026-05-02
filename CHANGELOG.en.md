@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.12] - 2026-05-02
+
+ ### Added
+- CI now includes native macOS Apple Silicon (M series) builds (macos-14 runner)
+- CI now includes Linux ARM64 builds (ubuntu-24.04-arm runner)
+- Build artifact filenames now include architecture suffixes to distinguish Intel/ARM versions
+- Auto-update module now detects host architecture and automatically downloads the corresponding arch installer/portable package
+
+### Changed
+- Build toolchain Python version upgraded from 3.8 to 3.11 (3.8 does not support native Apple Silicon)
+- DEB package Architecture field changed from hardcoded `amd64` to dynamically generated based on build architecture
+- Workflow actions upgraded: checkout@v4, setup-python@v5, action-gh-release@v2
+
+### Fixed
+- Fixed bug where `.deb` file could not be found in the Linux build release directory (incorrect filename lookup path in `scripts/build.py`)
+- Fixed misleading "portable artifact not found" warning during macOS builds
+
 ## [1.0.11] - 2025-02-16
 
 ### Added
@@ -207,6 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment variable setting reliability and stability
 - Cross-platform compatibility of symlink paths
 
+[1.0.12]: https://github.com/l06066hb/jvman/releases/tag/v1.0.12
 [1.0.11]: https://github.com/l06066hb/jvman/releases/tag/v1.0.11
 [1.0.10]: https://github.com/l06066hb/jvman/releases/tag/v1.0.10
 [1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9

@@ -111,7 +111,7 @@ class SettingsTab(QWidget):
 
         # 获取更新管理器实例
         self.update_manager = UpdateManager()
-        #self.update_manager.check_update_complete.connect(self.on_check_update_complete)
+        # self.update_manager.check_update_complete.connect(self.on_check_update_complete)
 
         # 添加保存延迟计时器
         self.save_timer = QTimer()
@@ -390,8 +390,7 @@ class SettingsTab(QWidget):
         main_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         # 设置滚动条样式
-        main_scroll.setStyleSheet(
-            """
+        main_scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -469,8 +468,7 @@ class SettingsTab(QWidget):
                 background-color: rgba(0, 188, 212, 0.8);
                 height: 8px;
             }
-        """
-        )
+        """)
 
         # 创建主容器
         main_container = QWidget()
@@ -480,8 +478,7 @@ class SettingsTab(QWidget):
         # 基本设置组
         basic_group = QGroupBox(_("settings.sections.basic"))
         basic_group.setObjectName("basic_group")
-        basic_group.setStyleSheet(
-            """
+        basic_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 1px solid #E0E0E0;
@@ -494,8 +491,7 @@ class SettingsTab(QWidget):
                 left: 10px;
                 padding: 0 5px;
             }
-        """
-        )
+        """)
         basic_layout = QVBoxLayout(basic_group)
         basic_layout.setSpacing(10)
 
@@ -691,8 +687,7 @@ class SettingsTab(QWidget):
         auto_start_label.setMinimumWidth(100)
 
         self.auto_start_checkbox = QCheckBox()
-        self.auto_start_checkbox.setStyleSheet(
-            f"""
+        self.auto_start_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 spacing: 8px;
                 padding: 4px;
@@ -723,8 +718,7 @@ class SettingsTab(QWidget):
                 border: 1px solid #D2E3FC;
                 background-color: #D2E3FC;
             }}
-        """
-        )
+        """)
         self.auto_start_checkbox.setChecked(self.config.get_auto_start_status())
 
         auto_start_layout.addWidget(auto_start_label)
@@ -743,8 +737,7 @@ class SettingsTab(QWidget):
         self.reset_button = QPushButton(_("settings.reset"))
         self.reset_button.setProperty("i18n_key", "settings.reset")
         self.reset_button.setIcon(QIcon(os.path.join(self.icons_dir, "reset.png")))
-        self.reset_button.setStyleSheet(
-            """
+        self.reset_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
                 border: 1px solid #dc3545;
@@ -760,8 +753,7 @@ class SettingsTab(QWidget):
             QPushButton:pressed {
                 background-color: #FFE0E0;
             }
-            """
-        )
+            """)
         self.reset_button.clicked.connect(self.reset_basic_settings)
         reset_button_layout.addStretch()
         reset_button_layout.addWidget(self.reset_button)
@@ -773,8 +765,7 @@ class SettingsTab(QWidget):
         # 环境变量设置组
         env_group = QGroupBox(_("settings.sections.env"))
         env_group.setObjectName("env_group")
-        env_group.setStyleSheet(
-            """
+        env_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 1px solid #E0E0E0;
@@ -862,8 +853,7 @@ class SettingsTab(QWidget):
                 font-family: Consolas, Monaco, monospace;
                 opacity: 230;
             }
-        """
-        )
+        """)
 
         env_layout = QVBoxLayout(env_group)
         env_layout.setSpacing(15)
@@ -872,15 +862,13 @@ class SettingsTab(QWidget):
         # 方式一容器
         auto_container = QFrame()
         auto_container.setObjectName("desc_container")
-        auto_container.setStyleSheet(
-            """
+        auto_container.setStyleSheet("""
             QFrame {
                 background-color: #F8F9FA;
                 border-radius: 6px;
                 padding: 2px;
             }
-        """
-        )
+        """)
         auto_layout = QVBoxLayout(auto_container)
         auto_layout.setSpacing(8)
         auto_layout.setContentsMargins(15, 15, 15, 15)
@@ -888,8 +876,7 @@ class SettingsTab(QWidget):
         # 方式一说明
         method_one_desc = QLabel(_("settings.env.auto_method"))
         method_one_desc.setProperty("i18n_key", "settings.env.auto_method")
-        method_one_desc.setStyleSheet(
-            """
+        method_one_desc.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
                 font-weight: bold;
@@ -897,23 +884,20 @@ class SettingsTab(QWidget):
                 padding: 8px 0;
                 background: transparent;
             }
-        """
-        )
+        """)
         auto_layout.addWidget(method_one_desc)
 
         # 添加配置文件优先级显示区域 (仅用于 Mac/Linux)
         if not platform_manager.is_windows:
             config_priority_frame = QFrame()
-            config_priority_frame.setStyleSheet(
-                """
+            config_priority_frame.setStyleSheet("""
                 QFrame {
                     background-color: #F0F2F5;
                     border-radius: 4px;
                     padding: 8px;
                     margin: 0 0 8px 0;
                 }
-                """
-            )
+                """)
             config_priority_layout = QVBoxLayout(config_priority_frame)
             config_priority_layout.setSpacing(2)
             config_priority_layout.setContentsMargins(8, 8, 8, 8)
@@ -923,8 +907,7 @@ class SettingsTab(QWidget):
             priority_title.setProperty(
                 "i18n_key", "settings.env.config_files.priority.title"
             )
-            priority_title.setStyleSheet(
-                """
+            priority_title.setStyleSheet("""
                 QLabel {
                     color: #1a73e8;
                     font-weight: 600;
@@ -932,8 +915,7 @@ class SettingsTab(QWidget):
                     margin-bottom: 4px;
                     background: transparent;
                 }
-                """
-            )
+                """)
             config_priority_layout.addWidget(priority_title)
 
             # 配置文件列表
@@ -973,8 +955,7 @@ class SettingsTab(QWidget):
                     file_label.setProperty("status_key", status_key)
                     file_label.setProperty("file_path", file_path)
                     file_label.setProperty("is_current", bool(current))
-                    file_label.setStyleSheet(
-                        f"""
+                    file_label.setStyleSheet(f"""
                         QLabel {{
                             color: {color};
                             font-size: 11px;
@@ -982,8 +963,7 @@ class SettingsTab(QWidget):
                             background: transparent;
                             line-height: 1.2;
                         }}
-                        """
-                    )
+                        """)
                     self.config_labels.append(file_label)
                     config_priority_layout.addWidget(file_label)
                 else:
@@ -996,8 +976,7 @@ class SettingsTab(QWidget):
                     )
                     file_label.setProperty("file_path", file_path)
                     file_label.setProperty("is_current", False)
-                    file_label.setStyleSheet(
-                        """
+                    file_label.setStyleSheet("""
                         QLabel {
                             color: #6c757d;
                             font-size: 11px;
@@ -1005,8 +984,7 @@ class SettingsTab(QWidget):
                             background: transparent;
                             line-height: 1.2;
                         }
-                        """
-                    )
+                        """)
                     self.config_labels.append(file_label)
                     config_priority_layout.addWidget(file_label)
 
@@ -1015,8 +993,7 @@ class SettingsTab(QWidget):
         # 当前环境变量显示区域
         current_env_frame = QFrame()
         current_env_frame.setObjectName("current_env_frame")
-        current_env_frame.setStyleSheet(
-            """
+        current_env_frame.setStyleSheet("""
             QFrame#current_env_frame {
                 background-color: #FFFFFF;
                 border: 1px solid #E0E0E0;
@@ -1085,8 +1062,7 @@ class SettingsTab(QWidget):
                 opacity: 230;
             }
 
-        """
-        )
+        """)
 
         current_env_layout = QVBoxLayout(current_env_frame)
         current_env_layout.setSpacing(12)
@@ -1227,8 +1203,7 @@ class SettingsTab(QWidget):
                 )
             )
         )
-        self.apply_env_button.setStyleSheet(
-            """
+        self.apply_env_button.setStyleSheet("""
             QPushButton#apply_env_button {
                 padding: 10px 24px;
                 border: none;
@@ -1252,8 +1227,7 @@ class SettingsTab(QWidget):
                 color: #999999;
                 border: none;
             }
-        """
-        )
+        """)
         current_env_layout.addWidget(
             self.apply_env_button, alignment=Qt.AlignmentFlag.AlignRight
         )
@@ -1264,15 +1238,13 @@ class SettingsTab(QWidget):
         # 手动设置区域
         manual_container = QFrame()
         manual_container.setObjectName("desc_container")
-        manual_container.setStyleSheet(
-            """
+        manual_container.setStyleSheet("""
             QFrame {
                 background-color: #F8F9FA;
                 border-radius: 6px;
                 padding: 2px;
             }
-        """
-        )
+        """)
         manual_layout = QVBoxLayout(manual_container)
         manual_layout.setSpacing(8)
         manual_layout.setContentsMargins(15, 15, 15, 15)
@@ -1280,8 +1252,7 @@ class SettingsTab(QWidget):
         # 手动设置说明
         manual_desc = QLabel(_("settings.env.manual_method"))
         manual_desc.setProperty("i18n_key", "settings.env.manual_method")
-        manual_desc.setStyleSheet(
-            """
+        manual_desc.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
                 font-weight: bold;
@@ -1289,36 +1260,31 @@ class SettingsTab(QWidget):
                 padding: 8px 0;
                 background: transparent;
             }
-        """
-        )
+        """)
         manual_layout.addWidget(manual_desc)
 
         # 添加说明文本
         manual_tip = QLabel(_("settings.env.manual_tip"))
         manual_tip.setProperty("i18n_key", "settings.env.manual_tip")
-        manual_tip.setStyleSheet(
-            """
+        manual_tip.setStyleSheet("""
             QLabel {
                 color: #666666;
                 font-size: 10pt;
                 padding: 0 0 8px 0;
             }
-        """
-        )
+        """)
         manual_layout.addWidget(manual_tip)
 
         # 环境变量值容器
         values_frame = QFrame()
         values_frame.setObjectName("values_frame")
-        values_frame.setStyleSheet(
-            """
+        values_frame.setStyleSheet("""
             QFrame {
                 background-color: #FFFFFF;
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
             }
-        """
-        )
+        """)
         values_layout = QVBoxLayout(values_frame)
         values_layout.setSpacing(4)
         values_layout.setContentsMargins(10, 10, 10, 10)
@@ -1331,8 +1297,7 @@ class SettingsTab(QWidget):
         self.java_home_value = QLineEdit(self.junction_path_edit.text())
         self.java_home_value.setReadOnly(True)
         self.java_home_value.setMinimumWidth(400)
-        self.java_home_value.setStyleSheet(
-            """
+        self.java_home_value.setStyleSheet("""
             QLineEdit {
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
@@ -1340,8 +1305,7 @@ class SettingsTab(QWidget):
                 background-color: #F8F9FA;
                 selection-background-color: #E8F0FE;
             }
-        """
-        )
+        """)
         java_home_layout.addWidget(java_home_label)
         java_home_layout.addWidget(self.java_home_value)
         values_layout.addLayout(java_home_layout)
@@ -1397,8 +1361,7 @@ class SettingsTab(QWidget):
         # 更新设置组
         self.update_group = QGroupBox(_("settings.sections.update"))  # 保存为类属性
         self.update_group.setObjectName("update_group")
-        self.update_group.setStyleSheet(
-            """
+        self.update_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 1px solid #E0E0E0;
@@ -1411,8 +1374,7 @@ class SettingsTab(QWidget):
                 left: 10px;
                 padding: 0 5px;
             }
-        """
-        )
+        """)
         update_layout = QVBoxLayout(self.update_group)
         update_layout.setSpacing(10)
         update_layout.setContentsMargins(15, 5, 15, 15)
@@ -1424,8 +1386,7 @@ class SettingsTab(QWidget):
         auto_update_label.setMinimumWidth(100)
 
         self.auto_update_checkbox = QCheckBox()
-        self.auto_update_checkbox.setStyleSheet(
-            f"""
+        self.auto_update_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 spacing: 8px;
                 padding: 4px;
@@ -1456,8 +1417,7 @@ class SettingsTab(QWidget):
                 border: 1px solid #D2E3FC;
                 background-color: #D2E3FC;
             }}
-        """
-        )
+        """)
         self.auto_update_checkbox.setChecked(self.config.get("update.auto_check", True))
 
         auto_update_layout.addWidget(auto_update_label)
@@ -1482,8 +1442,7 @@ class SettingsTab(QWidget):
                 )
             )
         )
-        self.check_update_button.setStyleSheet(
-            """
+        self.check_update_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
                 border: 1px solid #1a73e8;
@@ -1499,8 +1458,7 @@ class SettingsTab(QWidget):
             QPushButton:pressed {
                 background-color: #E3F2FD;
             }
-        """
-        )
+        """)
         check_update_layout.addStretch()
         check_update_layout.addWidget(self.check_update_button)
 
@@ -1715,7 +1673,9 @@ class SettingsTab(QWidget):
                         creationflags=subprocess.CREATE_NO_WINDOW,
                     )
                 except Exception as e:
-                    logger.warning(f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}")
+                    logger.warning(
+                        f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}"
+                    )
 
                 QMessageBox.information(
                     self, _("common.success"), _("settings.messages.env_update_windows")
@@ -2301,7 +2261,9 @@ class SettingsTab(QWidget):
                                 match = re.search(pattern, content, re.MULTILINE)
                                 if match:
                                     value = match.group(1).strip().strip("\"'")
-                                    logger.debug(f"在 {config_file} 中找到 {name}={value}")
+                                    logger.debug(
+                                        f"在 {config_file} 中找到 {name}={value}"
+                                    )
                                     return value
                         except Exception as e:
                             logger.debug(f"读取配置文件 {config_file} 失败: {str(e)}")
@@ -2543,8 +2505,7 @@ class SettingsTab(QWidget):
         self.create_button = QPushButton(_("settings.env.backup.create"))
         self.create_button.setIcon(QIcon(os.path.join(self.icons_dir, "backup.png")))
         self.create_button.clicked.connect(self.create_backup)
-        self.create_button.setStyleSheet(
-            """
+        self.create_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 16px;
                 background-color: #1a73e8;
@@ -2560,16 +2521,14 @@ class SettingsTab(QWidget):
             QPushButton:pressed {
                 background-color: #0D47A1;
             }
-        """
-        )
+        """)
         button_layout.addWidget(self.create_button)
 
         # 恢复备份按钮
         self.restore_button = QPushButton(_("settings.env.backup.restore"))
         self.restore_button.setIcon(QIcon(os.path.join(self.icons_dir, "restore.png")))
         self.restore_button.clicked.connect(self.restore_backup)
-        self.restore_button.setStyleSheet(
-            """
+        self.restore_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 16px;
                 background-color: #28a745;
@@ -2585,16 +2544,14 @@ class SettingsTab(QWidget):
             QPushButton:pressed {
                 background-color: #1e7e34;
             }
-        """
-        )
+        """)
         button_layout.addWidget(self.restore_button)
 
         # 查看备份按钮
         self.view_button = QPushButton(_("settings.env.backup.view"))
         self.view_button.setIcon(QIcon(os.path.join(self.icons_dir, "view.png")))
         self.view_button.clicked.connect(self.view_backup)
-        self.view_button.setStyleSheet(
-            """
+        self.view_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 16px;
                 background-color: white;
@@ -2614,8 +2571,7 @@ class SettingsTab(QWidget):
                 border-color: #0D47A1;
                 color: #0D47A1;
             }
-        """
-        )
+        """)
         button_layout.addWidget(self.view_button)
 
         # 设置按钮之间的间距
@@ -2651,8 +2607,7 @@ class SettingsTab(QWidget):
         self.backup_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.backup_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.backup_table.verticalHeader().setVisible(False)
-        self.backup_table.setStyleSheet(
-            """
+        self.backup_table.setStyleSheet("""
             QTableWidget {
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
@@ -2673,8 +2628,7 @@ class SettingsTab(QWidget):
             QHeaderView::section:last {
                 border-right: none;
             }
-        """
-        )
+        """)
         backup_layout.addWidget(self.backup_table)
 
         # 添加备份数量限制提示
@@ -2734,8 +2688,7 @@ class SettingsTab(QWidget):
 
             # 创建内容显示区域
             content_frame = QFrame()
-            content_frame.setStyleSheet(
-                """
+            content_frame.setStyleSheet("""
                 QFrame {
                     background-color: white;
                     border: 1px solid #e0e4e8;
@@ -2765,8 +2718,7 @@ class SettingsTab(QWidget):
                     padding: 0;
                     margin: 0;
                 }
-            """
-            )
+            """)
             content_layout = QVBoxLayout(content_frame)
             content_layout.setContentsMargins(0, 0, 0, 0)
             content_layout.setSpacing(0)
@@ -2806,8 +2758,7 @@ class SettingsTab(QWidget):
             left_copy.setIcon(QIcon(os.path.join(self.icons_dir, "copy.png")))
             left_copy.setToolTip(_("common.copy"))
             left_copy.setFixedSize(28, 28)
-            left_copy.setStyleSheet(
-                """
+            left_copy.setStyleSheet("""
                 QPushButton {
                     border: none;
                     padding: 4px;
@@ -2820,8 +2771,7 @@ class SettingsTab(QWidget):
                 QPushButton:pressed {
                     background-color: #e3f2fd;
                 }
-            """
-            )
+            """)
             left_title_layout.addWidget(left_copy)
 
             left_layout.addWidget(left_title_container)
@@ -3014,8 +2964,7 @@ class SettingsTab(QWidget):
             # 添加按钮区域
             button_box = QDialogButtonBox()
             restore_button = QPushButton(_("settings.env.backup.restore"))
-            restore_button.setStyleSheet(
-                """
+            restore_button.setStyleSheet("""
                 QPushButton {
                     min-width: 100px;
                     padding: 8px 16px;
@@ -3031,12 +2980,10 @@ class SettingsTab(QWidget):
                 QPushButton:pressed {
                     background-color: #0D47A1;
                 }
-            """
-            )
+            """)
 
             close_button = QPushButton(_("common.close"))
-            close_button.setStyleSheet(
-                """
+            close_button.setStyleSheet("""
                 QPushButton {
                     min-width: 100px;
                     padding: 8px 16px;
@@ -3052,8 +2999,7 @@ class SettingsTab(QWidget):
                 QPushButton:pressed {
                     background-color: #dee2e6;
                 }
-            """
-            )
+            """)
 
             button_box.addButton(restore_button, QDialogButtonBox.ButtonRole.ActionRole)
             button_box.addButton(close_button, QDialogButtonBox.ButtonRole.RejectRole)
@@ -3272,21 +3218,18 @@ def create_synced_widget(synced_text):
     pixmap = synced_icon.pixmap(16, 16)
     icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     icon_label.setPixmap(pixmap)
-    icon_label.setStyleSheet(
-        """
+    icon_label.setStyleSheet("""
         QLabel {
             padding: 0;
             margin: 0;
             background: transparent;
         }
-    """
-    )
+    """)
     layout.addWidget(icon_label)
 
     # 添加文本
     text_label = QLabel(synced_text)
-    text_label.setStyleSheet(
-        """
+    text_label.setStyleSheet("""
         QLabel {
             color: #28a745;
             font-size: 9pt;
@@ -3294,8 +3237,7 @@ def create_synced_widget(synced_text):
             margin: 0;
             background: transparent;
         }
-    """
-    )
+    """)
     layout.addWidget(text_label)
 
     layout.addStretch()

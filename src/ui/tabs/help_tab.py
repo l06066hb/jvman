@@ -82,8 +82,7 @@ class FloatingNavButton(QPushButton):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(38, 38)
-        self.setStyleSheet(
-            """
+        self.setStyleSheet("""
             QPushButton {
                 background-color: rgba(255, 255, 255, 0.6);
                 border: none;
@@ -100,8 +99,7 @@ class FloatingNavButton(QPushButton):
                 background-color: rgba(59, 130, 246, 0.95);
                 color: white;
             }
-        """
-        )
+        """)
         self.setText("☰")
         self.setMouseTracking(True)
         self.raise_()
@@ -215,8 +213,7 @@ class FloatingNavPanel(QFrame):
         self.content.setGraphicsEffect(shadow)
 
         # Set styles
-        self.setStyleSheet(
-            """
+        self.setStyleSheet("""
             QWidget {
                 background: transparent;
             }
@@ -262,8 +259,7 @@ class FloatingNavPanel(QFrame):
                 background-color: rgba(243, 244, 246, 0.95);
                 color: #3b82f6;
             }
-        """
-        )
+        """)
 
     def layout(self):
         """Return the layout of the navigation button container"""
@@ -300,15 +296,13 @@ class QuickNavTrigger(QFrame):
 
         icon_label = QLabel()
         icon_label.setFixedSize(20, 20)
-        icon_label.setStyleSheet(
-            """
+        icon_label.setStyleSheet("""
             QLabel {
                 background-color: rgba(59, 130, 246, 0.12);
                 border-radius: 6px;
                 padding: 3px;
             }
-        """
-        )
+        """)
         if icon_path := get_icon_path("nav.png"):
             icon_label.setPixmap(QIcon(icon_path).pixmap(14, 14))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -318,8 +312,7 @@ class QuickNavTrigger(QFrame):
 
         # Create vertical text
         self.text_label = QLabel(_("help.navigation.quick_nav"))
-        self.text_label.setStyleSheet(
-            """
+        self.text_label.setStyleSheet("""
             QLabel {
                 color: #3B82F6;
                 font-size: 13px;
@@ -327,8 +320,7 @@ class QuickNavTrigger(QFrame):
                 line-height: 1.6;
                 letter-spacing: 1px;
             }
-        """
-        )
+        """)
         self.text_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.text_label.setFixedWidth(20)  # 限制宽度以确保文本垂直排列
         content_layout.addWidget(self.text_label, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -345,8 +337,7 @@ class QuickNavTrigger(QFrame):
         self.content.setGraphicsEffect(shadow)
 
         # Set content container styles
-        self.content.setStyleSheet(
-            """
+        self.content.setStyleSheet("""
             QFrame#content {
                 background-color: rgba(255, 255, 255, 0.6);
                 border: 1px solid rgba(255, 255, 255, 0.8);
@@ -356,8 +347,7 @@ class QuickNavTrigger(QFrame):
                 background-color: rgba(255, 255, 255, 0.8);
                 border: 1px solid rgba(255, 255, 255, 0.9);
             }
-        """
-        )
+        """)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -558,8 +548,7 @@ class HelpTab(QWidget):
         # 创建滚动区域
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setStyleSheet(
-            """
+        self.scroll_area.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: #F5F7FA;
@@ -582,8 +571,7 @@ class HelpTab(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
             }
-        """
-        )
+        """)
 
         # 创建内容容器
         self.content_widget = QWidget()
@@ -1387,15 +1375,13 @@ class HelpTab(QWidget):
         """创建代码块"""
         # 创建外层容器
         container = QFrame()
-        container.setStyleSheet(
-            """
+        container.setStyleSheet("""
             QFrame {
                 margin: 8px 0;
                 padding: 0;
                 background: transparent;
             }
-        """
-        )
+        """)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
         container_layout.setSpacing(0)
@@ -1403,8 +1389,7 @@ class HelpTab(QWidget):
         # 创建代码块框架
         code_frame = QFrame()
         code_frame.setObjectName("codeBlock")
-        code_frame.setStyleSheet(
-            """
+        code_frame.setStyleSheet("""
             QFrame#codeBlock {
                 background-color: #1E293B;
                 border: 1px solid #334155;
@@ -1412,8 +1397,7 @@ class HelpTab(QWidget):
                 margin: 0;
                 padding: 0;
             }
-        """
-        )
+        """)
 
         code_layout = QVBoxLayout(code_frame)
         code_layout.setContentsMargins(16, 16, 16, 16)
@@ -1425,8 +1409,7 @@ class HelpTab(QWidget):
 
         # 添加复制按钮
         copy_button = QPushButton("复制代码")
-        copy_button.setStyleSheet(
-            """
+        copy_button.setStyleSheet("""
             QPushButton {
                 background-color: #2D3748;
                 color: #E2E8F0;
@@ -1445,8 +1428,7 @@ class HelpTab(QWidget):
                 background-color: #4A5568;
                 color: #9CA3AF;
             }
-        """
-        )
+        """)
         copy_button.setFixedSize(70, 24)
         copy_button.setCursor(Qt.CursorShape.PointingHandCursor)
         toolbar.addStretch()
@@ -1460,8 +1442,7 @@ class HelpTab(QWidget):
         # 创建代码标签
         code_label = QLabel()
         code_label.setObjectName("codeText")
-        code_label.setStyleSheet(
-            """
+        code_label.setStyleSheet("""
             QLabel#codeText {
                 color: #E2E8F0;
                 font-family: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -1472,8 +1453,7 @@ class HelpTab(QWidget):
                 padding: 0;
                 border: none;
             }
-        """
-        )
+        """)
 
         # 设置代码内容
         code_label.setText(code_content)
@@ -1634,8 +1614,7 @@ class HelpTab(QWidget):
         # 如果输入是字符串，直接作为普通文本处理
         if isinstance(desc, str):
             text_label = QLabel(desc)
-            text_label.setStyleSheet(
-                """
+            text_label.setStyleSheet("""
                 QLabel {
                     color: #4A5568;
                     font-size: 13px;
@@ -1643,8 +1622,7 @@ class HelpTab(QWidget):
                     padding: 0;
                     margin: 0;
                 }
-            """
-            )
+            """)
             text_label.setWordWrap(True)
             desc_layout.addWidget(text_label)
         # 如果是元组，且第一个元素是 "code"，则作为代码块处理
@@ -1656,16 +1634,14 @@ class HelpTab(QWidget):
         """添加帮助内容区块"""
         # 创建区块容器
         section = QFrame()
-        section.setStyleSheet(
-            """
+        section.setStyleSheet("""
             QFrame {
                 background-color: white;
                 border-radius: 10px;
                 border: 1px solid #E5E9F2;
                 margin: 0;
             }
-        """
-        )
+        """)
 
         # 创建阴影效果
         shadow = QGraphicsDropShadowEffect(self)
@@ -1689,16 +1665,14 @@ class HelpTab(QWidget):
 
         # 确保标题被翻译
         title_label = QLabel(_(title) if isinstance(title, str) else title)
-        title_label.setStyleSheet(
-            """
+        title_label.setStyleSheet("""
             QLabel {
                 color: #2C3E50;
                 font-size: 16px;
                 font-weight: bold;
                 padding: 2px 0;
             }
-        """
-        )
+        """)
         title_layout.addWidget(title_label)
         title_layout.addStretch()
         section_layout.addLayout(title_layout)
@@ -1706,19 +1680,16 @@ class HelpTab(QWidget):
         # 添加分隔线
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setStyleSheet(
-            """
+        separator.setStyleSheet("""
             background-color: #E8EEF7;
             margin: 0 -10px;
-        """
-        )
+        """)
         section_layout.addWidget(separator)
 
         # 添加内容项
         for item_title, item_list in items:
             item_frame = QFrame()
-            item_frame.setStyleSheet(
-                """
+            item_frame.setStyleSheet("""
                 QFrame {
                     background-color: #F8FAFD;
                     border-radius: 8px;
@@ -1729,8 +1700,7 @@ class HelpTab(QWidget):
                     background-color: #EDF2FC;
                     border: 1px solid #E5E9F2;
                 }
-            """
-            )
+            """)
             item_layout = QVBoxLayout(item_frame)
             item_layout.setSpacing(6)
             item_layout.setContentsMargins(16, 12, 16, 12)
@@ -1740,44 +1710,38 @@ class HelpTab(QWidget):
             title_layout.setSpacing(8)
 
             bullet = QLabel("•")
-            bullet.setStyleSheet(
-                """
+            bullet.setStyleSheet("""
                 QLabel {
                     color: #1a73e8;
                     font-size: 16px;
                     font-weight: bold;
                 }
-            """
-            )
+            """)
             title_layout.addWidget(bullet)
 
             # 确保子标题被翻译
             item_title_label = QLabel(
                 _(item_title) if isinstance(item_title, str) else item_title
             )
-            item_title_label.setStyleSheet(
-                """
+            item_title_label.setStyleSheet("""
                 QLabel {
                     color: #1a73e8;
                     font-weight: bold;
                     font-size: 14px;
                 }
-            """
-            )
+            """)
             title_layout.addWidget(item_title_label)
             title_layout.addStretch()
             item_layout.addLayout(title_layout)
 
             # 添加描述列表
             desc_frame = QFrame()
-            desc_frame.setStyleSheet(
-                """
+            desc_frame.setStyleSheet("""
                 QFrame {
                     background: transparent;
                     margin-left: 4px;
                 }
-            """
-            )
+            """)
             desc_layout = QVBoxLayout(desc_frame)
             desc_layout.setSpacing(4)
             desc_layout.setContentsMargins(0, 0, 0, 0)

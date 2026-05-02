@@ -12,87 +12,100 @@ permissions:
 
 jobs:
   build:
+    name: Build (${{ matrix.platform }}-${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: ['3.8']
       fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - os: macos-13
+            platform: macos
+            arch: x64
+          - os: macos-14
+            platform: macos
+            arch: arm64
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout source
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
         cache: 'pip'
-    
-    - name: Install dependencies
+        cache-dependency-path: |
+          requirements/requirements.txt
+          requirements/requirements-dev.txt
+
+    - name: Install Python dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/requirements-dev.txt
         if [ "${{ runner.os }}" == "Windows" ]; then
           pip install pywin32
         fi
-        if [ "${{ runner.os }}" == "macOS" ]; then
-          brew install create-dmg
-        fi
-      shell: bash
-    
-    # - name: Run tests
-    #   run: |
-    #     pytest tests/ --cov=src
-    
-    # - name: Check code style
-    #   run: |
-    #     black --check src/
-    #     flake8 src/
-    
-    - name: Get timestamp
-      id: timestamp
-      run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
-      shell: bash
-    
-    - name: Set platform
+
+    - name: Install macOS build tools
+      if: runner.os == 'macOS'
+      run: |
+        brew install create-dmg || true
+
+    - name: Install Linux build tools
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y dpkg-dev debhelper fakeroot
+
+    - name: Record build metadata
+      id: meta
       shell: bash
       run: |
+        echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> "$GITHUB_ENV"
         if [ "${{ runner.os }}" == "Windows" ]; then
-          echo "BUILD_PLATFORM=windows" >> $GITHUB_ENV
-          echo "PYINSTALLER_SEP=;" >> $GITHUB_ENV
-          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
+          echo "PYINSTALLER_SEP=;" >> "$GITHUB_ENV"
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> "$GITHUB_ENV"
         else
-          echo "BUILD_PLATFORM=linux" >> $GITHUB_ENV
-          echo "PYINSTALLER_SEP=:" >> $GITHUB_ENV
-          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
+          echo "PYINSTALLER_SEP=:" >> "$GITHUB_ENV"
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> "$GITHUB_ENV"
         fi
-        if [ "${{ runner.os }}" == "macOS" ]; then
-          echo "BUILD_PLATFORM=macos" >> $GITHUB_ENV
-        fi
-    
+
     - name: Build
       shell: bash
+      env:
+        JVMAN_DEB_MAINTAINER: "JVMan Maintainers <noreply@users.noreply.github.com>"
       run: |
         echo "============ Build Environment ============"
-        echo "Platform: $BUILD_PLATFORM"
-        echo "PyInstaller separator: $PYINSTALLER_SEP"
-        echo "PyInstaller add-data format: $PYINSTALLER_ADD_DATA_FORMAT"
-        echo "Python location: $pythonLocation"
-        echo "Working directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        echo "========================================="
-        python scripts/build.py --platform $BUILD_PLATFORM --type all
-    
+        echo "Target:        ${{ matrix.platform }}-${{ matrix.arch }}"
+        echo "Runner OS:     ${{ runner.os }}"
+        echo "Runner arch:   $(uname -m 2>/dev/null || echo unknown)"
+        echo "Python:        $(python --version)"
+        echo "Working dir:   $(pwd)"
+        echo "==========================================="
+        python scripts/build.py --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --type all
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: jvman-${{ runner.os }}-${{ env.timestamp }}
+        name: jvman-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.timestamp }}
         path: |
-          release/**/*.exe
-          release/**/*.zip
-          release/**/*.dmg
-          release/**/*.deb
-          release/**/release.json 
+          release/**/jvman-*.exe
+          release/**/jvman-*.zip
+          release/**/jvman-*.dmg
+          release/**/jvman-*.deb
+          release/**/jvman-*.sha256
+          release/**/release.json
+        if-no-files-found: warn
+        retention-days: 7

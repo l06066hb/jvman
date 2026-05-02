@@ -434,15 +434,13 @@ class ConfigManager:
 
                     # 创建 .desktop 文件
                     with open(desktop_file, "w") as f:
-                        f.write(
-                            f"""[Desktop Entry]
+                        f.write(f"""[Desktop Entry]
 Type=Application
 Name=JVMan
 Exec={exe_path}
 Terminal=false
 Categories=Development;
-"""
-                        )
+""")
                 else:
                     # 删除自启动文件
                     if os.path.exists(desktop_file):

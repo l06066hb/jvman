@@ -976,7 +976,9 @@ class JDKDownloader(QObject):
                         if response.status_code == 200:
                             return api_url
                     except Exception as e:
-                        logger.error(f"获取 Microsoft OpenJDK {version} 下载链接失败: {str(e)}")
+                        logger.error(
+                            f"获取 Microsoft OpenJDK {version} 下载链接失败: {str(e)}"
+                        )
 
                 return version_map.get(version)
 
@@ -1383,9 +1385,9 @@ class JDKDownloader(QObject):
                 and version_info["is_temurin"]
             ):
                 jdk_info["vendor"] = "Eclipse Temurin"
-                jdk_info[
-                    "display_name"
-                ] = f"Eclipse Temurin JDK {full_version} ({arch})"
+                jdk_info["display_name"] = (
+                    f"Eclipse Temurin JDK {full_version} ({arch})"
+                )
 
             return True, _("downloader.status.success"), jdk_info
 

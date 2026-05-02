@@ -141,7 +141,10 @@ class PlatformManager:
     def get_platform_requirements(self):
         """获取平台特定的要求信息"""
         if self.is_windows:
-            return {"admin_required": True, "message": "需要管理员权限来修改系统环境变量和创建符号链接。"}
+            return {
+                "admin_required": True,
+                "message": "需要管理员权限来修改系统环境变量和创建符号链接。",
+            }
         else:
             return {
                 "admin_required": True,

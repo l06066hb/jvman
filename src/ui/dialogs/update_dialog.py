@@ -31,16 +31,16 @@ def convert_markdown_to_html(markdown_text):
         # 配置 markdown 转换器
         md = markdown.Markdown(
             extensions=[
-                'markdown.extensions.extra',  # 包含表格、代码块等扩展功能
-                'markdown.extensions.nl2br',  # 将换行符转换为 <br>
-                'markdown.extensions.sane_lists',  # 更好的列表处理
-                'markdown.extensions.codehilite'  # 代码高亮
+                "markdown.extensions.extra",  # 包含表格、代码块等扩展功能
+                "markdown.extensions.nl2br",  # 将换行符转换为 <br>
+                "markdown.extensions.sane_lists",  # 更好的列表处理
+                "markdown.extensions.codehilite",  # 代码高亮
             ]
         )
-        
+
         # 转换 Markdown 为 HTML
-        html = md.convert(markdown_text or '')
-        
+        html = md.convert(markdown_text or "")
+
         # 添加基本样式
         styled_html = f"""
         <html>
@@ -71,7 +71,7 @@ def convert_markdown_to_html(markdown_text):
         </body>
         </html>
         """
-        
+
         return styled_html
     except Exception as e:
         logger.error(f"Markdown 转换失败: {str(e)}")
@@ -89,11 +89,13 @@ class UpdateNotificationDialog(QDialog):
         self.is_downloading = False  # 添加下载状态标志
         self.download_url = update_info.get("download_url")
         self.init_ui()
-        
+
         # 连接信号
         if self.parent and hasattr(self.parent, "update_manager"):
             self.parent.update_manager.download_progress.connect(self.update_progress)
-            self.parent.update_manager.download_complete.connect(self.on_download_complete)
+            self.parent.update_manager.download_complete.connect(
+                self.on_download_complete
+            )
             self.parent.update_manager.download_error.connect(self.on_download_error)
 
     def init_ui(self):
@@ -122,13 +124,11 @@ class UpdateNotificationDialog(QDialog):
         version_layout.addWidget(new_version_label)
 
         version_number = QLabel(f"v{self.update_info['version']}")
-        version_number.setStyleSheet(
-            """
+        version_number.setStyleSheet("""
             color: #1a73e8;
             font-size: 24px;
             font-weight: bold;
-        """
-        )
+        """)
         version_layout.addWidget(version_number)
 
         version_widget.setLayout(version_layout)
@@ -170,8 +170,7 @@ class UpdateNotificationDialog(QDialog):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
-        self.progress_bar.setStyleSheet(
-            """
+        self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
                 border-radius: 4px;
@@ -183,8 +182,7 @@ class UpdateNotificationDialog(QDialog):
                 background-color: #1a73e8;
                 border-radius: 4px;
             }
-            """
-        )
+            """)
         progress_layout.addWidget(self.progress_bar)
 
         self.progress_label = QLabel(_("update.new_version.download.preparing"))
@@ -206,8 +204,7 @@ class UpdateNotificationDialog(QDialog):
         content_layout.addWidget(notes_label)
 
         content_browser = QTextBrowser()
-        content_browser.setStyleSheet(
-            """
+        content_browser.setStyleSheet("""
             QTextBrowser {
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
@@ -215,8 +212,7 @@ class UpdateNotificationDialog(QDialog):
                 background-color: white;
                 font-size: 13px;
             }
-        """
-        )
+        """)
         # 转换并设置 HTML 内容
         release_notes = self.update_info.get("release_notes", "")
         if release_notes:
@@ -237,8 +233,7 @@ class UpdateNotificationDialog(QDialog):
         # 更新日志链接
         if self.update_info.get("changelog_url"):
             changelog_link = QPushButton(_("update.dialog.buttons.view_changelog"))
-            changelog_link.setStyleSheet(
-                """
+            changelog_link.setStyleSheet("""
                 QPushButton {
                     border: none;
                     color: #1a73e8;
@@ -249,8 +244,7 @@ class UpdateNotificationDialog(QDialog):
                 QPushButton:hover {
                     color: #174ea6;
                 }
-            """
-            )
+            """)
             changelog_link.clicked.connect(self.open_changelog)
             button_layout.addWidget(changelog_link)
 
@@ -258,8 +252,7 @@ class UpdateNotificationDialog(QDialog):
 
         # 取消按钮
         cancel_button = QPushButton(_("update.dialog.buttons.cancel"))
-        cancel_button.setStyleSheet(
-            """
+        cancel_button.setStyleSheet("""
             QPushButton {
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
@@ -272,15 +265,13 @@ class UpdateNotificationDialog(QDialog):
                 background-color: #F5F5F5;
                 border-color: #D0D0D0;
             }
-        """
-        )
+        """)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
 
         # 下载按钮
         self.download_button = QPushButton(_("update.dialog.buttons.download"))
-        self.download_button.setStyleSheet(
-            """
+        self.download_button.setStyleSheet("""
             QPushButton {
                 border: none;
                 border-radius: 4px;
@@ -296,8 +287,7 @@ class UpdateNotificationDialog(QDialog):
                 background-color: #E0E0E0;
                 color: #999999;
             }
-        """
-        )
+        """)
         self.download_button.clicked.connect(self.start_download)
         button_layout.addWidget(self.download_button)
 
@@ -313,8 +303,10 @@ class UpdateNotificationDialog(QDialog):
             self.download_button.setEnabled(False)
 
         self.progress_bar.setValue(progress)
-        self.progress_label.setText(_("update.new_version.download.progress").format(percent=progress))
-        
+        self.progress_label.setText(
+            _("update.new_version.download.progress").format(percent=progress)
+        )
+
         # 确保UI更新
         QApplication.processEvents()
 
@@ -333,10 +325,17 @@ class UpdateNotificationDialog(QDialog):
             # 开始下载
             if self.parent and hasattr(self.parent, "update_manager"):
                 save_dir = self.parent.update_manager.get_update_save_path()
-                save_path = os.path.join(save_dir, f"update_v{self.update_info['version']}.zip")
+                save_path = os.path.join(
+                    save_dir, f"update_v{self.update_info['version']}.zip"
+                )
 
                 # 直接调用下载方法
-                QTimer.singleShot(0, lambda: self.parent.update_manager.download_update(self.download_url, save_path))
+                QTimer.singleShot(
+                    0,
+                    lambda: self.parent.update_manager.download_update(
+                        self.download_url, save_path
+                    ),
+                )
         except Exception as e:
             self.is_downloading = False
             self.on_download_error(str(e))
@@ -352,18 +351,28 @@ class UpdateNotificationDialog(QDialog):
             msg_box = QMessageBox(self)
             msg_box.setWindowTitle(_("update.dialog.download.title"))
             msg_box.setText(_("update.dialog.download.complete"))
-            msg_box.setInformativeText(_("update.dialog.download.complete_info").format(path=file_path))
-            
+            msg_box.setInformativeText(
+                _("update.dialog.download.complete_info").format(path=file_path)
+            )
+
             # 添加按钮
-            install_btn = msg_box.addButton(_("update.dialog.download.install_now"), QMessageBox.ButtonRole.AcceptRole)
-            open_folder_btn = msg_box.addButton(_("update.dialog.download.open_folder"), QMessageBox.ButtonRole.ActionRole)
-            later_btn = msg_box.addButton(_("update.dialog.buttons.later"), QMessageBox.ButtonRole.RejectRole)
-            
+            install_btn = msg_box.addButton(
+                _("update.dialog.download.install_now"),
+                QMessageBox.ButtonRole.AcceptRole,
+            )
+            open_folder_btn = msg_box.addButton(
+                _("update.dialog.download.open_folder"),
+                QMessageBox.ButtonRole.ActionRole,
+            )
+            later_btn = msg_box.addButton(
+                _("update.dialog.buttons.later"), QMessageBox.ButtonRole.RejectRole
+            )
+
             msg_box.setDefaultButton(install_btn)
             msg_box.exec()
 
             clicked_button = msg_box.clickedButton()
-            
+
             if clicked_button == install_btn:
                 self.start_install(file_path)
             elif clicked_button == open_folder_btn:
@@ -385,7 +394,11 @@ class UpdateNotificationDialog(QDialog):
         """开始安装更新"""
         try:
             if not os.path.exists(file_path):
-                raise FileNotFoundError(_("update.dialog.install.error.file_not_found").format(path=file_path))
+                raise FileNotFoundError(
+                    _("update.dialog.install.error.file_not_found").format(
+                        path=file_path
+                    )
+                )
 
             import sys
             import subprocess
@@ -398,24 +411,30 @@ class UpdateNotificationDialog(QDialog):
                         subprocess.Popen([file_path])
                         self._disconnect_signals()
                         self.accept()
-                                # 通知用户程序将退出
+                        # 通知用户程序将退出
                         QTimer.singleShot(500, lambda: QApplication.quit())
                     except PermissionError:
-                        raise PermissionError(_("update.dialog.install.error.no_permission"))
+                        raise PermissionError(
+                            _("update.dialog.install.error.no_permission")
+                        )
                     except Exception as e:
-                        raise Exception(_("update.error.install_failed").format(error=str(e)))
-                        
+                        raise Exception(
+                            _("update.error.install_failed").format(error=str(e))
+                        )
+
                 elif file_path.endswith(".zip"):
                     # 如果是便携版ZIP，提示解压路径
                     install_dir = os.path.dirname(os.path.dirname(file_path))
                     reply = QMessageBox.information(
                         self,
                         _("update.dialog.install.title"),
-                        _("update.dialog.install.portable_info").format(path=install_dir),
+                        _("update.dialog.install.portable_info").format(
+                            path=install_dir
+                        ),
                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                        QMessageBox.StandardButton.Yes
+                        QMessageBox.StandardButton.Yes,
                     )
-                    
+
                     if reply == QMessageBox.StandardButton.Yes:
                         # 打开文件所在目录
                         os.startfile(os.path.dirname(file_path))
@@ -452,24 +471,16 @@ class UpdateNotificationDialog(QDialog):
 
         except FileNotFoundError as e:
             logger.error(f"安装文件不存在: {str(e)}")
-            QMessageBox.warning(
-                self,
-                _("update.dialog.install.error.title"),
-                str(e)
-            )
+            QMessageBox.warning(self, _("update.dialog.install.error.title"), str(e))
         except PermissionError as e:
             logger.error(f"安装权限不足: {str(e)}")
-            QMessageBox.warning(
-                self,
-                _("update.dialog.install.error.title"),
-                str(e)
-            )
+            QMessageBox.warning(self, _("update.dialog.install.error.title"), str(e))
         except Exception as e:
             logger.error(f"启动安装失败: {str(e)}")
             QMessageBox.warning(
                 self,
                 _("update.dialog.install.error.title"),
-                _("update.dialog.install.error.message").format(error=str(e))
+                _("update.dialog.install.error.message").format(error=str(e)),
             )
             # 打开下载目录
             try:
@@ -480,39 +491,47 @@ class UpdateNotificationDialog(QDialog):
     def on_download_error(self, error):
         """下载错误处理"""
         self.is_downloading = False
-        self.progress_label.setText(_("update.new_version.download.failed").format(error=error))
+        self.progress_label.setText(
+            _("update.new_version.download.failed").format(error=error)
+        )
         self.download_button.setEnabled(True)
-        
+
         # 断开信号连接
         self._disconnect_signals()
 
         QMessageBox.warning(
             self,
             _("dialog.error.title"),
-            _("update.new_version.download.failed").format(error=error)
+            _("update.new_version.download.failed").format(error=error),
         )
 
     def _disconnect_signals(self):
         """断开所有信号连接并重置状态"""
         if self.parent and hasattr(self.parent, "update_manager"):
             try:
-                self.parent.update_manager.download_progress.disconnect(self.update_progress)
-                self.parent.update_manager.download_complete.disconnect(self.on_download_complete)
-                self.parent.update_manager.download_error.disconnect(self.on_download_error)
-                
+                self.parent.update_manager.download_progress.disconnect(
+                    self.update_progress
+                )
+                self.parent.update_manager.download_complete.disconnect(
+                    self.on_download_complete
+                )
+                self.parent.update_manager.download_error.disconnect(
+                    self.on_download_error
+                )
+
                 # 取消下载
                 if self.is_downloading:
                     self.parent.update_manager.cancel_download()
-                
+
                 # 重置更新管理器状态
                 self.parent.update_manager.reset_check_state()
             except:
                 pass
-            
+
             # 重置设置页面的更新按钮状态
             if hasattr(self.parent, "settings_tab"):
                 self.parent.settings_tab._reset_update_button()
-            
+
             # 重置下载状态
             self.is_downloading = False
             self.download_button.setEnabled(True)
@@ -534,9 +553,9 @@ class UpdateNotificationDialog(QDialog):
                 _("update.dialog.cancel.title"),
                 _("update.dialog.cancel.download_confirm"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
-            
+
             if reply == QMessageBox.StandardButton.Yes:
                 self._disconnect_signals()
                 event.accept()
@@ -555,9 +574,9 @@ class UpdateNotificationDialog(QDialog):
                 _("update.dialog.cancel.title"),
                 _("update.dialog.cancel.download_confirm"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
-            
+
             if reply == QMessageBox.StandardButton.Yes:
                 self._disconnect_signals()
                 super().reject()

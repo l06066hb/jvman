@@ -1,11 +1,12 @@
 # JDK Version Manager
 
-[![Version](https://img.shields.io/badge/version-1.0.11-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.12-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
+[![Afdian](https://img.shields.io/badge/Afdian-Support%20Project-946ce6)](https://afdian.com/a/l06066hb)
 
 A user-friendly JDK version management tool supporting Windows, macOS, and Linux platforms.
 
@@ -183,15 +184,16 @@ python scripts/build.py --platform windows --type all
 
 ## Latest Version
 
-v1.0.11 Major Updates:
-- ✨ [Added] MacOS native menu bar support
-- ✨ [Added] MacOS Dock menu support
-- ✨ [Added] -Add application standard shortcut key support
-- ✨ [Added] -Add internationalization support related to window management
-- 🔄 [Changed] Window behavior on macOS platform
-- 🔄 [Changed] -Improve the interaction method of tray icons
+v1.0.12 Major Updates:
+- ✨ [Added] Added macOS Apple Silicon (M-series) native build (macOS-14 runner)
+- ✨ [Added] Added Linux ARM64 build (ubuntu-24.04-arm runner)
+- ✨ [Added] Intel/ARM version
+- ✨ [Added] Arch installation/portable bag
+- 🔄 [Changed] Python version upgraded from 3.8 to 3.11 (3.8 does not support Apple Silicon native)
+- 🔄 [Changed] The Architecture field of the installation package has been changed from hard coded AMD64 to dynamically generated based on the build architecture
 
 For complete release notes, please check [CHANGELOG.en.md](CHANGELOG.en.md)
+
 
 
 ## Contributing
@@ -299,6 +301,9 @@ If this project has been helpful to you, you can:
 - ⭐ Star this project
 - 🐛 Submit Issues or Pull Requests
 - 💬 Help answer other users' questions
-- 💝 [Support the developer](docs/sponsor.md)
+- 💝 Sponsor the developer:
+    - **China** — [Afdian / 爱发电](https://afdian.com/a/l06066hb) (WeChat Pay / Alipay)
+    - **International** — [Ko-fi](https://ko-fi.com/l06066hb) (Visa / PayPal)
+- 📖 See [sponsor guide](docs/sponsor.md) for more options
 
 Your support helps maintain and improve the project. Thank you to everyone who contributes!

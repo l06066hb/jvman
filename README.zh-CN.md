@@ -1,11 +1,12 @@
 # JDK 版本管理工具
 
-[![Version](https://img.shields.io/badge/version-1.0.11-blue)](https://github.com/l06066hb/jvman/releases)
+[![Version](https://img.shields.io/badge/version-1.0.12-blue)](https://github.com/l06066hb/jvman/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/l06066hb/jvman)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
+[![爱发电](https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E9%A1%B9%E7%9B%AE-946ce6)](https://afdian.com/a/l06066hb)
 
 一个简单易用的 JDK 版本管理工具，支持 Windows、macOS 和 Linux 平台。
 
@@ -185,15 +186,16 @@ python scripts/build.py --platform windows --type all
 
 ## 最新版本
 
-v1.0.11 的主要更新：
-- ✨ [Added] macOS 原生菜单栏支持
-- ✨ [Added] macOS Dock 菜单支持
-- ✨ [Added] - 添加应用程序标准快捷键支持
-- ✨ [Added] - 添加窗口管理相关的国际化支持
-- 🔄 [Changed] macOS 平台下的窗口行为
-- 🔄 [Changed] - 改进托盘图标的交互方式
+v1.0.12 的主要更新：
+- ✨ [Added] 新增 macOS Apple Silicon (M 系列) 原生构建（macos-14 runner）
+- ✨ [Added] 新增 Linux ARM64 构建（ubuntu-24.04-arm runner）
+- ✨ [Added] Intel/ARM 版本
+- ✨ [Added] arch 的安装/便携包
+- 🔄 [Changed] Python 版本由 3.8 升级到 3.11（3.8 不支持 Apple Silicon 原生）
+- 🔄 [Changed] 安装包 Architecture 字段由硬编码 amd64 改为按构建架构动态生成
 
 完整的更新历史请查看 [CHANGELOG.md](CHANGELOG.md)
+
 
 
 ## 贡献指南
@@ -301,6 +303,9 @@ A: 检查是否有足够的权限，确保目标 JDK 目录存在且完整。
 - ⭐ Star 这个项目
 - 🐛 提交 Issue 或 Pull Request
 - 💬 帮助解答其他用户的问题
-- 💝 [打赏开发者](docs/sponsor.md)
+- 💝 赞助开发者：
+    - **国内** — [爱发电](https://afdian.com/a/l06066hb) (微信 / 支付宝)
+    - **国际** — [Ko-fi](https://ko-fi.com/l06066hb) (Visa / PayPal)
+- 📖 更多方式见 [赞助说明](docs/sponsor.md)
 
 你的支持将帮助项目持续维护和改进。感谢每一位贡献者！

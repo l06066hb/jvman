@@ -53,28 +53,24 @@ class ConfirmDialog(QDialog):
 
         # 标题
         title_label = QLabel(_("install.confirm.title"))
-        title_label.setStyleSheet(
-            """
+        title_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
                 font-size: 16px;
                 font-weight: bold;
             }
-        """
-        )
+        """)
         layout.addWidget(title_label)
 
         # 信息容器
         info_frame = QFrame()
-        info_frame.setStyleSheet(
-            """
+        info_frame.setStyleSheet("""
             QFrame {
                 background-color: #F8F9FA;
                 border-radius: 6px;
                 padding: 15px;
             }
-        """
-        )
+        """)
         info_layout = QVBoxLayout(info_frame)
         info_layout.setSpacing(10)
 
@@ -92,28 +88,24 @@ class ConfirmDialog(QDialog):
         md5_label = QLabel(f"MD5: {md5_hash}")
 
         for label in [file_name_label, file_size_label, md5_label]:
-            label.setStyleSheet(
-                """
+            label.setStyleSheet("""
                 QLabel {
                     color: #2C3E50;
                     font-family: "Segoe UI", "Microsoft YaHei";
                 }
-            """
-            )
+            """)
             info_layout.addWidget(label)
 
         layout.addWidget(info_frame)
 
         # 提示文本
         hint_label = QLabel(_("install.confirm.hint"))
-        hint_label.setStyleSheet(
-            """
+        hint_label.setStyleSheet("""
             QLabel {
                 color: #666666;
                 font-size: 12px;
             }
-        """
-        )
+        """)
         hint_label.setWordWrap(True)
         layout.addWidget(hint_label)
 
@@ -122,8 +114,7 @@ class ConfirmDialog(QDialog):
         install_button = QPushButton(_("install.confirm.button.install"))
         cancel_button = QPushButton(_("install.confirm.button.cancel"))
 
-        install_button.setStyleSheet(
-            """
+        install_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
                 border: none;
@@ -139,11 +130,9 @@ class ConfirmDialog(QDialog):
             QPushButton:pressed {
                 background-color: #0d47a1;
             }
-        """
-        )
+        """)
 
-        cancel_button.setStyleSheet(
-            """
+        cancel_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
                 border: 1px solid #E0E0E0;
@@ -158,8 +147,7 @@ class ConfirmDialog(QDialog):
             QPushButton:pressed {
                 background-color: #E0E0E0;
             }
-        """
-        )
+        """)
 
         button_box.addButton(install_button, QDialogButtonBox.ButtonRole.AcceptRole)
         button_box.addButton(cancel_button, QDialogButtonBox.ButtonRole.RejectRole)
@@ -202,27 +190,23 @@ class ProgressDialog(QDialog):
 
         # 状态标签
         self.status_label = QLabel(_("progress.dialog.status.preparing"))
-        self.status_label.setStyleSheet(
-            """
+        self.status_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
                 font-size: 14px;
                 font-weight: bold;
             }
-        """
-        )
+        """)
         layout.addWidget(self.status_label)
 
         # 详细信息标签
         self.detail_label = QLabel()
-        self.detail_label.setStyleSheet(
-            """
+        self.detail_label.setStyleSheet("""
             QLabel {
                 color: #666666;
                 font-size: 12px;
             }
-        """
-        )
+        """)
         self.detail_label.setWordWrap(True)  # 允许文本换行
         layout.addWidget(self.detail_label)
 
@@ -231,8 +215,7 @@ class ProgressDialog(QDialog):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet(
-            """
+        self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
                 border-radius: 6px;
@@ -249,8 +232,7 @@ class ProgressDialog(QDialog):
                     stop:1 #1a73e8);
                 border-radius: 6px;
             }
-        """
-        )
+        """)
         layout.addWidget(self.progress_bar)
 
         # 添加弹性空间
@@ -272,8 +254,7 @@ class ProgressDialog(QDialog):
         # 确保最小宽度不小于100px
         button_width = max(100, button_width)
         self.manual_download_button.setFixedSize(button_width, 32)
-        self.manual_download_button.setStyleSheet(
-            """
+        self.manual_download_button.setStyleSheet("""
             QPushButton {
                 padding: 6px 20px;
                 border: 1px solid #1a73e8;
@@ -289,8 +270,7 @@ class ProgressDialog(QDialog):
             QPushButton:pressed {
                 background-color: #E8F0FE;
             }
-        """
-        )
+        """)
         self.manual_download_button.clicked.connect(self.open_manual_download)
         self.manual_download_button.hide()
 
@@ -300,8 +280,7 @@ class ProgressDialog(QDialog):
         # 取消按钮
         self.cancel_button = QPushButton(_("progress.dialog.button.cancel"))
         self.cancel_button.setFixedSize(100, 32)
-        self.cancel_button.setStyleSheet(
-            """
+        self.cancel_button.setStyleSheet("""
             QPushButton {
                 padding: 6px 20px;
                 border: 1px solid #E0E0E0;
@@ -316,15 +295,13 @@ class ProgressDialog(QDialog):
             QPushButton:pressed {
                 background-color: #E0E0E0;
             }
-        """
-        )
+        """)
         self.cancel_button.clicked.connect(self.reject)
 
         # 完成按钮
         self.close_button = QPushButton(_("progress.dialog.button.complete"))
         self.close_button.setFixedSize(100, 32)
-        self.close_button.setStyleSheet(
-            """
+        self.close_button.setStyleSheet("""
             QPushButton {
                 padding: 6px 20px;
                 border: none;
@@ -344,8 +321,7 @@ class ProgressDialog(QDialog):
                 background-color: #E0E0E0;
                 color: #999999;
             }
-        """
-        )
+        """)
         self.close_button.clicked.connect(self.accept)
         self.close_button.hide()
 
@@ -424,18 +400,15 @@ class ProgressDialog(QDialog):
                 self.status_label.setText(_("progress.dialog.status.install.complete"))
                 self.detail_label.setText(_("progress.dialog.detail.install.complete"))
 
-            self.status_label.setStyleSheet(
-                """
+            self.status_label.setStyleSheet("""
                 QLabel {
                     color: #34A853;
                     font-size: 14px;
                     font-weight: bold;
                 }
-            """
-            )
+            """)
             self.progress_bar.setValue(100)
-            self.progress_bar.setStyleSheet(
-                """
+            self.progress_bar.setStyleSheet("""
                 QProgressBar {
                     border: none;
                     border-radius: 6px;
@@ -449,8 +422,7 @@ class ProgressDialog(QDialog):
                     background: #34A853;
                     border-radius: 6px;
                 }
-            """
-            )
+            """)
 
             self.close_button.setEnabled(True)
             self.close_button.show()
@@ -458,17 +430,14 @@ class ProgressDialog(QDialog):
             self.manual_download_button.hide()
         else:
             self.status_label.setText(_("progress.dialog.status.failed"))
-            self.status_label.setStyleSheet(
-                """
+            self.status_label.setStyleSheet("""
                 QLabel {
                     color: #EA4335;
                     font-size: 14px;
                     font-weight: bold;
                 }
-            """
-            )
-            self.progress_bar.setStyleSheet(
-                """
+            """)
+            self.progress_bar.setStyleSheet("""
                 QProgressBar {
                     border: none;
                     border-radius: 6px;
@@ -482,8 +451,7 @@ class ProgressDialog(QDialog):
                     background: #EA4335;
                     border-radius: 6px;
                 }
-            """
-            )
+            """)
 
             self.close_button.setEnabled(True)
             self.close_button.show()
@@ -506,15 +474,13 @@ class ProgressDialog(QDialog):
         self.version = version
 
         self.status_label.setText(_("progress.dialog.status.manual.required"))
-        self.status_label.setStyleSheet(
-            """
+        self.status_label.setStyleSheet("""
             QLabel {
                 color: #F29900;
                 font-size: 14px;
                 font-weight: bold;
             }
-        """
-        )
+        """)
 
         # 根据不同发行版提供不同的下载链接和提示
         if vendor == "Oracle JDK":
@@ -680,8 +646,7 @@ class DownloadTab(QWidget):
         select_group = QGroupBox(_("download.group.select"))
         select_group.setObjectName("select_group")  # 添加对象名
         select_group.setFixedHeight(120)
-        select_group.setStyleSheet(
-            """
+        select_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 1px solid #E0E0E0;
@@ -694,8 +659,7 @@ class DownloadTab(QWidget):
                 left: 10px;
                 padding: 0 5px;
             }
-        """
-        )
+        """)
         select_layout = QVBoxLayout(select_group)
         select_layout.setSpacing(15)
 
@@ -710,8 +674,7 @@ class DownloadTab(QWidget):
         vendor_label.setObjectName("vendor_label")  # 添加对象名
         vendor_label.setStyleSheet("font-weight: bold; color: #666666;")
         self.vendor_combo = QComboBox()
-        self.vendor_combo.setStyleSheet(
-            """
+        self.vendor_combo.setStyleSheet("""
             QComboBox {
                 padding: 5px;
                 border: 1px solid #E0E0E0;
@@ -732,8 +695,7 @@ class DownloadTab(QWidget):
                 background-color: white;
                 selection-background-color: #F5F5F5;
             }
-        """
-        )
+        """)
         self.vendor_combo.addItems(
             [
                 "Oracle JDK",
@@ -780,8 +742,7 @@ class DownloadTab(QWidget):
                 )
             )
         )
-        self.refresh_button.setStyleSheet(
-            """
+        self.refresh_button.setStyleSheet("""
             QPushButton {
                 padding: 5px 15px;
                 border: 1px solid #E0E0E0;
@@ -794,8 +755,7 @@ class DownloadTab(QWidget):
             QPushButton:pressed {
                 background-color: #E0E0E0;
             }
-        """
-        )
+        """)
 
         self.download_button = QPushButton(_("download.button.download"))
         self.download_button.setIcon(
@@ -810,8 +770,7 @@ class DownloadTab(QWidget):
                 )
             )
         )
-        self.download_button.setStyleSheet(
-            """
+        self.download_button.setStyleSheet("""
             QPushButton {
                 padding: 5px 15px;
                 border: none;
@@ -830,8 +789,7 @@ class DownloadTab(QWidget):
                 background-color: #E0E0E0;
                 color: #999999;
             }
-        """
-        )
+        """)
 
         button_group.addWidget(self.refresh_button)
         button_group.addWidget(self.download_button)
@@ -857,8 +815,7 @@ class DownloadTab(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(
-            """
+        scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -884,20 +841,17 @@ class DownloadTab(QWidget):
             QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
                 background: none;
             }
-        """
-        )
+        """)
 
         # 创建版本信息容器
         info_container = QFrame()
-        info_container.setStyleSheet(
-            """
+        info_container.setStyleSheet("""
             QFrame {
                 background-color: #FFFFFF;
                 border-radius: 6px;
                 padding: 15px;
             }
-        """
-        )
+        """)
         info_container_layout = QVBoxLayout(info_container)
         info_container_layout.setContentsMargins(15, 15, 15, 15)
         info_container_layout.setSpacing(0)
@@ -906,14 +860,12 @@ class DownloadTab(QWidget):
         self.version_info_label.setWordWrap(True)
         self.version_info_label.setTextFormat(Qt.TextFormat.RichText)
         self.version_info_label.setOpenExternalLinks(True)
-        self.version_info_label.setStyleSheet(
-            """
+        self.version_info_label.setStyleSheet("""
             QLabel {
                 font-family: "Segoe UI", "Microsoft YaHei";
                 line-height: 1.6;
             }
-        """
-        )
+        """)
         info_container_layout.addWidget(self.version_info_label)
         info_container_layout.addStretch()
 
@@ -929,7 +881,9 @@ class DownloadTab(QWidget):
         # 默认选择最新版本
         if self.version_combo.count() > 0:
             self.version_combo.setCurrentIndex(0)  # 选择第一个版本（最新版本）
-            self.on_version_changed(self.version_combo.currentText())  # 触发版本变更事件
+            self.on_version_changed(
+                self.version_combo.currentText()
+            )  # 触发版本变更事件
 
     def connect_signals(self):
         """连接信号"""
@@ -1127,7 +1081,11 @@ class DownloadTab(QWidget):
                     self.progress_dialog.show_error(_("download.error.file_not_found"))
             else:
                 # 如果消息中包含手动下载的指导，显示手动下载提示
-                if "请按以下步骤" in message or "需要登录" in message or "手动下载" in message:
+                if (
+                    "请按以下步骤" in message
+                    or "需要登录" in message
+                    or "手动下载" in message
+                ):
                     self.progress_dialog.show_manual_download_hint(
                         self.vendor_combo.currentText(),
                         self.version_combo.currentData(),
@@ -1648,8 +1606,7 @@ class DownloadTab(QWidget):
             )
             if info:
                 # 更新版本信息
-                self.version_info_label.setText(
-                    f"""
+                self.version_info_label.setText(f"""
                     <style>
                         .content-section {{
                             color: #3c4043;
@@ -1730,16 +1687,13 @@ class DownloadTab(QWidget):
                             </a>
                         </div>
                     </div>
-                """
-                )
+                """)
             else:
-                self.version_info_label.setText(
-                    f"""
+                self.version_info_label.setText(f"""
                     <div style='color: #666666; font-style: italic; padding: 20px 0; text-align: center;'>
                         {_("version.info.not_available")}
                     </div>
-                """
-                )
+                """)
         else:
             self.version_info_label.setText("")
 

@@ -373,7 +373,9 @@ class WindowsManager(SystemManager):
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             except Exception as e:
-                logger.warning(f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}")
+                logger.warning(
+                    f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}"
+                )
 
             return True
         except Exception as e:
@@ -481,7 +483,9 @@ class WindowsManager(SystemManager):
                 )
 
             except Exception as e:
-                logger.warning(f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}")
+                logger.warning(
+                    f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}"
+                )
 
             # 确保环境变量已正确设置
             try:
@@ -580,7 +584,9 @@ class UnixManager(SystemManager):
                             target_dir, os.path.basename(target_path)
                         )
                         os.symlink(source_path, target_path)
-                        logger.info(f"成功在用户目录下创建软链接: {target_path} -> {source_path}")
+                        logger.info(
+                            f"成功在用户目录下创建软链接: {target_path} -> {source_path}"
+                        )
                         return True
 
                 except Exception as e:
@@ -613,7 +619,9 @@ class UnixManager(SystemManager):
                             logger.info("使用管理员权限成功创建软链接")
                             return True
                         else:
-                            logger.error(f"使用管理员权限创建软链接失败: {result.stderr}")
+                            logger.error(
+                                f"使用管理员权限创建软链接失败: {result.stderr}"
+                            )
                             return False
                     except Exception as e:
                         logger.error(f"使用管理员权限创建软链接失败: {str(e)}")
@@ -646,7 +654,9 @@ class UnixManager(SystemManager):
                         )
                         return True
                     except Exception as e:
-                        logger.warning(f"在用户目录下创建软链接失败，尝试在原目标位置创建: {str(e)}")
+                        logger.warning(
+                            f"在用户目录下创建软链接失败，尝试在原目标位置创建: {str(e)}"
+                        )
 
                     # 如果在用户目录下创建失败，尝试在原目标位置创建
                     target_dir = os.path.dirname(target_path)
@@ -709,7 +719,9 @@ class UnixManager(SystemManager):
                                 text=True,
                             )
                             if result.returncode != 0:
-                                logger.warning(f"修改所有权失败（不影响使用）: {result.stderr}")
+                                logger.warning(
+                                    f"修改所有权失败（不影响使用）: {result.stderr}"
+                                )
 
                         return True
 
@@ -766,7 +778,10 @@ class UnixManager(SystemManager):
                         patterns = [
                             (f"^{name}=([^#\n]+)", "direct"),  # 直接赋值
                             (f"^export\s+{name}=([^#\n]+)", "export"),  # export 赋值
-                            (f"^setenv\s+{name}\s+([^#\n]+)", "setenv"),  # csh/tcsh 风格
+                            (
+                                f"^setenv\s+{name}\s+([^#\n]+)",
+                                "setenv",
+                            ),  # csh/tcsh 风格
                             (f'^{name}="([^"]+)"', "quoted"),  # 双引号
                             (f"^{name}='([^']+)'", "quoted"),  # 单引号
                             (
@@ -799,7 +814,9 @@ class UnixManager(SystemManager):
                                     value = self._validate_env_value(value)
                                     expanded = self._expand_env_vars(value)
                                     if expanded != value:
-                                        logger.debug(f"展开环境变量 {value} -> {expanded}")
+                                        logger.debug(
+                                            f"展开环境变量 {value} -> {expanded}"
+                                        )
                                     return expanded
 
                     except Exception as e:
@@ -904,9 +921,9 @@ class UnixManager(SystemManager):
                     else:
                         env_vars["PATH"] = "$JAVA_HOME/bin:$PATH"
                 elif name == "CLASSPATH":
-                    env_vars[
-                        "CLASSPATH"
-                    ] = ".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+                    env_vars["CLASSPATH"] = (
+                        ".:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+                    )
 
                 # 重建配置文件内容
                 new_content = []
@@ -955,7 +972,9 @@ class UnixManager(SystemManager):
                     subprocess.run([shell, "-c", f"source {config_file}"], check=True)
 
                 except Exception as e:
-                    logger.warning(f"执行环境变量立即生效命令失败（不影响设置）: {str(e)}")
+                    logger.warning(
+                        f"执行环境变量立即生效命令失败（不影响设置）: {str(e)}"
+                    )
 
                 return True
 

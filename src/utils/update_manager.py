@@ -62,6 +62,7 @@ class UpdateManager(QObject):
             if sys.platform == "win32":
                 # Windows下检查是否存在注册表项
                 import winreg
+
                 try:
                     with winreg.OpenKey(
                         winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\JVMan", 0, winreg.KEY_READ
@@ -232,9 +233,10 @@ class UpdateManager(QObject):
                 # 获取更新日志内容
                 response = requests.get(
                     changelog_url,
-                    timeout=self.config_manager.get("update.source_timeout", 5000) / 1000,
+                    timeout=self.config_manager.get("update.source_timeout", 5000)
+                    / 1000,
                     verify=True,
-                    headers=self._get_request_headers()
+                    headers=self._get_request_headers(),
                 )
 
                 if response.status_code != 200:
@@ -288,13 +290,19 @@ class UpdateManager(QObject):
                 response = requests.get(
                     urls["api_url"],
                     headers=self._get_request_headers(),
-                    timeout=self.config_manager.get("update.source_timeout", 5000) / 1000,
+                    timeout=self.config_manager.get("update.source_timeout", 5000)
+                    / 1000,
                     verify=True,
                 )
 
                 if response.status_code != 200:
-                    error_msg = (_("update.error.no_release") if response.status_code == 404 
-                               else _("update.error.request_failed").format(status=response.status_code))
+                    error_msg = (
+                        _("update.error.no_release")
+                        if response.status_code == 404
+                        else _("update.error.request_failed").format(
+                            status=response.status_code
+                        )
+                    )
                     if self.is_manual_check:
                         self.show_error.emit(_("update.dialog.title"), error_msg)
                     self.check_update_complete.emit(False, error_msg)
@@ -305,30 +313,43 @@ class UpdateManager(QObject):
                 current_version = self.config_manager.get("version")
 
                 if self._version_compare(latest_version, current_version) > 0:
-                    # 获取当前安装类型和平台
+                    # 获取当前安装类型、平台与架构
                     install_type = self._get_installation_type()
                     platform = self._get_platform()
+                    arch = self._get_arch()
 
                     # 构建下载URL
+                    download_url = self._build_package_url(
+                        urls["download_url"],
+                        latest_version,
+                        platform,
+                        arch,
+                        install_type,
+                    )
                     if install_type == "installer":
-                        download_url = f"{urls['download_url']}/v{latest_version}/jvman-{latest_version}-{platform}-setup.exe"
                         package_type = _("update.package_type.installer")
                     else:
-                        download_url = f"{urls['download_url']}/v{latest_version}/jvman-{latest_version}-{platform}.zip"
                         package_type = _("update.package_type.portable")
 
                     # 验证下载URL
                     if not self.security.validate_url(download_url):
-                        self.check_update_complete.emit(False, _("update.error.invalid_api_url"))
+                        self.check_update_complete.emit(
+                            False, _("update.error.invalid_api_url")
+                        )
                         return
 
                     # 获取发布信息
-                    release_info_url = f"{urls['raw_url']}/v{latest_version}/release.json"
+                    release_info_url = (
+                        f"{urls['raw_url']}/v{latest_version}/release.json"
+                    )
                     try:
                         release_info_response = requests.get(
                             release_info_url,
                             verify=True,
-                            timeout=self.config_manager.get("update.source_timeout", 5000) / 1000
+                            timeout=self.config_manager.get(
+                                "update.source_timeout", 5000
+                            )
+                            / 1000,
                         )
 
                         if release_info_response.status_code == 200:
@@ -355,88 +376,156 @@ class UpdateManager(QObject):
                                     "changelog": changelog_content,
                                     "release_notes": latest.get("body", ""),
                                     "package_type": package_type,
-                                    "file_size": file_info["size"] if file_info else None,
-                                    "sha256": file_info["sha256"] if file_info else None,
+                                    "file_size": (
+                                        file_info["size"] if file_info else None
+                                    ),
+                                    "sha256": (
+                                        file_info["sha256"] if file_info else None
+                                    ),
                                 }
 
-                                # 添加其他版本的下载链接
+                                # 添加其他版本的下载链接（如果当前是便携版则提供安装版链接，反之亦然）
+                                alt_install_type = (
+                                    "installer"
+                                    if install_type == "portable"
+                                    else "portable"
+                                )
                                 alternative_package = {
-                                    "url": f"{urls['download_url']}/v{latest_version}/jvman-{latest_version}-{platform}-{'setup.exe' if install_type == 'portable' else 'zip'}",
-                                    "type": _("update.package_type.installer") if install_type == "portable" else _("update.package_type.portable"),
+                                    "url": self._build_package_url(
+                                        urls["download_url"],
+                                        latest_version,
+                                        platform,
+                                        arch,
+                                        alt_install_type,
+                                    ),
+                                    "type": (
+                                        _("update.package_type.installer")
+                                        if install_type == "portable"
+                                        else _("update.package_type.portable")
+                                    ),
                                 }
                                 update_info["alternative_package"] = alternative_package
 
                                 # 发送更新可用信号
                                 self.update_available.emit(update_info)
                                 self.update_notification_shown = True
-                                
+
                                 # 更新最后检查时间
                                 self.last_check_time = datetime.now()
                                 return
 
                             except json.JSONDecodeError as e:
                                 logger.error(f"解析发布信息JSON失败: {str(e)}")
-                                self.check_update_complete.emit(False, _("update.error.invalid_release_json"))
+                                self.check_update_complete.emit(
+                                    False, _("update.error.invalid_release_json")
+                                )
                                 return
                             except Exception as e:
                                 logger.error(f"处理发布信息失败: {str(e)}")
-                                self.check_update_complete.emit(False, _("update.error.process_release_failed").format(error=str(e)))
+                                self.check_update_complete.emit(
+                                    False,
+                                    _("update.error.process_release_failed").format(
+                                        error=str(e)
+                                    ),
+                                )
                                 return
                         else:
                             # 如果无法获取release.json，仍然继续，只是没有文件大小和校验信息
-                            logger.warning(_("update.error.no_release_json").format(status=release_info_response.status_code))
+                            logger.warning(
+                                _("update.error.no_release_json").format(
+                                    status=release_info_response.status_code
+                                )
+                            )
                             update_info = {
                                 "version": latest_version,
                                 "download_url": download_url,
-                                "changelog": self._get_changelog_content(urls, latest_version),
+                                "changelog": self._get_changelog_content(
+                                    urls, latest_version
+                                ),
                                 "release_notes": latest.get("body", ""),
                                 "package_type": package_type,
                             }
 
                             # 添加其他版本的下载链接
+                            alt_install_type = (
+                                "installer"
+                                if install_type == "portable"
+                                else "portable"
+                            )
                             alternative_package = {
-                                "url": f"{urls['download_url']}/v{latest_version}/jvman-{latest_version}-{platform}-{'setup.exe' if install_type == 'portable' else 'zip'}",
-                                "type": _("update.package_type.installer") if install_type == "portable" else _("update.package_type.portable"),
+                                "url": self._build_package_url(
+                                    urls["download_url"],
+                                    latest_version,
+                                    platform,
+                                    arch,
+                                    alt_install_type,
+                                ),
+                                "type": (
+                                    _("update.package_type.installer")
+                                    if install_type == "portable"
+                                    else _("update.package_type.portable")
+                                ),
                             }
                             update_info["alternative_package"] = alternative_package
 
                             # 发送更新可用信号
                             self.update_available.emit(update_info)
                             self.update_notification_shown = True
-                            
+
                             # 更新最后检查时间
                             self.last_check_time = datetime.now()
                             return
 
                     except requests.exceptions.RequestException as e:
-                        logger.warning(_("update.error.get_release_json_failed").format(error=str(e)))
+                        logger.warning(
+                            _("update.error.get_release_json_failed").format(
+                                error=str(e)
+                            )
+                        )
                         # 如果无法获取release.json，仍然继续，只是没有文件大小和校验信息
                         update_info = {
                             "version": latest_version,
                             "download_url": download_url,
-                            "changelog": self._get_changelog_content(urls, latest_version),
+                            "changelog": self._get_changelog_content(
+                                urls, latest_version
+                            ),
                             "release_notes": latest.get("body", ""),
                             "package_type": package_type,
                         }
 
                         # 添加其他版本的下载链接
+                        alt_install_type = (
+                            "installer" if install_type == "portable" else "portable"
+                        )
                         alternative_package = {
-                            "url": f"{urls['download_url']}/v{latest_version}/jvman-{latest_version}-{platform}-{'setup.exe' if install_type == 'portable' else 'zip'}",
-                            "type": _("update.package_type.installer") if install_type == "portable" else _("update.package_type.portable"),
+                            "url": self._build_package_url(
+                                urls["download_url"],
+                                latest_version,
+                                platform,
+                                arch,
+                                alt_install_type,
+                            ),
+                            "type": (
+                                _("update.package_type.installer")
+                                if install_type == "portable"
+                                else _("update.package_type.portable")
+                            ),
                         }
                         update_info["alternative_package"] = alternative_package
 
                         # 发送更新可用信号
                         self.update_available.emit(update_info)
                         self.update_notification_shown = True
-                        
+
                         # 更新最后检查时间
                         self.last_check_time = datetime.now()
                         return
 
                 # 如果没有新版本，只在手动检查时发送信号
                 if self.is_manual_check:
-                    self.check_update_complete.emit(True, _("update.status.latest_version"))
+                    self.check_update_complete.emit(
+                        True, _("update.status.latest_version")
+                    )
                     # 更新最后检查时间
                     self.last_check_time = datetime.now()
 
@@ -482,11 +571,15 @@ class UpdateManager(QObject):
 
             if response.status_code != 200:
                 self.is_downloading = False
-                self.download_error.emit(_("update.error.download_failed").format(status=response.status_code))
+                self.download_error.emit(
+                    _("update.error.download_failed").format(
+                        status=response.status_code
+                    )
+                )
                 return False
 
             # 获取文件大小
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             if total_size == 0:
                 self.is_downloading = False
                 self.download_error.emit(_("update.error.no_size").format(url=url))
@@ -498,7 +591,7 @@ class UpdateManager(QObject):
             last_progress_time = time.time()
             update_interval = 0.1  # 最小进度更新间隔（秒）
 
-            with open(target_path, 'wb') as f:
+            with open(target_path, "wb") as f:
                 for data in response.iter_content(block_size):
                     if not self.is_downloading:  # 检查是否取消下载
                         response.close()
@@ -511,21 +604,25 @@ class UpdateManager(QObject):
                     if data:
                         downloaded += len(data)
                         f.write(data)
-                        
+
                         # 计算进度
                         current_progress = int((downloaded / total_size) * 100)
                         current_time = time.time()
-                        
+
                         # 只在进度变化超过1%且时间间隔超过0.1秒时更新进度条
-                        if (current_progress > last_progress_update and 
-                            current_time - last_progress_time >= update_interval):
+                        if (
+                            current_progress > last_progress_update
+                            and current_time - last_progress_time >= update_interval
+                        ):
                             self.download_progress.emit(current_progress)
                             last_progress_update = current_progress
                             last_progress_time = current_time
 
             # 验证下载是否完整
             if downloaded != total_size:
-                logger.error(f"下载不完整: 已下载 {downloaded} 字节，总大小 {total_size} 字节")
+                logger.error(
+                    f"下载不完整: 已下载 {downloaded} 字节，总大小 {total_size} 字节"
+                )
                 self.is_downloading = False
                 self.download_error.emit(_("update.error.incomplete"))
                 try:
@@ -555,13 +652,13 @@ class UpdateManager(QObject):
         finally:
             # 清理资源
             try:
-                if 'response' in locals():
+                if "response" in locals():
                     response.close()
             except Exception as e:
                 logger.error(f"清理下载资源失败: {str(e)}")
-            
+
             # 如果下载失败，尝试删除不完整的文件
-            if 'downloaded' in locals() and 'total_size' in locals():
+            if "downloaded" in locals() and "total_size" in locals():
                 if downloaded != total_size and os.path.exists(target_path):
                     try:
                         os.remove(target_path)
@@ -592,31 +689,60 @@ class UpdateManager(QObject):
         else:
             return "linux"
 
+    def _get_arch(self):
+        """获取当前机器架构，归一化为 x64 / arm64"""
+        import platform as _plat
+
+        machine = (_plat.machine() or "").lower()
+        if machine in ("x86_64", "amd64", "x64"):
+            return "x64"
+        if machine in ("arm64", "aarch64"):
+            return "arm64"
+        return machine or "unknown"
+
+    def _get_installer_ext(self, platform=None):
+        """根据平台返回安装包扩展名"""
+        platform = platform or self._get_platform()
+        return {
+            "windows": "exe",
+            "macos": "dmg",
+            "linux": "deb",
+        }.get(platform, "zip")
+
+    def _build_package_url(
+        self, base_download_url, version, platform, arch, install_type
+    ):
+        """拼接下载包的 URL
+
+        - 安装版: jvman-{version}-{platform}-{arch}-setup.{ext}
+        - 便携版: jvman-{version}-{platform}-{arch}.zip
+        """
+        if install_type == "installer":
+            ext = self._get_installer_ext(platform)
+            filename = f"jvman-{version}-{platform}-{arch}-setup.{ext}"
+        else:
+            filename = f"jvman-{version}-{platform}-{arch}.zip"
+        return f"{base_download_url}/v{version}/{filename}"
+
     def _get_random_user_agent(self):
         """生成随机的 User-Agent"""
-        chrome_versions = ['120.0.0.0', '119.0.0.0', '118.0.0.0', '117.0.0.0']
+        chrome_versions = ["120.0.0.0", "119.0.0.0", "118.0.0.0", "117.0.0.0"]
         platforms = {
-            'windows': {
-                'os': 'Windows NT 10.0; Win64; x64',
-                'platform': '"Windows"'
+            "windows": {"os": "Windows NT 10.0; Win64; x64", "platform": '"Windows"'},
+            "darwin": {
+                "os": "Macintosh; Intel Mac OS X 10_15_7",
+                "platform": '"macOS"',
             },
-            'darwin': {
-                'os': 'Macintosh; Intel Mac OS X 10_15_7',
-                'platform': '"macOS"'
-            },
-            'linux': {
-                'os': 'X11; Linux x86_64',
-                'platform': '"Linux"'
-            }
+            "linux": {"os": "X11; Linux x86_64", "platform": '"Linux"'},
         }
 
         platform_key = self._get_platform()
-        platform_info = platforms.get(platform_key, platforms['windows'])
+        platform_info = platforms.get(platform_key, platforms["windows"])
         chrome_version = chrome_versions[int(time.time()) % len(chrome_versions)]
 
         return {
-            'user_agent': f'Mozilla/5.0 ({platform_info["os"]}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_version} Safari/537.36',
-            'platform': platform_info['platform']
+            "user_agent": f'Mozilla/5.0 ({platform_info["os"]}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_version} Safari/537.36',
+            "platform": platform_info["platform"],
         }
 
     def _get_request_headers(self):
@@ -624,7 +750,7 @@ class UpdateManager(QObject):
         browser_info = self._get_random_user_agent()
         return {
             "Accept": "application/json,application/vnd.github.v3+json",
-            "User-Agent": browser_info['user_agent'],
+            "User-Agent": browser_info["user_agent"],
             "Accept-Language": "en-US,en;q=0.9",
             "Accept-Encoding": "gzip, deflate, br",
             "Connection": "keep-alive",
@@ -632,10 +758,10 @@ class UpdateManager(QObject):
             "Pragma": "no-cache",
             "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
             "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": browser_info['platform'],
+            "Sec-Ch-Ua-Platform": browser_info["platform"],
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site"
+            "Sec-Fetch-Site": "same-site",
         }
 
     def get_update_check_interval(self):

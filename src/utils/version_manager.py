@@ -47,9 +47,11 @@ class VersionManager:
             config_paths = [
                 os.path.join(base_path, "config", "app.json"),  # 标准位置
                 os.path.join(base_path, "app.json"),  # 根目录
-                os.path.join(sys._MEIPASS, "config", "app.json")
-                if getattr(sys, "frozen", False)
-                else None,  # 打包后的位置
+                (
+                    os.path.join(sys._MEIPASS, "config", "app.json")
+                    if getattr(sys, "frozen", False)
+                    else None
+                ),  # 打包后的位置
             ]
 
             config_file = None

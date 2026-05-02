@@ -10,34 +10,55 @@ on:
 permissions:
   contents: write
   packages: write
-  issues: write
-  pull-requests: write
 
 jobs:
   build:
+    name: Build (${{ matrix.platform }}-${{ matrix.arch }})
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # Windows x64
           - os: windows-latest
             platform: windows
+            arch: x64
+          # Linux x64
           - os: ubuntu-latest
             platform: linux
-          - os: macos-latest
+            arch: x64
+          # Linux ARM64（GitHub 公共仓库可用的免费 ARM runner）
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          # macOS Intel (x86_64)
+          - os: macos-13
             platform: macos
-    
+            arch: x64
+          # macOS Apple Silicon (M 系列)
+          - os: macos-14
+            platform: macos
+            arch: arm64
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout source
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
-    
-    - name: Install dependencies
+        # 3.8 不支持 Apple Silicon 原生；统一升级到 3.11（LTS 周期内且三平台都有官方构建）
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements/requirements.txt
+          requirements/requirements-dev.txt
+
+    - name: Install Python dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/requirements.txt
@@ -45,133 +66,170 @@ jobs:
         if [ "${{ runner.os }}" == "Windows" ]; then
           pip install pywin32
         fi
-        if [ "${{ runner.os }}" == "macOS" ]; then
-          brew install create-dmg
-        fi
-        if [ "${{ runner.os }}" == "Linux" ]; then
-          sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper fakeroot
-        fi
-      shell: bash
-    
-    - name: Get version from tag
-      id: get_version
+
+    - name: Install macOS build tools
+      if: runner.os == 'macOS'
       run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        else
-          echo "version=$(cat config/app.json | python -c "import sys, json; print(json.load(sys.stdin)['version'])")" >> $GITHUB_ENV
-        fi
+        brew install create-dmg || true
+
+    - name: Install Linux build tools
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y dpkg-dev debhelper fakeroot
+
+    - name: Resolve build version
+      id: get_version
       shell: bash
-    
-    - name: Set build variables
+      run: |
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          VERSION="${GITHUB_REF#refs/tags/v}"
+        else
+          VERSION=$(python -c "import json; print(json.load(open('config/app.json', encoding='utf-8'))['version'])")
+        fi
+        echo "version=$VERSION" >> "$GITHUB_ENV"
+        echo "Build version: $VERSION"
+
+    - name: Configure PyInstaller separators
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
-          echo "PYINSTALLER_SEP=;" >> $GITHUB_ENV
-          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> $GITHUB_ENV
+          echo "PYINSTALLER_SEP=;" >> "$GITHUB_ENV"
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data" >> "$GITHUB_ENV"
         else
-          echo "PYINSTALLER_SEP=:" >> $GITHUB_ENV
-          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> $GITHUB_ENV
+          echo "PYINSTALLER_SEP=:" >> "$GITHUB_ENV"
+          echo "PYINSTALLER_ADD_DATA_FORMAT=--add-data=" >> "$GITHUB_ENV"
         fi
-        echo "Build version: ${{ env.version }}"
-    
-    - name: Build Application
+
+    - name: Print build environment
       shell: bash
       run: |
         echo "============ Build Environment ============"
-        echo "Platform: ${{ matrix.platform }}"
-        echo "OS: ${{ runner.os }}"
-        echo "Python: ${{ env.pythonLocation }}"
-        echo "Version: ${{ env.version }}"
-        echo "Working directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        echo "========================================="
-        python scripts/build.py --platform ${{ matrix.platform }} --type all
-    
+        echo "Runner OS:     ${{ runner.os }}"
+        echo "Runner arch:   $(uname -m 2>/dev/null || echo unknown)"
+        echo "Target:        ${{ matrix.platform }}-${{ matrix.arch }}"
+        echo "Python:        $(python --version)"
+        echo "Version:       ${{ env.version }}"
+        echo "Working dir:   $(pwd)"
+        echo "==========================================="
+
+    - name: Build application
+      shell: bash
+      # 使用匿名维护者信息，避免硬编码个人邮箱在公开产物中
+      env:
+        JVMAN_DEB_MAINTAINER: "JVMan Maintainers <noreply@users.noreply.github.com>"
+      run: |
+        python scripts/build.py \
+          --platform ${{ matrix.platform }} \
+          --arch ${{ matrix.arch }} \
+          --type all
+
     - name: List release directory
       shell: bash
       run: |
         echo "Release directory contents:"
-        ls -R release/
-    
+        ls -R release/ || true
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: release-${{ matrix.platform }}
-        path: release
+        name: release-${{ matrix.platform }}-${{ matrix.arch }}
+        # 仅上传按平台+架构归档的目录里的最终产物
+        path: |
+          release/jvman_${{ env.version }}_${{ matrix.platform }}_${{ matrix.arch }}_*/jvman-*
+          release/jvman_${{ env.version }}_${{ matrix.platform }}_${{ matrix.arch }}_*/release.json
+        if-no-files-found: error
+        retention-days: 14
 
   create-release:
+    name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Get version from tag
-      id: get_version
-      run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        else
-          echo "version=$(cat config/app.json | python -c "import sys, json; print(json.load(sys.stdin)['version'])")" >> $GITHUB_ENV
-        fi
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Resolve build version
       shell: bash
-    
+      run: |
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          VERSION="${GITHUB_REF#refs/tags/v}"
+        else
+          VERSION=$(python -c "import json; print(json.load(open('config/app.json', encoding='utf-8'))['version'])")
+        fi
+        echo "version=$VERSION" >> "$GITHUB_ENV"
+
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
         path: release
-        
+        pattern: release-*
+        merge-multiple: false
+
     - name: List downloaded artifacts
       shell: bash
       run: |
         echo "Downloaded artifacts:"
-        ls -R release/
-        
+        ls -R release/ || true
+
     - name: Merge release.json files
+      shell: bash
       run: |
-        echo "Merging release.json files..."
-        python -c '
-        import json
-        import glob
-        import os
-        
-        # 初始化合并后的数据
-        merged_data = {"files": []}
-        
-        # 查找所有 release.json 文件
-        json_files = glob.glob("release/**/release.json", recursive=True)
+        python - <<'PY'
+        import json, glob, os
+
+        merged = {
+            "version": os.environ.get("version", ""),
+            "files": [],
+        }
+
+        json_files = sorted(glob.glob("release/**/release.json", recursive=True))
         print(f"Found {len(json_files)} release.json files")
-        
-        # 合并所有文件数据
-        for json_file in json_files:
-            print(f"Processing {json_file}")
+
+        for jf in json_files:
+            print(f"Processing {jf}")
             try:
-                with open(json_file, "r") as f:
+                with open(jf, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    if "files" in data:
-                        merged_data["files"].extend(data["files"])
+                for item in data.get("files", []):
+                    # 保证每条记录都带有 platform/arch，便于客户端挑选
+                    item.setdefault("platform", data.get("platform"))
+                    item.setdefault("arch", data.get("arch"))
+                    merged["files"].append(item)
             except Exception as e:
-                print(f"Error processing {json_file}: {str(e)}")
-        
-        # 保存合并后的文件
-        with open("release/release.json", "w") as f:
-            json.dump(merged_data, f, indent=2)
+                print(f"Error processing {jf}: {e}")
+
+        os.makedirs("release", exist_ok=True)
+        with open("release/release.json", "w", encoding="utf-8") as f:
+            json.dump(merged, f, indent=2, ensure_ascii=False)
         print("Merged release.json created successfully")
-        '
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+        PY
+
+    - name: Stage release assets
+      shell: bash
+      run: |
+        mkdir -p release/_assets
+        # 收集所有安装包 / 便携包 / 校验文件
+        shopt -s globstar nullglob
+        for f in release/release-*/**/jvman-*.{exe,zip,dmg,deb,sha256}; do
+          echo "Staging $f"
+          cp -f "$f" release/_assets/
+        done
+        cp -f release/release.json release/_assets/ || true
+        echo "Final asset list:"
+        ls -la release/_assets/
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
       with:
         files: |
-          release/release-windows/**/jvman-${{ env.version }}-windows-setup.exe
-          release/release-windows/**/jvman-${{ env.version }}-windows.zip
-          release/release-macos/**/jvman-${{ env.version }}-macos-setup.dmg
-          release/release-macos/**/jvman-${{ env.version }}-macos.zip
-          release/release-linux/**/jvman-${{ env.version }}-linux-setup.deb
-          release/release-linux/**/jvman-${{ env.version }}-linux.zip
-          release/release.json
+          release/_assets/*
         body_path: CHANGELOG.md
+        fail_on_unmatched_files: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

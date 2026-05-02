@@ -241,15 +241,13 @@ class LocalTab(QWidget):
         # 当前版本显示
         version_container = QWidget()
         version_container.setObjectName("version_container")
-        version_container.setStyleSheet(
-            """
+        version_container.setStyleSheet("""
             QWidget#version_container {
                 background-color: #EBF3FE;
                 border-radius: 8px;
                 border: 1px solid #D0E1F9;
             }
-        """
-        )
+        """)
 
         version_layout = QVBoxLayout(version_container)
         version_layout.setContentsMargins(16, 16, 16, 16)
@@ -258,14 +256,12 @@ class LocalTab(QWidget):
         # 当前应用版本
         current_version_widget = QWidget()
         current_version_widget.setObjectName("current_version_widget")
-        current_version_widget.setStyleSheet(
-            """
+        current_version_widget.setStyleSheet("""
             QWidget#current_version_widget {
                 background-color: rgba(26, 115, 232, 0.08);
                 border-radius: 6px;
             }
-        """
-        )
+        """)
         current_version_layout = QHBoxLayout(current_version_widget)
         current_version_layout.setContentsMargins(12, 8, 12, 8)
         current_version_layout.setSpacing(8)
@@ -299,30 +295,26 @@ class LocalTab(QWidget):
         self.current_version_label = QLabel(_("local.current_version.not_set"))
         self.current_version_label.setObjectName("current_version_label")
         self.current_version_label.setProperty("has_version", False)  # 添加状态属性
-        self.current_version_label.setStyleSheet(
-            """
+        self.current_version_label.setStyleSheet("""
             QLabel#current_version_label {
                 color: #1a73e8;
                 font-weight: 600;
                 font-size: 13px;
                 background: transparent;
             }
-        """
-        )
+        """)
         current_version_layout.addWidget(self.current_version_label)
         current_version_layout.addStretch()
 
         # 环境变量版本
         system_version_widget = QWidget()
         system_version_widget.setObjectName("system_version_widget")
-        system_version_widget.setStyleSheet(
-            """
+        system_version_widget.setStyleSheet("""
             QWidget#system_version_widget {
                 background-color: rgba(102, 102, 102, 0.06);
                 border-radius: 6px;
             }
-        """
-        )
+        """)
         system_version_layout = QVBoxLayout(system_version_widget)
         system_version_layout.setContentsMargins(12, 10, 12, 10)
         system_version_layout.setSpacing(8)
@@ -349,26 +341,22 @@ class LocalTab(QWidget):
 
         # 标题和说明
         self.title_label = QLabel(_("local.system_version.title"))
-        self.title_label.setStyleSheet(
-            """
+        self.title_label.setStyleSheet("""
             color: #444444;
             font-size: 13px;
             font-weight: 600;
             background: transparent;
             letter-spacing: 0.3px;
-        """
-        )
+        """)
         title_layout.addWidget(self.title_label)
 
         # 添加提示信息
         self.info_label = QLabel(_("local.system_version.hint"))
-        self.info_label.setStyleSheet(
-            """
+        self.info_label.setStyleSheet("""
             color: #666666;
             font-size: 12px;
             background: transparent;
-        """
-        )
+        """)
         title_layout.addWidget(self.info_label)
         title_layout.addStretch()
 
@@ -378,8 +366,7 @@ class LocalTab(QWidget):
         self.system_version_label = QLabel(_("local.system_version.detecting"))
         self.system_version_label.setObjectName("system_version_label")
         self.system_version_label.setWordWrap(True)
-        self.system_version_label.setStyleSheet(
-            """
+        self.system_version_label.setStyleSheet("""
             QLabel#system_version_label {
                 color: #444444;
                 font-family: 'Consolas', monospace;
@@ -396,8 +383,7 @@ class LocalTab(QWidget):
             QLabel#system_version_label[status="not_installed"] {
                 color: #C62828;
             }
-        """
-        )
+        """)
         system_version_layout.addWidget(self.system_version_label)
 
         # 添加到主布局
@@ -408,8 +394,7 @@ class LocalTab(QWidget):
 
         # JDK列表
         self.jdk_list = QListWidget()
-        self.jdk_list.setStyleSheet(
-            """
+        self.jdk_list.setStyleSheet("""
             QListWidget {
                 border: 1px solid #E0E0E0;
                 border-radius: 8px;
@@ -428,8 +413,7 @@ class LocalTab(QWidget):
                 background-color: #F8F9FA;
                 border: 1px solid #E0E0E0;
             }
-        """
-        )
+        """)
         layout.addWidget(self.jdk_list)
 
         # 按钮容器
@@ -452,8 +436,7 @@ class LocalTab(QWidget):
             )
         )
         add_button.clicked.connect(self.add_local_jdk)
-        add_button.setStyleSheet(
-            """
+        add_button.setStyleSheet("""
             QPushButton {
                 padding: 8px 20px;
                 border: none;
@@ -468,8 +451,7 @@ class LocalTab(QWidget):
             QPushButton:pressed {
                 background-color: #0d47a1;
             }
-        """
-        )
+        """)
 
         # 连接语言变化信号
         i18n_manager.language_changed.connect(
@@ -604,8 +586,7 @@ class LocalTab(QWidget):
             if not valid_jdks:
                 empty_label = QLabel(_("local.list.empty"))
                 empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                empty_label.setStyleSheet(
-                    """
+                empty_label.setStyleSheet("""
                     QLabel {
                         color: #666666;
                         font-size: 14px;
@@ -617,8 +598,7 @@ class LocalTab(QWidget):
                         border-radius: 6px;
                         margin: 10px;
                     }
-                """
-                )
+                """)
                 empty_label.setWordWrap(True)  # 启用自动换行
                 self.jdk_list.addItem(QListWidgetItem())
                 self.jdk_list.item(0).setSizeHint(empty_label.sizeHint())
@@ -731,15 +711,13 @@ class LocalTab(QWidget):
         # 版本类型标签
         version_type = self._get_version_type(jdk["version"])
         version_type_tag = QLabel(version_type)
-        version_type_tag.setStyleSheet(
-            f"""
+        version_type_tag.setStyleSheet(f"""
             background-color: {self._get_version_type_color(version_type)};
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 9pt;
-        """
-        )
+        """)
         version_layout.addWidget(version_type_tag)
 
         # 类型标签
@@ -749,15 +727,13 @@ class LocalTab(QWidget):
             else _("local.jdk.type.downloaded")
         )
         type_tag = QLabel(type_text)
-        type_tag.setStyleSheet(
-            """
+        type_tag.setStyleSheet("""
             background-color: #6c757d;
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 9pt;
-        """
-        )
+        """)
         version_layout.addWidget(type_tag)
 
         # 发行商标签（将在异步加载后更新）
@@ -772,12 +748,10 @@ class LocalTab(QWidget):
             current_tag_layout = QHBoxLayout(current_tag)
             current_tag_layout.setContentsMargins(6, 2, 8, 2)
             current_tag_layout.setSpacing(4)
-            current_tag.setStyleSheet(
-                """
+            current_tag.setStyleSheet("""
                 background-color: #28a745;
                         border-radius: 4px;
-            """
-            )
+            """)
 
             # 添加对号图标
             check_icon = QLabel()
@@ -835,8 +809,7 @@ class LocalTab(QWidget):
         open_dir_button = QPushButton()
         open_dir_button.setToolTip(_("local.button.open_dir"))
         open_dir_button.setFixedSize(32, 32)
-        open_dir_button.setStyleSheet(
-            """
+        open_dir_button.setStyleSheet("""
             QPushButton {
                 border: none;
                 background-color: transparent;
@@ -846,8 +819,7 @@ class LocalTab(QWidget):
                 background-color: rgba(0, 0, 0, 0.04);
                 border-radius: 4px;
             }
-        """
-        )
+        """)
         folder_icon_path = os.path.join(
             os.path.dirname(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -870,8 +842,7 @@ class LocalTab(QWidget):
                 set_current_button = QPushButton()
                 set_current_button.setToolTip(_("local.button.apply_version"))
                 set_current_button.setFixedSize(32, 32)
-                set_current_button.setStyleSheet(
-                    """
+                set_current_button.setStyleSheet("""
                     QPushButton {
                         border: none;
                         background-color: transparent;
@@ -881,8 +852,7 @@ class LocalTab(QWidget):
                         background-color: rgba(26, 115, 232, 0.08);
                         border-radius: 4px;
                     }
-                """
-                )
+                """)
                 apply_icon_path = os.path.join(
                     os.path.dirname(
                         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -902,8 +872,7 @@ class LocalTab(QWidget):
                 delete_button = QPushButton()
                 delete_button.setToolTip(_("local.button.delete"))
                 delete_button.setFixedSize(32, 32)
-                delete_button.setStyleSheet(
-                    """
+                delete_button.setStyleSheet("""
                     QPushButton {
                         border: none;
                         background-color: transparent;
@@ -913,8 +882,7 @@ class LocalTab(QWidget):
                         background-color: rgba(211, 47, 47, 0.08);
                         border-radius: 4px;
                     }
-                """
-                )
+                """)
                 delete_icon_path = os.path.join(
                     os.path.dirname(
                         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -958,15 +926,13 @@ class LocalTab(QWidget):
         )
 
         vendor_tag.setText(vendor)
-        vendor_tag.setStyleSheet(
-            f"""
+        vendor_tag.setStyleSheet(f"""
             background-color: {vendor_color};
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 9pt;
-        """
-        )
+        """)
 
     def version_sort_key(self, version):
         """版本号排序键"""
@@ -1183,8 +1149,7 @@ class LocalTab(QWidget):
             dialog = QDialog(self)
             dialog.setWindowTitle(_("local.dialog.delete.title"))
             dialog.setFixedWidth(500)  # 增加对话框宽度
-            dialog.setStyleSheet(
-                """
+            dialog.setStyleSheet("""
                 QDialog {
                     background-color: white;
                     border-radius: 8px;
@@ -1218,8 +1183,7 @@ class LocalTab(QWidget):
                     font-size: 13px;
                     min-width: 100px;
                 }
-            """
-            )
+            """)
 
             layout = QVBoxLayout(dialog)
             layout.setSpacing(16)
@@ -1233,12 +1197,10 @@ class LocalTab(QWidget):
             # 添加警告图标
             warning_icon = QLabel()
             warning_icon.setFixedSize(20, 20)
-            warning_icon.setStyleSheet(
-                """
+            warning_icon.setStyleSheet("""
                 background: transparent;
                 margin: 0;  /* 完全移除边距 */
-            """
-            )
+            """)
             warning_icon_path = os.path.join(
                 os.path.dirname(
                     os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -1292,8 +1254,7 @@ class LocalTab(QWidget):
             # 警告标题
             warning_title = QLabel(_("local.dialog.delete.warning_title"))
             warning_title.setObjectName("warningTitle")
-            warning_title.setStyleSheet(
-                """
+            warning_title.setStyleSheet("""
                 QLabel#warningTitle {
                     color: #d32f2f;
                     font-size: 16px;
@@ -1302,8 +1263,7 @@ class LocalTab(QWidget):
                     padding: 0;
                     margin: 0;
                 }
-            """
-            )
+            """)
             header_layout.addWidget(warning_title)
 
             title_layout.addWidget(header_container)
@@ -1320,8 +1280,7 @@ class LocalTab(QWidget):
             # 创建信息容器
             info_container = QWidget()
             info_container.setObjectName("infoContainer")
-            info_container.setStyleSheet(
-                """
+            info_container.setStyleSheet("""
                 QWidget#infoContainer {
                     background-color: #f8f9fa;
                     border-radius: 6px;
@@ -1345,8 +1304,7 @@ class LocalTab(QWidget):
                     font-size: 13px;
                     letter-spacing: 0.3px;
                 }
-            """
-            )
+            """)
 
             info_layout = QVBoxLayout(info_container)
             info_layout.setSpacing(16)
@@ -1389,8 +1347,7 @@ class LocalTab(QWidget):
 
             remove_list_btn = QPushButton(_("local.dialog.button.remove_from_list"))
             remove_list_btn.setFixedWidth(190)  # 增加固定宽度到190px
-            remove_list_btn.setStyleSheet(
-                """
+            remove_list_btn.setStyleSheet("""
                 QPushButton {
                     border: 1px solid #dc3545;
                     background-color: white;
@@ -1405,12 +1362,10 @@ class LocalTab(QWidget):
                     background-color: #c82333;
                     color: white;
                 }
-            """
-            )
+            """)
 
             remove_all_btn = QPushButton(_("local.dialog.button.delete_folder"))
-            remove_all_btn.setStyleSheet(
-                """
+            remove_all_btn.setStyleSheet("""
                 QPushButton {
                     border: none;
                     background-color: #dc3545;
@@ -1423,12 +1378,10 @@ class LocalTab(QWidget):
                 QPushButton:pressed {
                     background-color: #bd2130;
                 }
-            """
-            )
+            """)
 
             cancel_btn = QPushButton(_("local.dialog.button.cancel"))
-            cancel_btn.setStyleSheet(
-                """
+            cancel_btn.setStyleSheet("""
                 QPushButton {
                     border: 1px solid #ccc;
                     background-color: white;
@@ -1441,8 +1394,7 @@ class LocalTab(QWidget):
                 QPushButton:pressed {
                     background-color: #e9ecef;
                 }
-            """
-            )
+            """)
 
             button_layout.addStretch()
             button_layout.addWidget(remove_list_btn)
@@ -1452,7 +1404,9 @@ class LocalTab(QWidget):
             layout.addLayout(button_layout)
 
             # 连接按钮信号
-            remove_list_btn.clicked.connect(lambda: dialog.done(1))  # 1 表示仅从列表移除
+            remove_list_btn.clicked.connect(
+                lambda: dialog.done(1)
+            )  # 1 表示仅从列表移除
             remove_all_btn.clicked.connect(lambda: dialog.done(2))  # 2 表示删除文件夹
             cancel_btn.clicked.connect(dialog.reject)
 
@@ -1570,8 +1524,7 @@ class LocalTab(QWidget):
             # 移除固定尺寸，改用最小尺寸
             success_dialog.setMinimumWidth(340)
             success_dialog.setMinimumHeight(200)  # 增加最小高度
-            success_dialog.setStyleSheet(
-                """
+            success_dialog.setStyleSheet("""
                 QDialog {
                     background-color: white;
                     border-radius: 8px;
@@ -1625,8 +1578,7 @@ class LocalTab(QWidget):
                     background-color: #E8EEF7;
                     margin: 0 -12px;
                 }
-            """
-            )
+            """)
 
             # 创建布局
             layout = QVBoxLayout(success_dialog)
@@ -1700,8 +1652,7 @@ class LocalTab(QWidget):
             error_dialog = QDialog(self)
             error_dialog.setWindowTitle(_("local.dialog.switch.error_title"))
             error_dialog.setFixedSize(340, 140)  # 减小对话框尺寸
-            error_dialog.setStyleSheet(
-                """
+            error_dialog.setStyleSheet("""
                 QDialog {
                     background-color: white;
                     border-radius: 8px;
@@ -1743,8 +1694,7 @@ class LocalTab(QWidget):
                     background-color: #E8EEF7;
                     margin: 0 -12px;
                 }
-            """
-            )
+            """)
 
             # 创建布局
             layout = QVBoxLayout(error_dialog)
@@ -1827,8 +1777,7 @@ class LocalTab(QWidget):
             dialog.setDefaultButton(default_button)
 
         # 设置对话框样式
-        dialog.setStyleSheet(
-            """
+        dialog.setStyleSheet("""
             QMessageBox {
                 background-color: white;
             }
@@ -1877,8 +1826,7 @@ class LocalTab(QWidget):
             QPushButton[text="删除文件夹"]:hover {
                 background-color: #c82333;
             }
-        """
-        )
+        """)
 
         return dialog
 
@@ -1912,8 +1860,7 @@ class LocalTab(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle(_("local.dialog.delete.title"))
         dialog.setFixedWidth(500)  # 增加对话框宽度
-        dialog.setStyleSheet(
-            """
+        dialog.setStyleSheet("""
             QDialog {
                 background-color: white;
                 border-radius: 8px;
@@ -1947,8 +1894,7 @@ class LocalTab(QWidget):
                 font-size: 13px;
                 min-width: 100px;
             }
-        """
-        )
+        """)
 
         layout = QVBoxLayout(dialog)
         layout.setSpacing(16)
@@ -1962,12 +1908,10 @@ class LocalTab(QWidget):
         # 添加警告图标
         warning_icon = QLabel()
         warning_icon.setFixedSize(20, 20)
-        warning_icon.setStyleSheet(
-            """
+        warning_icon.setStyleSheet("""
             background: transparent;
             margin: 0;  /* 完全移除边距 */
-        """
-        )
+        """)
         warning_icon_path = os.path.join(
             os.path.dirname(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -2021,8 +1965,7 @@ class LocalTab(QWidget):
         # 警告标题
         warning_title = QLabel(_("local.dialog.delete.warning_title"))
         warning_title.setObjectName("warningTitle")
-        warning_title.setStyleSheet(
-            """
+        warning_title.setStyleSheet("""
             QLabel#warningTitle {
                 color: #d32f2f;
                 font-size: 16px;
@@ -2031,8 +1974,7 @@ class LocalTab(QWidget):
                 padding: 0;
                 margin: 0;
             }
-        """
-        )
+        """)
         header_layout.addWidget(warning_title)
 
         title_layout.addWidget(header_container)
@@ -2049,8 +1991,7 @@ class LocalTab(QWidget):
         # 创建信息容器
         info_container = QWidget()
         info_container.setObjectName("infoContainer")
-        info_container.setStyleSheet(
-            """
+        info_container.setStyleSheet("""
             QWidget#infoContainer {
                 background-color: #f8f9fa;
                 border-radius: 6px;
@@ -2074,8 +2015,7 @@ class LocalTab(QWidget):
                 font-size: 13px;
                 letter-spacing: 0.3px;
             }
-        """
-        )
+        """)
 
         info_layout = QVBoxLayout(info_container)
         info_layout.setSpacing(16)
@@ -2118,8 +2058,7 @@ class LocalTab(QWidget):
 
         remove_list_btn = QPushButton(_("local.dialog.button.remove_from_list"))
         remove_list_btn.setFixedWidth(190)  # 增加固定宽度到190px
-        remove_list_btn.setStyleSheet(
-            """
+        remove_list_btn.setStyleSheet("""
             QPushButton {
                 border: 1px solid #dc3545;
                 background-color: white;
@@ -2134,12 +2073,10 @@ class LocalTab(QWidget):
                 background-color: #c82333;
                 color: white;
             }
-        """
-        )
+        """)
 
         remove_all_btn = QPushButton(_("local.dialog.button.delete_folder"))
-        remove_all_btn.setStyleSheet(
-            """
+        remove_all_btn.setStyleSheet("""
             QPushButton {
                 border: none;
                 background-color: #dc3545;
@@ -2152,12 +2089,10 @@ class LocalTab(QWidget):
             QPushButton:pressed {
                 background-color: #bd2130;
             }
-        """
-        )
+        """)
 
         cancel_btn = QPushButton(_("local.dialog.button.cancel"))
-        cancel_btn.setStyleSheet(
-            """
+        cancel_btn.setStyleSheet("""
             QPushButton {
                 border: 1px solid #ccc;
                 background-color: white;
@@ -2170,8 +2105,7 @@ class LocalTab(QWidget):
             QPushButton:pressed {
                 background-color: #e9ecef;
             }
-        """
-        )
+        """)
 
         button_layout.addStretch()
         button_layout.addWidget(remove_list_btn)

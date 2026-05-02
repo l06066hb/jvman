@@ -103,7 +103,9 @@ class MainWindow(QMainWindow):
         # 连接更新管理器的信号
         self.update_manager.update_available.connect(self.show_update_notification)
         self.update_manager.check_update_complete.connect(self.show_check_result)
-        self.update_manager.show_error.connect(self.show_error_message)  # 添加错误消息信号连接
+        self.update_manager.show_error.connect(
+            self.show_error_message
+        )  # 添加错误消息信号连接
 
         # 设置窗口标题和大小
         self.setWindowTitle(f"JDK Version Manager v{version_manager.get_version()}")
@@ -210,8 +212,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tab_widget)
 
         # 设置标签页样式
-        self.tab_widget.setStyleSheet(
-            """
+        self.tab_widget.setStyleSheet("""
             QTabWidget {
                 background: transparent;
             }
@@ -243,8 +244,7 @@ class MainWindow(QMainWindow):
                 color: #999999;
                 background: transparent;
             }
-        """
-        )
+        """)
 
         # 连接信号
         self.download_tab.jdk_downloaded.connect(self.on_jdk_downloaded)
@@ -282,8 +282,7 @@ class MainWindow(QMainWindow):
 
         # 创建托盘菜单
         tray_menu = QMenu()
-        tray_menu.setStyleSheet(
-            """
+        tray_menu.setStyleSheet("""
             QMenu {
                 background-color: #FAFAFA;
                 border: 1px solid #E0E0E0;
@@ -321,8 +320,7 @@ class MainWindow(QMainWindow):
                 background-color: #E8F0FE;
                 color: #1a73e8;
             }
-        """
-        )
+        """)
 
         # 添加当前版本显示
         version_text = self.get_formatted_version_text()
@@ -696,7 +694,9 @@ class MainWindow(QMainWindow):
                                 creationflags=subprocess.CREATE_NO_WINDOW,
                             )
                         except Exception as e:
-                            logger.warning(f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}")
+                            logger.warning(
+                                f"发送环境变量更改通知时出现警告（不影响设置）: {str(e)}"
+                            )
 
                         self.tray_icon.showMessage(
                             _("tray.switch_success"),
@@ -896,7 +896,10 @@ class MainWindow(QMainWindow):
             return
 
         # 如果不是手动检查且不是自动检查的第一次通知，则不显示
-        if not self.update_manager.is_manual_check and self.update_manager.update_notification_shown:
+        if (
+            not self.update_manager.is_manual_check
+            and self.update_manager.update_notification_shown
+        ):
             return
 
         # 创建新的对话框前，确保旧的对话框被正确清理
@@ -915,26 +918,29 @@ class MainWindow(QMainWindow):
             self.update_manager.reset_check_state()  # 先重置状态
             self.update_dialog.deleteLater()  # 确保对话框被正确清理
             self.update_dialog = None  # 最后清除引用
-            
+
             # 重置设置页面的更新按钮状态
             if hasattr(self, "settings_tab"):
                 self.settings_tab._reset_update_button()
 
     def show_check_result(self, success, message):
         """显示检查结果
-        
+
         Args:
             success (bool): 检查是否成功
             message (str): 提示消息
         """
         # 只在手动检查更新且成功时显示"当前已是最新版本"的提示
-        if hasattr(self.update_manager, "is_manual_check") and self.update_manager.is_manual_check:
+        if (
+            hasattr(self.update_manager, "is_manual_check")
+            and self.update_manager.is_manual_check
+        ):
             if success and message == _("update.status.latest_version"):
                 QMessageBox.information(self, _("update.dialog.title"), message)
                 # 重置手动检查标志
                 self.update_manager.is_manual_check = False
-            
-                 # 使用 QTimer.singleShot 延迟执行按钮重置
+
+                # 使用 QTimer.singleShot 延迟执行按钮重置
                 QTimer.singleShot(0, self.settings_tab._reset_update_button)
 
     def manual_check_update(self):
@@ -955,7 +961,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self,
                 _("dialog.error.title"),
-                _("update.error.general").format(error=str(e))
+                _("update.error.general").format(error=str(e)),
             )
 
     def toggle_window(self):

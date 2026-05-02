@@ -92,10 +92,25 @@ def check_macos_build_environment():
         print("Error: PyInstaller not found")
         sys.exit(1)
 
-def build_portable(platform='windows', timestamp=None):
+def _detect_arch():
+    """检测当前机器架构，归一化为 x64 / arm64"""
+    import platform as _plat
+    machine = (_plat.machine() or '').lower()
+    if machine in ('x86_64', 'amd64', 'x64'):
+        return 'x64'
+    if machine in ('arm64', 'aarch64'):
+        return 'arm64'
+    return machine or 'unknown'
+
+
+def build_portable(platform='windows', timestamp=None, arch=None):
     """构建免安装版"""
     print("Building portable version...")
-    
+
+    # 确定架构
+    if arch is None:
+        arch = _detect_arch()
+
     # 检查构建环境
     if platform == 'macos':
         check_macos_build_environment()
@@ -554,7 +569,7 @@ init_user_dirs()
         print("Skipping ZIP creation on macOS...")
     else:
         # 创建一个临时目录来组织文件
-        zip_name = f"jvman-{version}-{platform}"
+        zip_name = f"jvman-{version}-{platform}-{arch}"
         temp_dir = os.path.join(output_dir, "temp")
         final_dir = os.path.join(temp_dir, zip_name)
         
@@ -638,12 +653,13 @@ def generate_hash_file(file_path, hash_value):
         return False
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print("Usage: python build_portable.py <platform> <timestamp>")
+    if len(sys.argv) not in (3, 4):
+        print("Usage: python build_portable.py <platform> <timestamp> [arch]")
         sys.exit(1)
-        
+
     platform = sys.argv[1]
     timestamp = sys.argv[2]
-    
-    build_portable(platform, timestamp)
-    sys.exit(0) 
+    arch = sys.argv[3] if len(sys.argv) == 4 else None
+
+    build_portable(platform, timestamp, arch=arch)
+    sys.exit(0)

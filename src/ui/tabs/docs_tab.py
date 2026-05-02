@@ -42,7 +42,9 @@ def get_icon_path(icon_name):
     base_paths.extend(
         [
             os.path.join(project_root, "resources", "icons"),  # 主项目resources目录
-            os.path.join(current_dir, "..", "..", "..", "resources", "icons"),  # 相对路径
+            os.path.join(
+                current_dir, "..", "..", "..", "resources", "icons"
+            ),  # 相对路径
             os.path.join(
                 os.path.dirname(sys.executable), "resources", "icons"
             ),  # 可执行文件目录
@@ -117,8 +119,7 @@ class DocsTab(QWidget):
 
         # 搜索区域
         search_frame = QFrame()
-        search_frame.setStyleSheet(
-            """
+        search_frame.setStyleSheet("""
             QFrame {
                 background-color: white;
                 border: 1px solid #E0E0E0;
@@ -127,8 +128,7 @@ class DocsTab(QWidget):
             QFrame:hover {
                 border: 1px solid #1a73e8;
             }
-        """
-        )
+        """)
         search_layout = QHBoxLayout(search_frame)
         search_layout.setContentsMargins(12, 8, 12, 8)
         search_layout.setSpacing(6)
@@ -147,8 +147,7 @@ class DocsTab(QWidget):
         logger.debug(f"Initial search placeholder: {placeholder}")
         self.search_input.setPlaceholderText(placeholder)
 
-        self.search_input.setStyleSheet(
-            """
+        self.search_input.setStyleSheet("""
             QLineEdit {
                 border: none;
                 padding: 4px;
@@ -163,8 +162,7 @@ class DocsTab(QWidget):
             QLineEdit::placeholder {
                 color: #666666;
             }
-        """
-        )
+        """)
         self.search_input.textChanged.connect(self.filter_docs)
         search_layout.addWidget(self.search_input)
 
@@ -174,8 +172,7 @@ class DocsTab(QWidget):
         # 文档内容区域
         content_area = QScrollArea()
         content_area.setWidgetResizable(True)
-        content_area.setStyleSheet(
-            """
+        content_area.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -194,8 +191,7 @@ class DocsTab(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
             }
-        """
-        )
+        """)
 
         content_widget = QWidget()
         self.content_layout = QVBoxLayout(content_widget)
@@ -248,15 +244,13 @@ class DocsTab(QWidget):
         title_layout.addWidget(icon_label)
 
         title_label = QLabel(title)
-        title_label.setStyleSheet(
-            """
+        title_label.setStyleSheet("""
             QLabel {
                 color: #1a73e8;
                 font-size: 14px;
                 font-weight: bold;
             }
-        """
-        )
+        """)
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
@@ -278,8 +272,7 @@ class DocsTab(QWidget):
                 button.setIcon(QIcon(icon_path))
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.clicked.connect(lambda: webbrowser.open(url))
-        button.setStyleSheet(
-            """
+        button.setStyleSheet("""
             QPushButton {
                 text-align: left;
                 padding: 8px 15px;
@@ -293,8 +286,7 @@ class DocsTab(QWidget):
                 background-color: #F5F5F5;
                 border-color: #1a73e8;
             }
-        """
-        )
+        """)
         return button
 
     def add_api_docs(self):

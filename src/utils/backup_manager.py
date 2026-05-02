@@ -56,7 +56,9 @@ class BackupManager:
             # 检查备份数量
             backups = self.get_backup_list()
             if len(backups) >= self.max_backups and backup_type == "auto":
-                logger.warning(f"自动备份数量已达到上限({self.max_backups}个)，将删除最旧的备份")
+                logger.warning(
+                    f"自动备份数量已达到上限({self.max_backups}个)，将删除最旧的备份"
+                )
 
             # 生成备份文件名
             timestamp = time.strftime("%Y%m%d_%H%M%S")

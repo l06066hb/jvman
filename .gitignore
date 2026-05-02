@@ -43,6 +43,9 @@ current/
 .env
 config/local.json
 config/personal.json
+updates/
+scripts/.installer
+_fix_*.py
 
 # Test
 .coverage
@@ -66,7 +69,7 @@ $RECYCLE.BIN/
 scripts/push_all.ps1
 scripts/push_all.sh
 scripts/release.py
-scripts/release.py
+scripts/push_log.md
 .cursorrules
 ABOUT.md
 config/platforms.json

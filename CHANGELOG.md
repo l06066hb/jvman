@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.12] - 2026-05-02
+
+### Added
+- CI 新增 macOS Apple Silicon (M 系列) 原生构建（macos-14 runner）
+- CI 新增 Linux ARM64 构建（ubuntu-24.04-arm runner）
+- 构建产物文件名加入架构后缀，区分 Intel/ARM 版本
+- 自动更新模块识别本机架构，自动下载对应 arch 的安装/便携包
+
+### Changed
+- 构建工具链 Python 版本由 3.8 升级到 3.11（3.8 不支持 Apple Silicon 原生）
+- DEB 安装包 Architecture 字段由硬编码 amd64 改为按构建架构动态生成
+- 工作流 actions 升级：checkout@v4、setup-python@v5、action-gh-release@v2
+
+### Fixed
+- 修复 Linux 构建 release 目录中找不到 .deb 文件的 bug（scripts/build.py 文件名查找路径错误）
+- 修复 macOS 构建产生误导性"portable artifact not found"警告
+
+
 ## [1.0.11] - 2025-02-16
 
 ### Added
@@ -305,6 +323,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyQt6 界面框架
 - 基础配置系统
 
+[1.0.12]: https://github.com/l06066hb/jvman/releases/tag/v1.0.12
 [1.0.11]: https://github.com/l06066hb/jvman/releases/tag/v1.0.11
 [1.0.10]: https://github.com/l06066hb/jvman/releases/tag/v1.0.10
 [1.0.9]: https://github.com/l06066hb/jvman/releases/tag/v1.0.9
