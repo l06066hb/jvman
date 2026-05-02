@@ -11,6 +11,11 @@ permissions:
   contents: write
   packages: write
 
+# 同一 ref 触发新 run 时取消之前未完成的 run，避免长时间排队卡死
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build (${{ matrix.platform }}-${{ matrix.arch }})
@@ -31,15 +36,21 @@ jobs:
             platform: linux
             arch: arm64
           # macOS Intel (x86_64)
+          # 标 experimental: GitHub 公共池 macos-13 排队偶尔超长，不阻断 release 发布
           - os: macos-13
             platform: macos
             arch: x64
+            experimental: true
           # macOS Apple Silicon (M 系列)
           - os: macos-14
             platform: macos
             arch: arm64
 
     runs-on: ${{ matrix.os }}
+    # experimental 标记的 job 失败/超时不会让整个 release 卡死
+    continue-on-error: ${{ matrix.experimental || false }}
+    # 单 job 执行（排队后）最长 60 分钟，超时直接失败
+    timeout-minutes: 60
 
     steps:
     - name: Checkout source
