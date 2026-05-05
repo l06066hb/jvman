@@ -13,6 +13,13 @@ on:
       - completed
   release:
     types: [published, edited]  # 发布或编辑 release 时触发
+  # 手动触发：用于 release 事件同步资产失败后补救，或旧 tag 补传
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '要同步资产的 release tag（例如 v1.0.12）'
+        required: true
+        default: ''
 
 jobs:
   sync:
@@ -47,7 +54,9 @@ jobs:
           # 测试连接
           ssh -T git@gitee.com || true
       
-      - name: Sync to Gitee
+      - name: Sync code to Gitee (mirror)
+        # workflow_dispatch 只用来补同步资产，不重复 mirror。其他事件正常走 mirror
+        if: github.event_name != 'workflow_dispatch'
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
@@ -55,36 +64,100 @@ jobs:
           source-repo: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           destination-repo: "git@gitee.com:l06066hb/jvman.git"
       
-      - name: Sync Release Assets
-        if: github.event_name == 'release'
-        run: |
-          # 获取当前 release 信息
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
-          echo "Processing release: $RELEASE_TAG"
-          
-          # 安装 gitee-release-action
-          pip install gitee-release-action
-          
-          # 下载 release 资源
-          mkdir -p release_assets
-          cd release_assets
-          
-          # 使用 GitHub CLI 下载所有资源
-          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --pattern "*" --dir .
-          
-          # 列出所有下载的文件
-          echo "Downloaded assets:"
-          ls -la
-          
-          # 创建或更新 Gitee release
-          gitee-release -o l06066hb -r jvman -t $RELEASE_TAG \
-            --description "$(cat ../CHANGELOG.md)" \
-            --assets ./* \
-            --token ${{ secrets.GITEE_ACCESS_TOKEN }}
+      - name: Sync Release Assets to Gitee (via v5 REST API)
+        # 触发条件：release: published/edited 或手动 workflow_dispatch
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        # 资产上传失败不能阻断后续的 Sync Tags 步骤
+        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Sync Tags
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEE_TOKEN: ${{ secrets.GITEE_ACCESS_TOKEN }}
+          GITEE_OWNER: l06066hb
+          GITEE_REPO: jvman
+          # release 事件读 event payload，workflow_dispatch 读用户输入
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
+          RELEASE_NAME: ${{ github.event.release.name || github.event.inputs.release_tag }}
+          RELEASE_BODY: ${{ github.event.release.body || '' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RELEASE_TAG}" ]; then
+            echo "RELEASE_TAG is empty, nothing to sync."
+            exit 0
+          fi
+          echo "Syncing release ${RELEASE_TAG} to Gitee..."
+
+          # 1) 从 GitHub Release 下载全部资产
+          mkdir -p release_assets
+          rm -rf release_assets/*
+          gh release download "${RELEASE_TAG}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*" --dir release_assets
+          echo "Downloaded assets:"
+          ls -la release_assets
+
+          # 2) workflow_dispatch 下 RELEASE_BODY 为空，回补一下
+          if [ -z "${RELEASE_BODY}" ]; then
+            RELEASE_BODY=$(gh release view "${RELEASE_TAG}" \
+              --repo "${{ github.repository }}" \
+              --json body -q '.body' || echo '')
+          fi
+
+          # 3) 查 Gitee 是否已有同 tag 的 release
+          echo "Checking existing Gitee release for tag ${RELEASE_TAG}..."
+          EXISTING=$(curl -sS \
+            "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases/tags/${RELEASE_TAG}?access_token=${GITEE_TOKEN}")
+          RELEASE_ID=$(echo "${EXISTING}" | jq -r '.id // empty')
+
+          if [ -z "${RELEASE_ID}" ]; then
+            echo "No existing Gitee release, creating..."
+            CREATE_BODY=$(jq -n \
+              --arg tag "${RELEASE_TAG}" \
+              --arg name "${RELEASE_NAME:-$RELEASE_TAG}" \
+              --arg body "${RELEASE_BODY}" \
+              --arg target "master" \
+              '{tag_name: $tag, name: $name, body: $body, target_commitish: $target, prerelease: false}')
+            CREATED=$(curl -sS -X POST \
+              -H "Content-Type: application/json;charset=UTF-8" \
+              -d "${CREATE_BODY}" \
+              "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases?access_token=${GITEE_TOKEN}")
+            RELEASE_ID=$(echo "${CREATED}" | jq -r '.id // empty')
+            if [ -z "${RELEASE_ID}" ]; then
+              echo "ERROR: failed to create Gitee release:"
+              echo "${CREATED}"
+              exit 1
+            fi
+            echo "Created Gitee release id: ${RELEASE_ID}"
+          else
+            echo "Reusing existing Gitee release id: ${RELEASE_ID}"
+          fi
+
+          # 4) 依次 multipart 上传每个资产
+          ERR=0
+          for f in release_assets/*; do
+            [ -f "$f" ] || continue
+            BASENAME=$(basename "$f")
+            echo "Uploading ${BASENAME}..."
+            RESPONSE=$(curl -sS -X POST \
+              -F "access_token=${GITEE_TOKEN}" \
+              -F "file=@${f}" \
+              "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases/${RELEASE_ID}/attach_files")
+            if echo "${RESPONSE}" | jq -e '.id' >/dev/null 2>&1; then
+              echo "  OK: ${BASENAME}"
+            else
+              echo "  FAIL: ${BASENAME} -> ${RESPONSE}"
+              ERR=$((ERR + 1))
+            fi
+          done
+
+          if [ "${ERR}" -gt 0 ]; then
+            echo "Warning: ${ERR} asset(s) failed to upload to Gitee."
+          fi
+          echo "Release asset sync done."
+
+      - name: Sync Tags to Gitee
+        # workflow_dispatch 下已由上游推过标签，不需要重复操作
+        if: github.event_name != 'workflow_dispatch'
         run: |
           git fetch --tags origin
-          git push --tags git@gitee.com:l06066hb/jvman.git 
+          git push --tags git@gitee.com:l06066hb/jvman.git || true
