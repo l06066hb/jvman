@@ -36,19 +36,18 @@ jobs:
             platform: linux
             arch: arm64
           # macOS Intel (x86_64)
-          # 标 experimental: GitHub 公共池 macos-13 排队偶尔超长，不阻断 release 发布
-          - os: macos-13
+          # 在 Apple Silicon runner (macos-14) 上经 Rosetta 2 跨架构构建,
+          # 规避 macos-13 公共 Intel 池排队拥堵 / 即将退役的问题
+          - os: macos-14
             platform: macos
             arch: x64
-            experimental: true
-          # macOS Apple Silicon (M 系列)
+            rosetta: true
+          # macOS Apple Silicon (M 系列) - 原生构建
           - os: macos-14
             platform: macos
             arch: arm64
 
     runs-on: ${{ matrix.os }}
-    # experimental 标记的 job 失败/超时不会让整个 release 卡死
-    continue-on-error: ${{ matrix.experimental || false }}
     # 单 job 执行（排队后）最长 60 分钟，超时直接失败
     timeout-minutes: 60
 
@@ -58,7 +57,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python
+    # 非 Rosetta 路径：使用 setup-python action（原生 Python）
+    - name: Set up Python (native)
+      if: ${{ !matrix.rosetta }}
       uses: actions/setup-python@v5
       with:
         # 3.8 不支持 Apple Silicon 原生；统一升级到 3.11（LTS 周期内且三平台都有官方构建）
@@ -68,14 +69,51 @@ jobs:
           requirements/requirements.txt
           requirements/requirements-dev.txt
 
+    # Rosetta 路径：在 Apple Silicon runner 上安装 Rosetta 2 + universal2 Python，
+    # 后续 step 通过 `arch -x86_64` 跨架构产出 x86_64 原生二进制
+    - name: Install Rosetta 2 (cross-arch macOS x64)
+      if: ${{ matrix.rosetta }}
+      shell: bash
+      run: |
+        sudo softwareupdate --install-rosetta --agree-to-license
+
+    - name: Install universal2 Python from python.org (cross-arch macOS x64)
+      if: ${{ matrix.rosetta }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        PY_VER="3.11.9"
+        PKG="python-${PY_VER}-macos11.pkg"
+        curl -fsSLO "https://www.python.org/ftp/python/${PY_VER}/${PKG}"
+        sudo installer -pkg "${PKG}" -target /
+        rm -f "${PKG}"
+        PY_BIN_DIR="/Library/Frameworks/Python.framework/Versions/3.11/bin"
+        # python.org 默认不创建无版本号的 python/pip 符号链接，自行补一下，便于后续 step 兼容
+        sudo ln -sf "$PY_BIN_DIR/python3" "$PY_BIN_DIR/python"
+        sudo ln -sf "$PY_BIN_DIR/pip3" "$PY_BIN_DIR/pip"
+        # 把 python.org Python 的 bin 目录置于 PATH 最前
+        echo "$PY_BIN_DIR" >> "$GITHUB_PATH"
+        # 验证 universal2 双切片确实可用
+        echo "--- ARM64 slice ---"
+        arch -arm64 "$PY_BIN_DIR/python3" -c "import platform; print('arch:', platform.machine())"
+        echo "--- x86_64 slice ---"
+        arch -x86_64 "$PY_BIN_DIR/python3" -c "import platform; print('arch:', platform.machine())"
+
     - name: Install Python dependencies
       shell: bash
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements/requirements.txt
-        pip install -r requirements/requirements-dev.txt
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          pip install pywin32
+        if [ "${{ matrix.rosetta }}" == "true" ]; then
+          # Rosetta 路径：以 x86_64 进程执行 pip，pip 自动挑 x86_64 wheel
+          arch -x86_64 python3 -m pip install --upgrade pip
+          arch -x86_64 python3 -m pip install -r requirements/requirements.txt
+          arch -x86_64 python3 -m pip install -r requirements/requirements-dev.txt
+        else
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.txt
+          pip install -r requirements/requirements-dev.txt
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            pip install pywin32
+          fi
         fi
 
     - name: Install macOS build tools
@@ -130,10 +168,19 @@ jobs:
       env:
         JVMAN_DEB_MAINTAINER: "JVMan Maintainers <noreply@users.noreply.github.com>"
       run: |
-        python scripts/build.py \
-          --platform ${{ matrix.platform }} \
-          --arch ${{ matrix.arch }} \
-          --type all
+        if [ "${{ matrix.rosetta }}" == "true" ]; then
+          # Rosetta 路径：以 x86_64 进程跑 build.py，PyInstaller 子进程也是 x86_64,
+          # 自然产出 x86_64 原生二进制（不带 ARM64 切片）
+          arch -x86_64 python3 scripts/build.py \
+            --platform ${{ matrix.platform }} \
+            --arch ${{ matrix.arch }} \
+            --type all
+        else
+          python scripts/build.py \
+            --platform ${{ matrix.platform }} \
+            --arch ${{ matrix.arch }} \
+            --type all
+        fi
 
     - name: List release directory
       shell: bash

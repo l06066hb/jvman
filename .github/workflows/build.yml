@@ -27,9 +27,12 @@ jobs:
           - os: ubuntu-24.04-arm
             platform: linux
             arch: arm64
-          - os: macos-13
+          # macOS Intel (x86_64) - 在 Apple Silicon runner 上经 Rosetta 2 跨架构构建
+          # 避开即将退役 / 排队拥堵的 macos-13 公共池
+          - os: macos-14
             platform: macos
             arch: x64
+            rosetta: true
           - os: macos-14
             platform: macos
             arch: arm64
@@ -40,7 +43,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python
+    # 非 Rosetta 路径：使用 setup-python action
+    - name: Set up Python (native)
+      if: ${{ !matrix.rosetta }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
@@ -49,13 +54,41 @@ jobs:
           requirements/requirements.txt
           requirements/requirements-dev.txt
 
+    # Rosetta 路径：Apple Silicon 上跨架构产 x86_64 二进制
+    - name: Install Rosetta 2 (cross-arch macOS x64)
+      if: ${{ matrix.rosetta }}
+      shell: bash
+      run: |
+        sudo softwareupdate --install-rosetta --agree-to-license
+
+    - name: Install universal2 Python from python.org (cross-arch macOS x64)
+      if: ${{ matrix.rosetta }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        PY_VER="3.11.9"
+        PKG="python-${PY_VER}-macos11.pkg"
+        curl -fsSLO "https://www.python.org/ftp/python/${PY_VER}/${PKG}"
+        sudo installer -pkg "${PKG}" -target /
+        rm -f "${PKG}"
+        PY_BIN_DIR="/Library/Frameworks/Python.framework/Versions/3.11/bin"
+        sudo ln -sf "$PY_BIN_DIR/python3" "$PY_BIN_DIR/python"
+        sudo ln -sf "$PY_BIN_DIR/pip3" "$PY_BIN_DIR/pip"
+        echo "$PY_BIN_DIR" >> "$GITHUB_PATH"
+        arch -x86_64 "$PY_BIN_DIR/python3" -c "import platform; print('x86_64 slice ok:', platform.machine())"
+
     - name: Install Python dependencies
       shell: bash
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements/requirements-dev.txt
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          pip install pywin32
+        if [ "${{ matrix.rosetta }}" == "true" ]; then
+          arch -x86_64 python3 -m pip install --upgrade pip
+          arch -x86_64 python3 -m pip install -r requirements/requirements-dev.txt
+        else
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements-dev.txt
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            pip install pywin32
+          fi
         fi
 
     - name: Install macOS build tools
@@ -91,10 +124,15 @@ jobs:
         echo "Target:        ${{ matrix.platform }}-${{ matrix.arch }}"
         echo "Runner OS:     ${{ runner.os }}"
         echo "Runner arch:   $(uname -m 2>/dev/null || echo unknown)"
+        echo "Rosetta:       ${{ matrix.rosetta || false }}"
         echo "Python:        $(python --version)"
         echo "Working dir:   $(pwd)"
         echo "==========================================="
-        python scripts/build.py --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --type all
+        if [ "${{ matrix.rosetta }}" == "true" ]; then
+          arch -x86_64 python3 scripts/build.py --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --type all
+        else
+          python scripts/build.py --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --type all
+        fi
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
