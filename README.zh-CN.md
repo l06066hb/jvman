@@ -5,6 +5,9 @@
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
+[![下载量](https://img.shields.io/github/downloads/l06066hb/jvman/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=brightgreen)](https://github.com/l06066hb/jvman/releases)
+[![最新版本](https://img.shields.io/github/v/release/l06066hb/jvman?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=orange)](https://github.com/l06066hb/jvman/releases/latest)
+[![Stars](https://img.shields.io/github/stars/l06066hb/jvman?style=flat&color=yellow)](https://github.com/l06066hb/jvman/stargazers)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
 [![爱发电](https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E9%A1%B9%E7%9B%AE-946ce6)](https://afdian.com/a/l06066hb)
 

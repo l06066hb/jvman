@@ -5,6 +5,9 @@
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/l06066hb/jvman/actions)
+[![Downloads](https://img.shields.io/github/downloads/l06066hb/jvman/total?label=downloads&color=brightgreen)](https://github.com/l06066hb/jvman/releases)
+[![Latest Release](https://img.shields.io/github/v/release/l06066hb/jvman?label=latest&color=orange)](https://github.com/l06066hb/jvman/releases/latest)
+[![Stars](https://img.shields.io/github/stars/l06066hb/jvman?style=flat&color=yellow)](https://github.com/l06066hb/jvman/stargazers)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-ff5e5b?logo=ko-fi)](https://ko-fi.com/l06066hb)
 [![Afdian](https://img.shields.io/badge/Afdian-Support%20Project-946ce6)](https://afdian.com/a/l06066hb)
 
